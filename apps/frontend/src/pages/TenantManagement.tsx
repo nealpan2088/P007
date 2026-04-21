@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { TENANT_ROUTES } from '../config/routes';
+import apiRoutes from '../config/api-routes';
 import {
   Container,
   Box,
@@ -53,8 +55,17 @@ const TenantManagement: React.FC = () => {
   const [creatingTenant, setCreatingTenant] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    console.log('TenantManagement useEffect triggered, isAuthenticated:', isAuthenticated());
+    console.log('Token in localStorage:', localStorage.getItem('qilin_access_token'));
+    
+    if (isAuthenticated()) {
+      console.log('用户已认证，开始获取租户列表');
       fetchTenants();
+    } else {
+      // 如果未认证，设置加载完成状态
+      console.log('用户未认证，跳过API调用');
+      setLoading(false);
+      setError('请先登录以查看租户列表');
     }
   }, [isAuthenticated]);
 
@@ -63,18 +74,36 @@ const TenantManagement: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/v1/tenant/list', {
+      // 获取Token
+      const token = localStorage.getItem('qilin_access_token');
+      if (!token) {
+        throw new Error('未找到认证Token，请重新登录');
+      }
+
+      console.log('调用租户列表API，Token长度:', token.length);
+      
+      const response = await fetch(apiRoutes.tenant.TENANT.LIST, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
 
+      console.log('API响应状态:', response.status);
+      
       if (!response.ok) {
+        if (response.status === 401) {
+          // Token无效，清除登录状态
+          localStorage.removeItem('qilin_access_token');
+          localStorage.removeItem('qilin_user');
+          localStorage.removeItem('qilin_session_id');
+          throw new Error('认证已过期，请重新登录');
+        }
         throw new Error(`获取租户列表失败: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('API响应数据:', data);
       
       if (data.success) {
         setTenants(data.data || []);
@@ -215,7 +244,7 @@ const TenantManagement: React.FC = () => {
         <BusinessIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
         我的租户
       </Typography>
-      <Typography variant="body1" color="text.secondary" paragraph>
+      <Typography variant="body1" color="text.secondary" paragraph={true}>
         您可以管理以下租户。每个租户代表一个独立的餐厅或业务。
       </Typography>
 
@@ -227,7 +256,7 @@ const TenantManagement: React.FC = () => {
           <Typography variant="h6" color="text.secondary" gutterBottom>
             暂无租户
           </Typography>
-          <Typography variant="body1" color="text.secondary" paragraph>
+          <Typography variant="body1" color="text.secondary" paragraph={true}>
             您还没有创建任何租户。租户代表一个独立的餐厅或业务。
           </Typography>
           <Button

@@ -25,7 +25,7 @@ export const getAppConfig = () => ({
 
 export const getApiConfig = () => ({
   // API配置
-  baseUrl: env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:33037' : ''),
+  baseUrl: env.VITE_API_BASE_URL || '',
   timeout: parseInt(env.VITE_API_TIMEOUT || '30000', 10),
   version: env.VITE_API_VERSION || 'v1',
   
@@ -44,8 +44,8 @@ export const getApiConfig = () => ({
       features: '/api/v1/public/features',
     },
     tenant: {
-      checkSubdomain: '/api/v1/tenants/check-subdomain',
-      publicInfo: '/api/v1/tenants/:tenantId/public',
+      checkSubdomain: '/api/v1/tenant/check-subdomain',
+      publicInfo: '/api/v1/tenant/:tenantId/public',
     },
   },
 });
@@ -75,7 +75,7 @@ export const getFeatureConfig = () => ({
 
 export const getDevConfig = () => ({
   // 开发配置
-  proxyTarget: env.VITE_DEV_PROXY_TARGET || 'http://localhost:33037',
+  proxyTarget: env.VITE_DEV_PROXY_TARGET || '',
   openBrowser: env.VITE_DEV_OPEN_BROWSER !== 'false',
   
   // 环境信息

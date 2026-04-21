@@ -5,7 +5,7 @@
 const getApiBaseUrl = () => {
   // 优先使用Vite环境变量
   const env = import.meta.env;
-  const baseUrl = env.VITE_API_BASE_URL || (env.DEV ? 'http://localhost:33037' : '');
+  const baseUrl = env.VITE_API_BASE_URL || '';
   
   // 确保URL以斜杠结尾
   return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;

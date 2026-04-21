@@ -125,11 +125,11 @@ const CreateTenant: React.FC = () => {
 
   const checkSubdomainAvailability = async (subdomain: string): Promise<boolean> => {
     try {
-      const response = await fetch('/api/v1/tenant/check-subdomain', {
+      const response = await fetch(apiRoutes.tenant.TENANT.CHECK_SUBDOMAIN, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          'Authorization': `Bearer ${localStorage.getItem('qilin_access_token')}`,
         },
         body: JSON.stringify({ subdomain }),
       });
@@ -162,7 +162,7 @@ const CreateTenant: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          'Authorization': `Bearer ${localStorage.getItem('qilin_access_token')}`,
         },
         body: JSON.stringify({
           tenant: {

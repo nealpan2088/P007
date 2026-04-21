@@ -35,7 +35,7 @@ export const validate = () => {
   }
   
   // 验证端口号
-  const port = parseInt(process.env.PORT || '33037', 10);
+  const port = parseInt(process.env.PORT, 10);
   if (isNaN(port) || port < 1 || port > 65535) {
     throw new Error(`端口号无效: ${process.env.PORT}`);
   }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import apiRoutes from '../config/api-routes';
 import {
   Container,
   Box,
@@ -146,11 +147,11 @@ const EditTenant: React.FC = () => {
       setSuccess(null);
       
       // 这里应该调用更新租户的API
-      const response = await fetch(`/api/v1/tenant/${tenantId}`, {
+      const response = await fetch(apiRoutes.buildUrl(apiRoutes.tenant.TENANT.UPDATE, { tenantId }), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          'Authorization': `Bearer ${localStorage.getItem('qilin_access_token')}`,
         },
         body: JSON.stringify({
           name: formData.name,

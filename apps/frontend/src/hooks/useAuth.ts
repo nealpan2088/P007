@@ -1,6 +1,4 @@
 import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { PUBLIC_ROUTES } from '../config/routes';
 import { authApi, User, LoginCredentials, RegisterData } from '../api/simple-auth';
 
 // 本地存储键名
@@ -12,8 +10,6 @@ const STORAGE_KEYS = {
 };
 
 export const useAuth = () => {
-  const navigate = useNavigate();
-  
   // 状态管理
   const [user, setUser] = useState<User | null>(() => {
     const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
@@ -144,18 +140,16 @@ export const useAuth = () => {
       }
       
       clearAuthData();
-      navigate(PUBLIC_ROUTES.AUTH.LOGIN);
       return true;
     } catch (err) {
       console.error('登出错误:', err);
       // 即使API调用失败，也清除本地数据
       clearAuthData();
-      navigate(PUBLIC_ROUTES.AUTH.LOGIN);
       return false;
     } finally {
       setIsLoading(false);
     }
-  }, [accessToken, clearAuthData, navigate]);
+  }, [accessToken, clearAuthData]);
 
   // 刷新Token
   const refreshToken = useCallback(async (): Promise<boolean> => {
@@ -209,22 +203,38 @@ export const useAuth = () => {
     const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
     
     if (!token || !storedUser) {
+      console.log('isAuthenticated: Token或用户信息不存在');
+      return false;
+    }
+    
+    // 检查Token格式
+    if (!token.includes('.')) {
+      console.log('isAuthenticated: Token格式错误');
       return false;
     }
     
     // 检查Token是否过期
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        console.log('isAuthenticated: Token部分数量错误');
+        return false;
+      }
+      
+      const payload = JSON.parse(atob(parts[1]));
       const isExpired = payload.exp * 1000 < Date.now();
       
       if (isExpired) {
+        console.log('isAuthenticated: Token已过期');
         // Token过期，尝试刷新
         refreshToken().catch(console.error);
         return false;
       }
       
+      console.log('isAuthenticated: 用户已认证');
       return true;
-    } catch {
+    } catch (error) {
+      console.error('Token解析错误:', error);
       return false;
     }
   }, [refreshToken]);

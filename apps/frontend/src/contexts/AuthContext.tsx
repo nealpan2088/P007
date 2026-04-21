@@ -1,5 +1,7 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { PUBLIC_ROUTES } from '../config/routes';
 import { User } from '../api/simple-auth';
 
 // 认证上下文类型
@@ -21,6 +23,7 @@ interface AuthContextType {
   saveAuthData: (data: any) => void;
   clearAuthData: () => void;
   setError: (error: string | null) => void;
+  navigateToLogin: () => void;
 }
 
 // 创建上下文
@@ -33,10 +36,31 @@ interface AuthProviderProps {
 
 // 认证提供者组件
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const navigate = useNavigate();
   const auth = useAuth();
 
+  // 包装logout函数，添加导航功能
+  const logoutWithNavigation = useCallback(async (): Promise<boolean> => {
+    const result = await auth.logout();
+    if (result) {
+      navigate(PUBLIC_ROUTES.AUTH.LOGIN);
+    }
+    return result;
+  }, [auth, navigate]);
+
+  // 导航到登录页面的函数
+  const navigateToLogin = useCallback(() => {
+    navigate(PUBLIC_ROUTES.AUTH.LOGIN);
+  }, [navigate]);
+
+  const contextValue: AuthContextType = {
+    ...auth,
+    logout: logoutWithNavigation,
+    navigateToLogin,
+  };
+
   return (
-    <AuthContext.Provider value={auth}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

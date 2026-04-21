@@ -1,0 +1,17 @@
+-- CreateEnum
+CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'SUSPENDED', 'DELETED');
+
+-- CreateEnum
+CREATE TYPE "TenantPlan" AS ENUM ('FREE', 'BASIC', 'PREMIUM', 'ENTERPRISE');
+
+-- CreateEnum
+CREATE TYPE "TenantStatus" AS ENUM ('ACTIVE', 'TRIAL', 'SUSPENDED', 'CANCELLED', 'DELETED');
+
+-- CreateEnum
+CREATE TYPE "BillingCycle" AS ENUM ('MONTHLY', 'YEARLY');
+
+-- CreateEnum
+CREATE TYPE "UserRole" AS ENUM ('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'USER');
+
+-- CreateEnum
+CREATE TYPE "UserTenantStatus" AS ENUM ('PENDING', 'ACTIVE', 'INACTIVE', 'SUSPENDED', 'REMOVED');

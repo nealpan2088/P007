@@ -26,8 +26,8 @@ export const PUBLIC_ROUTES = {
   
   // 租户
   TENANT: {
-    CHECK_SUBDOMAIN: `${BASE_PATH}/tenants/check-subdomain`,
-    PUBLIC_INFO: `${BASE_PATH}/tenants/:tenantId/public`,
+    CHECK_SUBDOMAIN: `${BASE_PATH}/tenant/check-subdomain`,
+    PUBLIC_INFO: `${BASE_PATH}/tenant/:tenantId/public`,
   },
   
   // 公共信息

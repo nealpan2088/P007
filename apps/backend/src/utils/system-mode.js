@@ -1,7 +1,5 @@
-// 麒麟项目 - 系统模式工具
+// 麒麟项目 - 系统模式工具（简化版）
 // 根据环境变量 SYSTEM_MODE 提供不同的业务逻辑实现
-
-import config from '../config/dynamic-config.js';
 
 /**
  * 系统模式工具类
@@ -9,7 +7,28 @@ import config from '../config/dynamic-config.js';
  */
 class SystemMode {
   constructor() {
-    this.systemConfig = config.system;
+    this.mode = process.env.SYSTEM_MODE || 'multi';
+    
+    // 验证系统模式
+    if (!['single', 'multi'].includes(this.mode)) {
+      throw new Error(`系统模式无效: ${this.mode}，必须是 'single' 或 'multi'`);
+    }
+    
+    // 单店模式配置
+    this.singleStoreConfig = {
+      storeId: process.env.DEFAULT_STORE_ID || 'store_001',
+      storeName: process.env.DEFAULT_STORE_NAME || '默认店铺',
+      subdomain: process.env.DEFAULT_STORE_SUBDOMAIN || 'default'
+    };
+    
+    // 功能开关
+    this.features = {
+      multiTenant: this.mode === 'multi',
+      scanningOrdering: true,
+      cloudPrinting: true,
+      analytics: true,
+      mobileReady: true
+    };
   }
   
   /**
@@ -17,7 +36,7 @@ class SystemMode {
    * @returns {string} 'single' 或 'multi'
    */
   getMode() {
-    return this.systemConfig.mode;
+    return this.mode;
   }
   
   /**
@@ -25,7 +44,7 @@ class SystemMode {
    * @returns {boolean}
    */
   isSingleStore() {
-    return this.systemConfig.isSingleStore;
+    return this.mode === 'single';
   }
   
   /**
@@ -33,7 +52,7 @@ class SystemMode {
    * @returns {boolean}
    */
   isMultiTenant() {
-    return this.systemConfig.isMultiTenant;
+    return this.mode === 'multi';
   }
   
   /**
@@ -41,7 +60,7 @@ class SystemMode {
    * @returns {Object} 单店配置信息
    */
   getSingleStoreConfig() {
-    return this.systemConfig.singleStore;
+    return this.isSingleStore() ? this.singleStoreConfig : null;
   }
   
   /**
@@ -49,7 +68,7 @@ class SystemMode {
    * @returns {Object} 功能开关对象
    */
   getFeatures() {
-    return this.systemConfig.features;
+    return this.features;
   }
   
   /**
@@ -58,7 +77,7 @@ class SystemMode {
    * @returns {boolean}
    */
   isFeatureEnabled(featureName) {
-    return this.systemConfig.features[featureName] === true;
+    return this.features[featureName] === true;
   }
   
   /**
@@ -69,98 +88,48 @@ class SystemMode {
    */
   executeByMode(singleStoreLogic, multiTenantLogic) {
     if (this.isSingleStore()) {
-      return singleStoreLogic();
+      return singleStoreLogic(this.singleStoreConfig);
     } else {
       return multiTenantLogic();
     }
   }
   
   /**
-   * 获取店铺ID（根据模式）
-   * @param {string} tenantId 租户ID（多租户模式）
-   * @param {string} storeId 店铺ID（多租户模式）
-   * @returns {string} 实际使用的店铺ID
+   * 获取默认店铺ID（单店模式）
+   * @returns {string} 店铺ID
    */
-  getStoreId(tenantId = null, storeId = null) {
+  getDefaultStoreId() {
     if (this.isSingleStore()) {
-      return this.systemConfig.singleStore.storeId;
-    } else {
-      // 多租户模式需要租户ID和店铺ID
-      if (!tenantId || !storeId) {
-        throw new Error('多租户模式需要提供租户ID和店铺ID');
-      }
-      return storeId;
+      return this.singleStoreConfig.storeId;
     }
+    throw new Error('多租户模式下没有默认店铺ID');
   }
   
   /**
-   * 获取租户ID（单店模式返回默认租户）
-   * @param {string} tenantId 租户ID（多租户模式）
-   * @returns {string} 实际使用的租户ID
-   */
-  getTenantId(tenantId = null) {
-    if (this.isSingleStore()) {
-      // 单店模式使用默认租户
-      return 'single_store_tenant';
-    } else {
-      if (!tenantId) {
-        throw new Error('多租户模式需要提供租户ID');
-      }
-      return tenantId;
-    }
-  }
-  
-  /**
-   * 构建数据库Schema名称（根据模式）
+   * 验证租户ID（多租户模式）
    * @param {string} tenantId 租户ID
-   * @returns {string} Schema名称
+   * @returns {boolean} 是否有效
    */
-  buildSchemaName(tenantId = null) {
+  validateTenantId(tenantId) {
     if (this.isSingleStore()) {
-      // 单店模式使用公共Schema
-      return 'public';
-    } else {
-      if (!tenantId) {
-        throw new Error('多租户模式需要提供租户ID来构建Schema名称');
-      }
-      return `tenant_${tenantId}`;
+      // 单店模式下，只接受默认店铺ID
+      return tenantId === this.singleStoreConfig.storeId;
     }
+    // 多租户模式下，需要验证租户存在性（这里只做基本验证）
+    return tenantId && tenantId.length > 0;
   }
   
   /**
-   * 验证API访问权限（根据模式）
-   * @param {Object} user 用户对象
-   * @param {string} tenantId 租户ID
-   * @param {string} storeId 店铺ID
-   * @returns {boolean} 是否有权限
-   */
-  validateAccess(user, tenantId = null, storeId = null) {
-    if (this.isSingleStore()) {
-      // 单店模式：所有认证用户都可以访问
-      return !!user;
-    } else {
-      // 多租户模式：需要验证用户-租户关系
-      if (!user || !tenantId) {
-        return false;
-      }
-      
-      // 这里可以添加更复杂的权限验证逻辑
-      // 例如检查用户是否属于该租户，是否有特定角色等
-      return true; // 简化实现
-    }
-  }
-  
-  /**
-   * 获取系统模式信息（用于API响应）
-   * @returns {Object} 系统模式信息
+   * 获取系统信息
+   * @returns {Object} 系统信息
    */
   getSystemInfo() {
     return {
-      mode: this.systemConfig.mode,
-      description: this.isSingleStore() ? '单店版本' : '多店SaaS版本',
-      features: this.systemConfig.features,
-      singleStore: this.isSingleStore() ? this.systemConfig.singleStore : null,
-      timestamp: new Date().toISOString(),
+      mode: this.mode,
+      features: this.features,
+      singleStore: this.isSingleStore() ? this.singleStoreConfig : null,
+      isSingleStore: this.isSingleStore(),
+      isMultiTenant: this.isMultiTenant()
     };
   }
 }
@@ -168,4 +137,6 @@ class SystemMode {
 // 创建单例实例
 const systemMode = new SystemMode();
 
+// 导出单例和类
 export default systemMode;
+export { SystemMode };

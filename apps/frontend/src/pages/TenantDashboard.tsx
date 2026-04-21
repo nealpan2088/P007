@@ -1,5 +1,347 @@
-                          size="small" 
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import {
+  Container,
+  Box,
+  Typography,
+  Grid,
+  Paper,
+  Card,
+  CardContent,
+  Button,
+  Chip,
+  LinearProgress,
+  Divider,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+  IconButton,
+  Avatar,
+} from '@mui/material';
+import {
+  Store as StoreIcon,
+  ShoppingCart as ShoppingCartIcon,
+  TrendingUp as TrendingUpIcon,
+  People as PeopleIcon,
+  Restaurant as RestaurantIcon,
+  Settings as SettingsIcon,
+  BarChart as BarChartIcon,
+  AccessTime as AccessTimeIcon,
+  Visibility as VisibilityIcon,
+  Add as AddIcon,
+  Edit as EditIcon,
+} from '@mui/icons-material';
+import { TENANT_ROUTES } from '../config/routes';
+
+// 模拟数据
+const mockStores = [
+  { id: '1', name: '凤凰餐厅总店', status: 'active', ordersToday: 42, revenueToday: 2560.00 },
+  { id: '2', name: '凤凰餐厅分店', status: 'active', ordersToday: 28, revenueToday: 1820.00 },
+];
+
+const mockOrders = [
+  { id: 'ORD-2026-00123', storeName: '凤凰餐厅总店', status: 'completed', totalAmount: 256.00, createdAt: '2026-04-21T10:30:00Z' },
+  { id: 'ORD-2026-00122', storeName: '凤凰餐厅分店', status: 'preparing', totalAmount: 128.50, createdAt: '2026-04-21T09:15:00Z' },
+];
+
+const mockTenant = {
+  name: '凤凰餐饮集团',
+  plan: 'PREMIUM',
+  trialEndsAt: '2026-05-21T00:00:00Z',
+  storesCount: 2,
+  totalRevenue: 12850.00,
+  activeUsers: 8,
+};
+
+// 工具函数
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('zh-CN', {
+    style: 'currency',
+    currency: 'CNY',
+    minimumFractionDigits: 2,
+  }).format(amount);
+};
+
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'active':
+    case 'completed':
+      return 'success';
+    case 'preparing':
+      return 'warning';
+    case 'pending':
+      return 'info';
+    case 'inactive':
+    case 'cancelled':
+      return 'error';
+    default:
+      return 'default';
+  }
+};
+
+const TenantDashboard: React.FC = () => {
+  const { tenantId } = useParams<{ tenantId: string }>();
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
+  
+  const [loading, setLoading] = useState(true);
+  const [tenant, setTenant] = useState(mockTenant);
+  const [stores, setStores] = useState(mockStores);
+  const [recentOrders, setRecentOrders] = useState(mockOrders);
+
+  useEffect(() => {
+    if (isAuthenticated && tenantId) {
+      setTimeout(() => {
+        setLoading(false);
+      }, 500);
+    }
+  }, [isAuthenticated, tenantId]);
+
+  const handleCreateStore = () => {
+    navigate(`${TENANT_ROUTES.TENANTS.DASHBOARD}/${tenantId}/stores/create`);
+  };
+
+  const handleViewStore = (storeId: string) => {
+    navigate(`${TENANT_ROUTES.TENANTS.DASHBOARD}/${tenantId}/stores/${storeId}`);
+  };
+
+  const handleViewOrder = (orderId: string) => {
+    navigate(`${TENANT_ROUTES.TENANTS.DASHBOARD}/${tenantId}/orders/${orderId}`);
+  };
+
+  const handleEditTenant = () => {
+    navigate(`${TENANT_ROUTES.TENANTS.DASHBOARD}/${tenantId}/edit`);
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
+        <Typography variant="h6" color="error">
+          请先登录以访问租户仪表板
+        </Typography>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={() => navigate('/auth/login')}
+          sx={{ mt: 2 }}
+        >
+          前往登录
+        </Button>
+      </Container>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+        <Typography variant="h6">加载中...</Typography>
+      </Container>
+    );
+  }
+
+  // 计算统计数据
+  const totalOrdersToday = stores.reduce((sum, store) => sum + store.ordersToday, 0);
+  const totalRevenueToday = stores.reduce((sum, store) => sum + store.revenueToday, 0);
+  const activeStoresCount = stores.filter(store => store.status === 'active').length;
+
+  return (
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      {/* 头部信息 */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Box>
+          <Typography variant="h4" component="h1" gutterBottom>
+            <StoreIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+            {tenant.name} - 管理仪表板
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            欢迎回来，{user?.fullName || user?.email}！
+          </Typography>
+        </Box>
+        <Button
+          variant="outlined"
+          startIcon={<EditIcon />}
+          onClick={handleEditTenant}
+        >
+          编辑租户信息
+        </Button>
+      </Box>
+
+      {/* 统计卡片 */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography color="text.secondary" gutterBottom>
+                今日订单
+              </Typography>
+              <Typography variant="h4" component="div">
+                {totalOrdersToday}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                <TrendingUpIcon color="success" sx={{ mr: 1 }} />
+                <Typography variant="body2" color="success.main">
+                  +12% 较昨日
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography color="text.secondary" gutterBottom>
+                今日营收
+              </Typography>
+              <Typography variant="h4" component="div">
+                {formatCurrency(totalRevenueToday)}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                <TrendingUpIcon color="success" sx={{ mr: 1 }} />
+                <Typography variant="body2" color="success.main">
+                  +8% 较昨日
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography color="text.secondary" gutterBottom>
+                活跃店铺
+              </Typography>
+              <Typography variant="h4" component="div">
+                {activeStoresCount}/{stores.length}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                <StoreIcon color="primary" sx={{ mr: 1 }} />
+                <Typography variant="body2" color="text.secondary">
+                  共 {stores.length} 家店铺
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography color="text.secondary" gutterBottom>
+                活跃员工
+              </Typography>
+              <Typography variant="h4" component="div">
+                {tenant.activeUsers}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                <PeopleIcon color="primary" sx={{ mr: 1 }} />
+                <Typography variant="body2" color="text.secondary">
+                  可管理员工账户
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* 主要内容区域 */}
+      <Grid container spacing={3}>
+        {/* 店铺管理 */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h6" component="h2">
+                <StoreIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                店铺管理
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleCreateStore}
+                size="small"
+              >
+                新增店铺
+              </Button>
+            </Box>
+            
+            <List>
+              {stores.map((store) => (
+                <ListItem
+                  key={store.id}
+                  secondaryAction={
+                    <IconButton edge="end" onClick={() => handleViewStore(store.id)}>
+                      <VisibilityIcon />
+                    </IconButton>
+                  }
+                >
+                  <ListItemIcon>
+                    <StoreIcon />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Typography variant="body1">{store.name}</Typography>
+                        <Chip
+                          label={store.status === 'active' ? '营业中' : '已关闭'}
+                          size="small"
+                          color={getStatusColor(store.status) as any}
+                          sx={{ ml: 2 }}
+                        />
+                      </Box>
+                    }
+                    secondary={
+                      <Typography variant="body2" color="text.secondary">
+                        今日订单: {store.ordersToday} | 营收: {formatCurrency(store.revenueToday)}
+                      </Typography>
+                    }
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </Paper>
+        </Grid>
+
+        {/* 最近订单 */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" component="h2" gutterBottom>
+              <ShoppingCartIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+              最近订单
+            </Typography>
+            
+            <List>
+              {recentOrders.map((order) => (
+                <ListItem
+                  key={order.id}
+                  secondaryAction={
+                    <IconButton edge="end" onClick={() => handleViewOrder(order.id)}>
+                      <VisibilityIcon />
+                    </IconButton>
+                  }
+                >
+                  <ListItemIcon>
+                    <ShoppingCartIcon />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Typography variant="body1">{order.id}</Typography>
+                        <Chip
+                          label={order.status === 'completed' ? '已完成' : 
+                                 order.status === 'preparing' ? '制作中' : '待处理'}
+                          size="small"
                           color={getStatusColor(order.status) as any}
+                          sx={{ ml: 2 }}
                         />
                       </Box>
                     }
@@ -14,91 +356,9 @@
                       </>
                     }
                   />
-                  <ListItemSecondaryAction>
-                    <IconButton edge="end" onClick={() => handleViewOrder(order.id)}>
-                      <VisibilityIcon />
-                    </IconButton>
-                  </ListItemSecondaryAction>
                 </ListItem>
               ))}
             </List>
-
-            {recentOrders.length === 0 && (
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <ShoppingCartIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
-                <Typography variant="body1" color="text.secondary">
-                  暂无订单
-                </Typography>
-              </Box>
-            )}
-          </Paper>
-        </Grid>
-
-        {/* 快速操作 */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" component="h2" gutterBottom>
-              <BarChartIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-              数据分析
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<BarChartIcon />}
-                  onClick={() => navigate(`${TENANT_ROUTES.TENANTS.DASHBOARD}/${tenantId}/analytics`)}
-                  sx={{ height: 100, flexDirection: 'column' }}
-                >
-                  <Typography variant="h6">销售报表</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    查看详细销售数据
-                  </Typography>
-                </Button>
-              </Grid>
-              <Grid item xs={6}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<PeopleIcon />}
-                  onClick={() => navigate(`${TENANT_ROUTES.TENANTS.DASHBOARD}/${tenantId}/users`)}
-                  sx={{ height: 100, flexDirection: 'column' }}
-                >
-                  <Typography variant="h6">员工管理</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    管理店铺员工
-                  </Typography>
-                </Button>
-              </Grid>
-              <Grid item xs={6}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<RestaurantIcon />}
-                  onClick={() => navigate(`${TENANT_ROUTES.TENANTS.DASHBOARD}/${tenantId}/menu`)}
-                  sx={{ height: 100, flexDirection: 'column' }}
-                >
-                  <Typography variant="h6">菜单管理</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    管理菜品和价格
-                  </Typography>
-                </Button>
-              </Grid>
-              <Grid item xs={6}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<SettingsIcon />}
-                  onClick={() => navigate(`${TENANT_ROUTES.TENANTS.DASHBOARD}/${tenantId}/settings`)}
-                  sx={{ height: 100, flexDirection: 'column' }}
-                >
-                  <Typography variant="h6">系统设置</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    配置店铺参数
-                  </Typography>
-                </Button>
-              </Grid>
-            </Grid>
           </Paper>
         </Grid>
 
@@ -170,49 +430,69 @@
                     3小时前
                   </Typography>
                 </ListItem>
-                <ListItem>
-                  <ListItemIcon>
-                    <Avatar sx={{ width: 24, height: 24, bgcolor: 'warning.main' }}>
-                      <Typography variant="caption">3</Typography>
-                    </Avatar>
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary="系统更新" 
-                    secondary="菜单管理系统已更新" 
-                  />
-                  <Typography variant="caption" color="text.secondary">
-                    1天前
-                  </Typography>
-                </ListItem>
               </List>
             </Box>
           </Paper>
         </Grid>
-      </Grid>
 
-      {/* 底部提示 */}
-      <Paper sx={{ p: 3, mt: 4, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <InfoIcon sx={{ mr: 2 }} />
-          <Box>
-            <Typography variant="subtitle1" gutterBottom>
-              欢迎使用麒麟点餐系统！
+        {/* 快速操作 */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" component="h2" gutterBottom>
+              <BarChartIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+              快速操作
             </Typography>
-            <Typography variant="body2">
-              您当前使用的是 {tenant.plan} 套餐。如需更多功能，请升级套餐或联系客服。
-            </Typography>
-          </Box>
-        </Box>
-      </Paper>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<BarChartIcon />}
+                  onClick={() => navigate(`${TENANT_ROUTES.TENANTS.DASHBOARD}/${tenantId}/analytics`)}
+                  sx={{ height: 80, flexDirection: 'column' }}
+                >
+                  <Typography variant="body1">销售报表</Typography>
+                </Button>
+              </Grid>
+              <Grid item xs={6}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<PeopleIcon />}
+                  onClick={() => navigate(`${TENANT_ROUTES.TENANTS.DASHBOARD}/${tenantId}/users`)}
+                  sx={{ height: 80, flexDirection: 'column' }}
+                >
+                  <Typography variant="body1">员工管理</Typography>
+                </Button>
+              </Grid>
+              <Grid item xs={6}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<RestaurantIcon />}
+                  onClick={() => navigate(`${TENANT_ROUTES.TENANTS.DASHBOARD}/${tenantId}/menu`)}
+                  sx={{ height: 80, flexDirection: 'column' }}
+                >
+                  <Typography variant="body1">菜单管理</Typography>
+                </Button>
+              </Grid>
+              <Grid item xs={6}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<SettingsIcon />}
+                  onClick={() => navigate(`${TENANT_ROUTES.TENANTS.DASHBOARD}/${tenantId}/settings`)}
+                  sx={{ height: 80, flexDirection: 'column' }}
+                >
+                  <Typography variant="body1">系统设置</Typography>
+                </Button>
+              </Grid>
+            </Grid>
+          </Paper>
+        </Grid>
+      </Grid>
     </Container>
   );
 };
-
-// 添加缺失的图标
-const InfoIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
-  </svg>
-);
 
 export default TenantDashboard;

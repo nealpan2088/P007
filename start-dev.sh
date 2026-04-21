@@ -26,7 +26,7 @@ if [ -f "apps/backend/.env.development" ]; then
 fi
 
 # 启动后端服务器
-BACKEND_PORT=${PORT:-33037}
+BACKEND_PORT=${BACKEND_PORT:-${PORT:-33037}}
 echo "🔧 启动后端服务器 (端口: ${BACKEND_PORT})..."
 cd apps/backend
 npm install 2>/dev/null || echo "后端依赖安装中..."
@@ -73,7 +73,7 @@ done
 
 echo ""
 echo "✅ 开发环境启动完成!"
-FRONTEND_PORT=${VITE_PORT:-5177}
+FRONTEND_PORT=${FRONTEND_PORT:-${VITE_PORT:-5177}}
 echo "🌐 前端: http://localhost:${FRONTEND_PORT}"
 echo "🔧 后端: http://localhost:${BACKEND_PORT}"
 echo "📊 健康检查: http://localhost:${BACKEND_PORT}/api/health"

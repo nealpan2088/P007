@@ -1,3 +1,290 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import {
+  Container,
+  Box,
+  Typography,
+  Grid,
+  Card,
+  CardContent,
+  CardActions,
+  Button,
+  TextField,
+  CircularProgress,
+  Alert,
+  Divider,
+  IconButton,
+} from '@mui/material';
+import {
+  Save as SaveIcon,
+  ArrowBack as ArrowBackIcon,
+  Business as BusinessIcon,
+} from '@mui/icons-material';
+
+interface TenantFormData {
+  name: string;
+  description: string;
+  contactEmail: string;
+  contactPhone: string;
+  contactPerson: string;
+  address: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  country: string;
+}
+
+interface ValidationErrors {
+  [key: string]: string;
+}
+
+const EditTenant: React.FC = () => {
+  const { tenantId } = useParams<{ tenantId: string }>();
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
+  
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  
+  const [formData, setFormData] = useState<TenantFormData>({
+    name: '',
+    description: '',
+    contactEmail: '',
+    contactPhone: '',
+    contactPerson: '',
+    address: '',
+    city: '',
+    province: '',
+    postalCode: '',
+    country: '中国',
+  });
+  
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+
+  useEffect(() => {
+    if (isAuthenticated && tenantId) {
+      fetchTenantData();
+    }
+  }, [isAuthenticated, tenantId]);
+
+  const fetchTenantData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // 这里应该调用获取租户详情的API
+      // 暂时使用模拟数据
+      setTimeout(() => {
+        setFormData({
+          name: '测试餐厅',
+          description: '这是一个测试餐厅的描述',
+          contactEmail: 'contact@testrestaurant.com',
+          contactPhone: '13800138000',
+          contactPerson: '张经理',
+          address: '测试路123号',
+          city: '上海',
+          province: '上海',
+          postalCode: '200000',
+          country: '中国',
+        });
+        setLoading(false);
+      }, 500);
+    } catch (err) {
+      console.error('获取租户数据错误:', err);
+      setError('获取租户数据失败');
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+    
+    // 清除该字段的验证错误
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const errors: ValidationErrors = {};
+    
+    if (!formData.name.trim()) {
+      errors.name = '租户名称是必需的';
+    }
+    
+    if (!formData.contactEmail.trim()) {
+      errors.contactEmail = '联系邮箱是必需的';
+    } else if (!/\S+@\S+\.\S+/.test(formData.contactEmail)) {
+      errors.contactEmail = '邮箱格式无效';
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    try {
+      setSaving(true);
+      setError(null);
+      setSuccess(null);
+      
+      // 这里应该调用更新租户的API
+      const response = await fetch(`/api/v1/tenant/${tenantId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          description: formData.description,
+          contactEmail: formData.contactEmail,
+          contactPhone: formData.contactPhone,
+          contactPerson: formData.contactPerson,
+          address: formData.address,
+          city: formData.city,
+          province: formData.province,
+          postalCode: formData.postalCode,
+          country: formData.country,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`更新失败: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setSuccess('租户信息更新成功！');
+        // 3秒后返回租户管理页面
+        setTimeout(() => {
+          navigate('/tenants');
+        }, 3000);
+      } else {
+        throw new Error(data.message || '更新失败');
+      }
+    } catch (err) {
+      console.error('更新租户错误:', err);
+      setError(err instanceof Error ? err.message : '更新租户失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleBack = () => {
+    navigate('/tenants');
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Alert severity="warning">
+          请先登录以编辑租户
+        </Alert>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={() => navigate('/auth/login')}
+          sx={{ mt: 2 }}
+        >
+          前往登录
+        </Button>
+      </Container>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+        <CircularProgress />
+      </Container>
+    );
+  }
+
+  return (
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+        <IconButton onClick={handleBack} sx={{ mr: 2 }}>
+          <ArrowBackIcon />
+        </IconButton>
+        <Typography variant="h4" component="h1">
+          <BusinessIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+          编辑租户
+        </Typography>
+      </Box>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+
+      {success && (
+        <Alert severity="success" sx={{ mb: 3 }}>
+          {success}
+        </Alert>
+      )}
+
+      <Card>
+        <CardContent>
+          <form onSubmit={handleSubmit}>
+            <Typography variant="h6" gutterBottom>
+              租户基本信息
+            </Typography>
+            <Divider sx={{ mb: 3 }} />
+            
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="租户名称 *"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  error={!!validationErrors.name}
+                  helperText={validationErrors.name}
+                  disabled={saving}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="描述"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  multiline
+                  rows={3}
+                  disabled={saving}
+                />
+              </Grid>
+            </Grid>
+
+            <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
+              联系信息
+            </Typography>
+            <Divider sx={{ mb: 3 }} />
+            
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="联系邮箱 *"
@@ -29,16 +316,14 @@
                   disabled={saving}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="行业"
-                  name="industry"
-                  value={formData.industry}
-                  onChange={handleInputChange}
-                  disabled={saving}
-                />
-              </Grid>
+            </Grid>
+
+            <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
+              地址信息
+            </Typography>
+            <Divider sx={{ mb: 3 }} />
+            
+            <Grid container spacing={3}>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -46,326 +331,71 @@
                   name="address"
                   value={formData.address}
                   onChange={handleInputChange}
-                  multiline
-                  rows={2}
+                  disabled={saving}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  label="城市"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleInputChange}
+                  disabled={saving}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  label="省份"
+                  name="province"
+                  value={formData.province}
+                  onChange={handleInputChange}
+                  disabled={saving}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  label="邮政编码"
+                  name="postalCode"
+                  value={formData.postalCode}
+                  onChange={handleInputChange}
                   disabled={saving}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="员工数量"
-                  name="employeeCount"
-                  value={formData.employeeCount}
+                  label="国家"
+                  name="country"
+                  value={formData.country}
                   onChange={handleInputChange}
-                  type="number"
-                  disabled={saving}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="成立年份"
-                  name="establishedYear"
-                  value={formData.establishedYear}
-                  onChange={handleInputChange}
-                  type="number"
                   disabled={saving}
                 />
               </Grid>
             </Grid>
-            <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
-                onClick={handleSaveBasicInfo}
-                disabled={saving}
-              >
-                {saving ? '保存中...' : '保存基本信息'}
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => navigate(TENANT_ROUTES.TENANTS.LIST)}
-                disabled={saving}
-              >
-                取消
-              </Button>
-            </Box>
-          </TabPanel>
-
-          {/* 系统设置标签页 */}
-          <TabPanel value={tabValue} index={1}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>界面语言</InputLabel>
-                  <Select
-                    name="language"
-                    value={settingsData.language}
-                    onChange={(e) => setSettingsData(prev => ({ ...prev, language: e.target.value }))}
-                    label="界面语言"
-                    disabled={saving}
-                  >
-                    {languages.map((lang) => (
-                      <MenuItem key={lang.value} value={lang.value}>
-                        {lang.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>货币</InputLabel>
-                  <Select
-                    name="currency"
-                    value={settingsData.currency}
-                    onChange={(e) => setSettingsData(prev => ({ ...prev, currency: e.target.value }))}
-                    label="货币"
-                    disabled={saving}
-                  >
-                    {currencies.map((currency) => (
-                      <MenuItem key={currency.value} value={currency.value}>
-                        {currency.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>时区</InputLabel>
-                  <Select
-                    name="timezone"
-                    value={settingsData.timezone}
-                    onChange={(e) => setSettingsData(prev => ({ ...prev, timezone: e.target.value }))}
-                    label="时区"
-                    disabled={saving}
-                  >
-                    {timezones.map((tz) => (
-                      <MenuItem key={tz.value} value={tz.value}>
-                        {tz.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>主题</InputLabel>
-                  <Select
-                    name="theme"
-                    value={settingsData.theme}
-                    onChange={(e) => setSettingsData(prev => ({ ...prev, theme: e.target.value }))}
-                    label="主题"
-                    disabled={saving}
-                  >
-                    <MenuItem value="light">浅色主题</MenuItem>
-                    <MenuItem value="dark">深色主题</MenuItem>
-                    <MenuItem value="auto">跟随系统</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-            <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
-                onClick={handleSaveSettings}
-                disabled={saving}
-              >
-                {saving ? '保存中...' : '保存系统设置'}
-              </Button>
-            </Box>
-          </TabPanel>
-
-          {/* 套餐管理标签页 */}
-          <TabPanel value={tabValue} index={2}>
-            <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                当前套餐
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Chip 
-                  label={plans.find(p => p.value === formData.plan)?.label || formData.plan}
-                  color={plans.find(p => p.value === formData.plan)?.color as any}
-                  size="medium"
-                  sx={{ mr: 2 }}
-                />
-                <Typography variant="body2" color="text.secondary">
-                  试用到期: {new Date(tenant.trialEndsAt).toLocaleDateString('zh-CN')}
-                </Typography>
-              </Box>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="subtitle2" gutterBottom>
-                可用套餐
-              </Typography>
-              <Grid container spacing={2}>
-                {plans.map((plan) => (
-                  <Grid item xs={12} md={6} key={plan.value}>
-                    <Paper 
-                      variant={formData.plan === plan.value ? "outlined" : "elevation"} 
-                      elevation={formData.plan === plan.value ? 0 : 1}
-                      sx={{ 
-                        p: 2, 
-                        border: formData.plan === plan.value ? '2px solid' : '1px solid',
-                        borderColor: formData.plan === plan.value ? 'primary.main' : 'divider',
-                        cursor: 'pointer',
-                        '&:hover': {
-                          borderColor: 'primary.main',
-                        },
-                      }}
-                      onClick={() => handlePlanChange(plan.value)}
-                    >
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="subtitle1">{plan.label}</Typography>
-                        {formData.plan === plan.value && (
-                          <Chip label="当前套餐" size="small" color="primary" />
-                        )}
-                      </Box>
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                        {plan.value === 'FREE' && '适合初创餐厅，基础功能'}
-                        {plan.value === 'BASIC' && '适合小型餐厅，更多功能'}
-                        {plan.value === 'PREMIUM' && '适合中型餐厅，完整功能'}
-                        {plan.value === 'ENTERPRISE' && '适合连锁餐厅，定制功能'}
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                ))}
-              </Grid>
-            </Paper>
-            <Alert severity="info" sx={{ mb: 3 }}>
-              更改套餐可能会影响您的账单和可用功能。如有疑问，请联系客服。
-            </Alert>
-          </TabPanel>
-
-          {/* 安全设置标签页 */}
-          <TabPanel value={tabValue} index={3}>
-            <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                安全设置
-              </Typography>
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={settingsData.security.twoFactor}
-                        onChange={(e) => handleSecurityChange('twoFactor', e.target.checked)}
-                        disabled={saving}
-                      />
-                    }
-                    label="启用双重认证"
-                  />
-                  <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                    启用后，用户登录时需要输入短信验证码
-                  </Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControl fullWidth>
-                    <InputLabel>会话超时时间（分钟）</InputLabel>
-                    <Select
-                      value={settingsData.security.sessionTimeout}
-                      onChange={(e) => handleSecurityChange('sessionTimeout', e.target.value)}
-                      label="会话超时时间（分钟）"
-                      disabled={saving}
-                    >
-                      <MenuItem value={15}>15分钟</MenuItem>
-                      <MenuItem value={30}>30分钟</MenuItem>
-                      <MenuItem value={60}>60分钟</MenuItem>
-                      <MenuItem value={120}>2小时</MenuItem>
-                      <MenuItem value={240}>4小时</MenuItem>
-                      <MenuItem value={480}>8小时</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                    用户无操作后自动退出登录的时间
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Paper>
-            <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
-                onClick={handleSaveSettings}
-                disabled={saving}
-              >
-                {saving ? '保存中...' : '保存安全设置'}
-              </Button>
-            </Box>
-          </TabPanel>
-
-          {/* 通知设置标签页 */}
-          <TabPanel value={tabValue} index={4}>
-            <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                通知设置
-              </Typography>
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={settingsData.notifications.email}
-                        onChange={() => handleNotificationsChange('email')}
-                        disabled={saving}
-                      />
-                    }
-                    label="邮件通知"
-                  />
-                  <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                    新订单、系统通知等将通过邮件发送
-                  </Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={settingsData.notifications.sms}
-                        onChange={() => handleNotificationsChange('sms')}
-                        disabled={saving}
-                      />
-                    }
-                    label="短信通知"
-                  />
-                  <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                    重要通知将通过短信发送（可能需要额外费用）
-                  </Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={settingsData.notifications.push}
-                        onChange={() => handleNotificationsChange('push')}
-                        disabled={saving}
-                      />
-                    }
-                    label="推送通知"
-                  />
-                  <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                    在浏览器或移动设备上显示推送通知
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Paper>
-            <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
-                onClick={handleSaveSettings}
-                disabled={saving}
-              >
-                {saving ? '保存中...' : '保存通知设置'}
-              </Button>
-            </Box>
-          </TabPanel>
+          </form>
         </CardContent>
+        
+        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={handleBack}
+            disabled={saving}
+          >
+            取消
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<SaveIcon />}
+            onClick={handleSubmit}
+            disabled={saving}
+          >
+            {saving ? '保存中...' : '保存更改'}
+          </Button>
+        </CardActions>
       </Card>
     </Container>
   );

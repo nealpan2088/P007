@@ -1,6 +1,19 @@
 // 简化版认证API客户端
+// 使用环境变量配置，禁止硬编码
 
-const API_BASE_URL = 'http://localhost:33037/api/v1';
+// 从环境变量获取API基础URL
+const getApiBaseUrl = () => {
+  // 优先使用Vite环境变量
+  const env = import.meta.env;
+  const baseUrl = env.VITE_API_BASE_URL || (env.DEV ? 'http://localhost:33037' : '');
+  
+  // 确保URL以斜杠结尾
+  return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+};
+
+// API版本
+const API_VERSION = 'v1';
+const API_BASE_URL = `${getApiBaseUrl()}/api/${API_VERSION}`;
 
 // 统一的请求函数
 const request = async <T>(

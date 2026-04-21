@@ -14,7 +14,11 @@
     "check:config": "tsc --noEmit && echo '✅ TypeScript配置验证通过'",
     "check:routes": "echo '✅ 前端路由配置检查' && echo '路由配置文件: src/config/routes.ts' && echo '路由类型定义: src/config/routes-check.ts' && echo '状态: 路由系统配置完成'",
     "normalize:import": "../../scripts/normalize-import.sh",
-    "check:all": "npm run check:hardcoded && npm run check:config && npm run check:routes"
+    "check:all": "npm run check:hardcoded && npm run check:config && npm run check:routes",
+    "check:imports": "../../scripts/check-duplicate-imports.sh --check",
+    "fix:imports": "../../scripts/check-duplicate-imports.sh --fix",
+    "precommit": "../../scripts/pre-commit-check.sh",
+    "quality": "npm run lint && npm run check:imports && npm run check:all"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -29,12 +33,13 @@
   "devDependencies": {
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
     "@vitejs/plugin-react": "^4.0.0",
-    "eslint": "^8.56.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.0",
+    "eslint": "^8.57.1",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.26",
     "typescript": "^5.0.0",
     "vite": "^7.3.2",
     "vitest": "^1.0.0"

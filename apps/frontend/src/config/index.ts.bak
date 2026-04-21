@@ -1,0 +1,612 @@
+// 麒麟项目前端 - 统一配置管理系统
+// 所有配置通过环境变量管理，禁止硬编码
+
+// 环境变量类型定义
+interface EnvConfig {
+  // 应用信息
+  VITE_APP_NAME: string;
+  VITE_APP_VERSION: string;
+  VITE_APP_DESCRIPTION: string;
+  
+  // API配置
+  VITE_API_BASE_URL: string;
+  VITE_API_TIMEOUT: string;
+  VITE_API_VERSION: string;
+  
+  // 功能开关
+  VITE_FEATURE_AUTH: string;
+  VITE_FEATURE_MULTI_TENANT: string;
+  VITE_FEATURE_PRINTING: string;
+  VITE_FEATURE_ANALYTICS: string;
+  VITE_FEATURE_PAYMENT: string;
+  
+  // 第三方服务
+  VITE_GOOGLE_ANALYTICS_ID: string;
+  VITE_SENTRY_DSN: string;
+  VITE_STRIPE_PUBLIC_KEY: string;
+  
+  // 业务配置
+  VITE_DEFAULT_LANGUAGE: string;
+  VITE_DEFAULT_CURRENCY: string;
+  VITE_DEFAULT_TIMEZONE: string;
+  VITE_SUPPORT_EMAIL: string;
+  VITE_SUPPORT_PHONE: string;
+  
+  // 开发配置
+  VITE_DEV_PROXY_TARGET: string;
+  VITE_DEV_OPEN_BROWSER: string;
+}
+
+// 从环境变量加载配置
+const env = import.meta.env as unknown as EnvConfig;
+
+// 验证必需的环境变量
+const requiredEnvVars = [
+  'VITE_APP_NAME',
+  'VITE_API_BASE_URL',
+];
+
+for (const envVar of requiredEnvVars) {
+  if (!env[envVar as keyof EnvConfig]) {
+    throw new Error(`❌ 必需的环境变量缺失: ${envVar}`);
+  }
+}
+
+// 应用配置
+export const appConfig = {
+  // 基本信息
+  name: env.VITE_APP_NAME || '麒麟云点餐SaaS',
+  version: env.VITE_APP_VERSION || '0.1.0',
+  description: env.VITE_APP_DESCRIPTION || '多店铺扫码点餐云打印SaaS平台',
+  
+  // 元数据
+  meta: {
+    title: env.VITE_APP_NAME || '麒麟云点餐SaaS',
+    description: env.VITE_APP_DESCRIPTION || '多店铺扫码点餐云打印SaaS平台',
+    keywords: '扫码点餐,SaaS,云打印,餐厅管理,多店铺',
+    author: '麒麟项目团队',
+    ogImage: '/og-image.png',
+    twitterCard: 'summary_large_image',
+  },
+  
+  // 支持信息
+  support: {
+    email: env.VITE_SUPPORT_EMAIL || 'support@qilin-dining.com',
+    phone: env.VITE_SUPPORT_PHONE || '400-888-8888',
+    workingHours: '09:00-18:00 (周一至周五)',
+  },
+  
+  // 公司信息
+  company: {
+    name: '麒麟科技',
+    address: '上海市浦东新区',
+    website: 'https://qilin-dining.com',
+    copyright: `© ${new Date().getFullYear()} 麒麟科技 版权所有`,
+  },
+};
+
+// API配置
+export const apiConfig = {
+  // 基础配置
+  baseUrl: env.VITE_API_BASE_URL || `http://localhost:${import.meta.env.DEV ? '33037' : '80'}`,
+  timeout: parseInt(env.VITE_API_TIMEOUT || '30000', 10),
+  version: env.VITE_API_VERSION || 'v1',
+  
+  // 端点
+  endpoints: {
+    // 认证
+    auth: {
+      login: '/api/v1/auth/login',
+      register: '/api/v1/auth/register',
+      logout: '/api/v1/auth/logout',
+      refresh: '/api/v1/auth/refresh-token',
+      forgotPassword: '/api/v1/auth/forgot-password',
+      resetPassword: '/api/v1/auth/reset-password',
+    },
+    
+    // 租户
+    tenant: {
+      info: '/api/v1/tenant',
+      update: '/api/v1/tenant',
+      billing: '/api/v1/tenant/billing',
+      subscription: '/api/v1/tenant/subscription',
+    },
+    
+    // 店铺
+    stores: {
+      list: '/api/v1/stores',
+      create: '/api/v1/stores',
+      detail: '/api/v1/stores/:id',
+      update: '/api/v1/stores/:id',
+      delete: '/api/v1/stores/:id',
+      stats: '/api/v1/stores/:id/stats',
+    },
+    
+    // 菜单
+    menu: {
+      categories: '/api/v1/stores/:storeId/menu/categories',
+      items: '/api/v1/stores/:storeId/menu/items',
+    },
+    
+    // 订单
+    orders: {
+      list: '/api/v1/stores/:storeId/orders',
+      create: '/api/v1/stores/:storeId/orders',
+      detail: '/api/v1/stores/:storeId/orders/:orderId',
+      update: '/api/v1/stores/:storeId/orders/:orderId',
+      status: '/api/v1/stores/:storeId/orders/:orderId/status',
+    },
+    
+    // 打印机
+    printers: {
+      list: '/api/v1/stores/:storeId/printers',
+      test: '/api/v1/stores/:storeId/printers/:printerId/test',
+    },
+    
+    // 统计分析
+    analytics: {
+      sales: '/api/v1/analytics/sales',
+      orders: '/api/v1/analytics/orders',
+      customers: '/api/v1/analytics/customers',
+    },
+  },
+  
+  // 请求配置
+  request: {
+    retryCount: 3,
+    retryDelay: 1000,
+    timeout: 30000,
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+  },
+  
+  // 响应处理
+  response: {
+    successCodes: [200, 201, 204],
+    errorCodes: [400, 401, 403, 404, 422, 429, 500, 502, 503, 504],
+  },
+  
+  // 工具函数
+  utils: {
+    // 构建完整URL
+    buildUrl(endpoint: string, params: Record<string, string | number> = {}): string {
+      let url = endpoint;
+      
+      // 替换路径参数
+      Object.keys(params).forEach(key => {
+        const paramKey = `:${key}`;
+        if (url.includes(paramKey)) {
+          url = url.replace(paramKey, encodeURIComponent(params[key].toString()));
+        }
+      });
+      
+      return `${apiConfig.baseUrl}${url}`;
+    },
+    
+    // 构建查询字符串
+    buildQueryString(params: Record<string, string | number | boolean> = {}): string {
+      const queryParams = new URLSearchParams();
+      
+      Object.keys(params).forEach(key => {
+        if (params[key] !== undefined && params[key] !== null) {
+          queryParams.append(key, params[key].toString());
+        }
+      });
+      
+      const queryString = queryParams.toString();
+      return queryString ? `?${queryString}` : '';
+    },
+    
+    // 构建完整API URL
+    buildApiUrl(
+      endpoint: string, 
+      pathParams: Record<string, string | number> = {},
+      queryParams: Record<string, string | number | boolean> = {}
+    ): string {
+      const url = this.buildUrl(endpoint, pathParams);
+      const queryString = this.buildQueryString(queryParams);
+      
+      return `${url}${queryString}`;
+    },
+  },
+};
+
+// 功能开关配置
+export const featureConfig = {
+  // 核心功能
+  auth: env.VITE_FEATURE_AUTH === 'true',
+  multiTenant: env.VITE_FEATURE_MULTI_TENANT === 'true',
+  printing: env.VITE_FEATURE_PRINTING === 'true',
+  analytics: env.VITE_FEATURE_ANALYTICS === 'true',
+  payment: env.VITE_FEATURE_PAYMENT === 'true',
+  
+  // 高级功能
+  features: {
+    // 认证相关
+    socialLogin: false,
+    twoFactorAuth: false,
+    sso: false,
+    
+    // 业务功能
+    inventoryManagement: true,
+    customerManagement: true,
+    staffManagement: true,
+    tableManagement: true,
+    menuManagement: true,
+    orderManagement: true,
+    printerManagement: true,
+    
+    // 分析功能
+    salesAnalytics: true,
+    customerAnalytics: true,
+    inventoryAnalytics: true,
+    realtimeDashboard: true,
+    
+    // 集成功能
+    wechatIntegration: false,
+    alipayIntegration: false,
+    meituanIntegration: false,
+    elemeIntegration: false,
+    
+    // 管理功能
+    multiStore: true,
+    roleBasedAccess: true,
+    auditLog: true,
+    backupRestore: false,
+  },
+  
+  // 检查功能是否可用
+  isEnabled(featureName: string): boolean {
+    const featurePath = featureName.split('.');
+    let current: any = this.features;
+    
+    for (const part of featurePath) {
+      if (current[part] === undefined) {
+        return false;
+      }
+      current = current[part];
+    }
+    
+    return current === true;
+  },
+  
+  // 获取所有可用功能
+  getAvailableFeatures(): string[] {
+    const features: string[] = [];
+    
+    const traverse = (obj: any, prefix = '') => {
+      Object.keys(obj).forEach(key => {
+        const fullKey = prefix ? `${prefix}.${key}` : key;
+        
+        if (typeof obj[key] === 'boolean') {
+          if (obj[key]) {
+            features.push(fullKey);
+          }
+        } else if (typeof obj[key] === 'object') {
+          traverse(obj[key], fullKey);
+        }
+      });
+    };
+    
+    traverse(this.features);
+    return features;
+  },
+};
+
+// 业务配置
+export const businessConfig = {
+  // 本地化
+  localization: {
+    defaultLanguage: env.VITE_DEFAULT_LANGUAGE || 'zh-CN',
+    defaultCurrency: env.VITE_DEFAULT_CURRENCY || 'CNY',
+    defaultTimezone: env.VITE_DEFAULT_TIMEZONE || 'Asia/Shanghai',
+    availableLanguages: ['zh-CN', 'en-US'],
+    availableCurrencies: ['CNY', 'USD', 'EUR', 'JPY'],
+  },
+  
+  // 店铺配置
+  store: {
+    defaultSettings: {
+      taxRate: 0.06,
+      serviceCharge: 0.10,
+      currency: 'CNY',
+      language: 'zh-CN',
+      timezone: 'Asia/Shanghai',
+    },
+    maxTables: 100,
+    maxMenuItems: 500,
+    maxStaff: 50,
+  },
+  
+  // 订单配置
+  order: {
+    numberPrefix: 'ORD',
+    numberLength: 8,
+    autoCancelMinutes: 30,
+    statuses: [
+      'pending',
+      'confirmed', 
+      'preparing',
+      'ready',
+      'served',
+      'completed',
+      'cancelled',
+    ],
+  },
+  
+  // 打印配置
+  printing: {
+    retryAttempts: 3,
+    retryDelay: 5000,
+    timeout: 30000,
+    supportedBrands: ['shangpeng', 'local_network', 'usb'],
+  },
+  
+  // 支付配置
+  payment: {
+    methods: ['cash', 'wechat', 'alipay', 'card'],
+    currencies: ['CNY'],
+    refundPeriod: 7, // 天
+  },
+};
+
+// 第三方服务配置
+export const thirdPartyConfig = {
+  // 分析服务
+  analytics: {
+    google: {
+      enabled: !!env.VITE_GOOGLE_ANALYTICS_ID,
+      id: env.VITE_GOOGLE_ANALYTICS_ID || '',
+    },
+  },
+  
+  // 错误监控
+  monitoring: {
+    sentry: {
+      enabled: !!env.VITE_SENTRY_DSN,
+      dsn: env.VITE_SENTRY_DSN || '',
+    },
+  },
+  
+  // 支付服务
+  payment: {
+    stripe: {
+      enabled: !!env.VITE_STRIPE_PUBLIC_KEY,
+      publicKey: env.VITE_STRIPE_PUBLIC_KEY || '',
+    },
+  },
+  
+  // 地图服务
+  maps: {
+    amap: {
+      enabled: false,
+      key: '',
+    },
+    baidu: {
+      enabled: false,
+      key: '',
+    },
+    google: {
+      enabled: false,
+      key: '',
+    },
+  },
+};
+
+// 开发配置
+export const devConfig = {
+  // 开发服务器
+  server: {
+    port: parseInt(env.VITE_PORT || '5177', 10),
+    host: env.VITE_HOST || (import.meta.env.DEV ? 'localhost' : '0.0.0.0'),
+    openBrowser: env.VITE_DEV_OPEN_BROWSER === 'true',
+    proxyTarget: env.VITE_API_PROXY_TARGET || `http://${env.VITE_HOST || 'localhost'}:${import.meta.env.DEV ? '33037' : '80'}`,
+  },
+  
+  // 开发工具
+  tools: {
+    reactDevTools: true,
+    reduxDevTools: true,
+    performanceMonitor: true,
+    errorBoundary: true,
+  },
+  
+  // 模拟数据
+  mock: {
+    enabled: false,
+    delay: 500,
+  },
+  
+  // 日志
+  logging: {
+    level: 'debug',
+    console: true,
+    file: false,
+  },
+};
+
+// 路由配置
+export const routeConfig = {
+  // 公共路由
+  public: {
+    home: '/',
+    login: '/auth/login',
+    register: '/auth/register',
+    forgotPassword: '/auth/forgot-password',
+    resetPassword: '/auth/reset-password/:token',
+    pricing: '/pricing',
+    features: '/features',
+    about: '/about',
+    contact: '/contact',
+    privacy: '/privacy',
+    terms: '/terms',
+  },
+  
+  // 租户路由
+  tenant: {
+    dashboard: '/dashboard',
+    stores: {
+      list: '/stores',
+      create: '/stores/create',
+      detail: '/stores/:id',
+      edit: '/stores/:id/edit',
+      settings: '/stores/:id/settings',
+    },
+    menu: {
+      categories: '/stores/:storeId/menu/categories',
+      items: '/stores/:storeId/menu/items',
+      itemDetail: '/stores/:storeId/menu/items/:itemId',
+    },
+    tables: {
+      list: '/stores/:storeId/tables',
+      create: '/stores/:storeId/tables/create',
+      edit: '/stores/:storeId/tables/:id/edit',
+    },
+    orders: {
+      list: '/stores/:storeId/orders',
+      detail: '/stores/:storeId/orders/:orderId',
+    },
+    printers: {
+      list: '/stores/:storeId/printers',
+      create: '/stores/:storeId/printers/create',
+      edit: '/stores/:storeId/printers/:id/edit',
+      test: '/stores/:storeId/printers/:id/test',
+    },
+    analytics: {
+      dashboard: '/analytics',
+      sales: '/analytics/sales',
+      orders: '/analytics/orders',
+      customers: '/analytics/customers',
+      inventory: '/analytics/inventory',
+    },
+    settings: {
+      profile: '/settings/profile',
+      account: '/settings/account',
+      notifications: '/settings/notifications',
+      security: '/settings/security',
+      billing: '/settings/billing',
+      integrations: '/settings/integrations',
+    },
+  },
+  
+  // 顾客路由
+  customer: {
+    scan: '/scan/:tableId',
+    menu: '/table/:tableId/menu',
+    cart: '/table/:tableId/cart',
+    checkout: '/table/:tableId/checkout',
+    orderSuccess: '/order/:orderId/success',
+    orderStatus: '/order/:orderId/status',
+  },
+  
+  // 工具函数
+  utils: {
+    // 构建路由URL
+    buildRoute(route: string, params: Record<string, string | number> = {}): string {
+      let url = route;
+      
+      Object.keys(params).forEach(key => {
+        const paramKey = `:${key}`;
+        if (url.includes(paramKey)) {
+          url = url.replace(paramKey, encodeURIComponent(params[key].toString()));
+        }
+      });
+      
+      return url;
+    },
+    
+    // 获取当前路由类别
+    getRouteCategory(path: string): 'public' | 'tenant' | 'customer' | 'unknown' {
+      if (path.startsWith('/auth/') || path === '/' || path.startsWith('/pricing')) {
+        return 'public';
+      } else if (path.startsWith('/dashboard') || path.startsWith('/stores') || path.startsWith('/settings')) {
+        return 'tenant';
+      } else if (path.startsWith('/scan') || path.startsWith('/table') || path.startsWith('/order')) {
+        return 'customer';
+      }
+      return 'unknown';
+    },
+  },
+};
+
+// 导出所有配置
+export default {
+  app: appConfig,
+  api: apiConfig,
+  feature: featureConfig,
+  business: businessConfig,
+  thirdParty: thirdPartyConfig,
+  dev: devConfig,
+  route: routeConfig,
+  
+  // 工具函数
+  getFullConfig() {
+    return {
+      app: appConfig,
+      api: apiConfig,
+      feature: featureConfig,
+      business: businessConfig,
+      thirdParty: thirdPartyConfig,
+      dev: devConfig,
+      route: routeConfig,
+    };
+  },
+  
+  // 验证配置
+  validate(): boolean {
+    const errors: string[] = [];
+    
+    // 验证API基础URL
+    if (!apiConfig.baseUrl.startsWith('http')) {
+      errors.push('API基础URL必须以http或https开头');
+    }
+    
+    // 验证功能开关
+    if (!featureConfig.auth) {
+      errors.push('认证功能必须启用');
+    }
+    
+    if (errors.length > 0) {
+      console.error('配置验证失败:', errors);
+      return false;
+    }
+    
+    return true;
+  },
+  
+  // 获取环境信息
+  getEnvInfo() {
+    return {
+      mode: import.meta.env.MODE,
+      prod: import.meta.env.PROD,
+      dev: import.meta.env.DEV,
+      ssr: import.meta.env.SSR,
+      baseUrl: import.meta.env.BASE_URL,
+    };
+  },
+  
+  // 获取配置摘要（用于调试）
+  getConfigSummary() {
+    return {
+      app: {
+        name: appConfig.name,
+        version: appConfig.version,
+      },
+      api: {
+        baseUrl: apiConfig.baseUrl,
+        timeout: apiConfig.timeout,
+      },
+      features: {
+        enabled: featureConfig.getAvailableFeatures().length,
+        list: featureConfig.getAvailableFeatures(),
+      },
+      business: {
+        language: businessConfig.localization.defaultLanguage,
+        currency: businessConfig.localization.defaultCurrency,
+      },
+      env: this.getEnvInfo(),
+    };
+  },
+};

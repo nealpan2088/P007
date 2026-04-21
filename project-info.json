@@ -1,12 +1,12 @@
 {
   "id": "P007",
-  "name": "待定项目",
-  "codename": "P007",
+  "name": "P007-项目麒麟",
+  "codename": "麒麟云点餐SaaS",
   "version": "0.1.0",
   "status": "initialized",
-  "type": "待定",
+  "type": "多租户SaaS平台",
   "path": "/home/admin/projects/P007",
-  "description": "P007项目，正在初始化中",
+  "description": "多店铺扫码点餐云打印SaaS平台，代号：麒麟云点餐SaaS",
   "services": [
     {
       "name": "前端开发服务器",

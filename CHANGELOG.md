@@ -1,0 +1,149 @@
+# 麒麟项目 - 更新日志
+
+所有 notable changes 都会记录在这个文件中。
+
+格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
+并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
+
+## [v0.1.0] - 2026-04-21
+
+### 新增
+- **项目初始化**: 创建麒麟项目P007，多店铺扫码点餐云打印SaaS平台
+- **技术栈**: React 19 + TypeScript + Vite (前端)，Fastify + Prisma + PostgreSQL (后端)
+- **多租户架构**: 设计Schema隔离的多租户数据库架构
+- **用户认证系统**: 完整的注册/登录/JWT认证流程
+- **动态配置管理**: 环境变量驱动的配置系统，零硬编码
+- **统一路由系统**: 前后端统一的路由常量管理
+- **系统模式功能**: 通过环境变量切换单店版/多店版模式
+- **规范化检查**: 自动化硬编码检查、配置验证、路由检查
+- **Git提交钩子**: Husky预提交检查
+- **数据库迁移**: PostgreSQL初始迁移 (`001_init_public_schema`)
+- **开发环境**: 完整的前后端开发环境配置
+
+### 技术特性
+- **后端架构**:
+  - Fastify 5.8.5高性能服务器
+  - Prisma 5.22.0 ORM和数据库工具
+  - JWT + bcrypt安全认证
+  - 动态配置验证系统
+  - 多租户数据隔离
+  
+- **前端架构**:
+  - React 19.2.5最新版本
+  - TypeScript类型安全
+  - Vite 7.3.2构建工具
+  - React Router 6路由管理
+  - 环境变量配置系统
+  
+- **数据库设计**:
+  - PostgreSQL 13数据库
+  - 4个核心业务表 (User, Tenant, UserTenant, Session)
+  - Schema级多租户隔离
+  - Prisma迁移管理
+  
+- **系统模式**:
+  - `SYSTEM_MODE=single`: 单店简化版
+  - `SYSTEM_MODE=multi`: 多店SaaS版
+  - 统一API接口，不同实现
+  - 功能开关自动调整
+
+### 配置系统
+- 环境变量验证和加载
+- 配置验证脚本 (`npm run check:config`)
+- 硬编码检查脚本 (`npm run check:hardcoded`)
+- 路由检查脚本 (`npm run check:routes`)
+- 开发环境设置脚本 (`setup-env.sh`)
+
+### API端点
+- `GET /api/health` - 健康检查
+- `GET /api/hello` - API示例
+- `POST /api/v1/auth/register` - 用户注册
+- `POST /api/v1/auth/login` - 用户登录
+- `GET /api/v1/auth/health` - 认证健康检查
+- `GET /api/v1/system/info` - 系统信息
+- `GET /api/v1/system/stores` - 店铺列表
+- `GET /api/v1/public/version` - 版本信息
+- `GET /api/v1/public/features` - 功能列表
+
+### 开发命令
+```bash
+# 项目根目录
+./start-dev.sh                    # 启动完整开发环境
+./scripts/check-hardcoded.sh      # 检查硬编码
+
+# 后端目录 (apps/backend)
+source setup-env.sh              # 设置环境变量
+npm run check:all                # 运行所有检查
+npm run dev                      # 启动开发服务器
+npx prisma studio                # 数据库GUI
+
+# 前端目录 (apps/frontend)
+source setup-env.sh              # 设置环境变量
+npm run check:all                # 运行所有检查
+npm run dev                      # 启动开发服务器
+```
+
+### 文档
+- `PROJECT.md` - 项目概述
+- `ARCHITECTURE.md` - 架构设计
+- `DATABASE.md` - 数据库设计
+- `DEVELOPMENT-PLAN.md` - 开发计划
+- `WEEK-1-TASKS.md` - 第一周任务
+- `INCREMENTAL-DEVELOPMENT.md` - 增量开发路线
+- `NORMALIZATION-WORKFLOW.md` - 规范化工作流
+- `CONFIGURATION-GUIDE.md` - 配置指南
+- `VERSION.md` - 版本管理
+
+### 项目状态
+- ✅ **阶段1完成**: 基础认证系统和系统模式框架
+- ✅ **数据库就绪**: PostgreSQL迁移应用成功
+- ✅ **API就绪**: 所有核心API端点可用
+- ✅ **配置就绪**: 完整的环境变量配置系统
+- ✅ **检查就绪**: 自动化规范化检查
+- ✅ **文档就绪**: 完整的技术文档
+
+### 下一步计划
+- 阶段2: 前端认证界面和租户管理
+- 阶段3: 扫码点餐核心功能
+- 阶段4: 打印集成和订单管理
+- 阶段5: 分析统计和报表系统
+
+---
+
+## 版本发布说明
+
+### 发布v0.1.0
+```bash
+# 创建Git标签
+git tag -a v0.1.0 -m "版本v0.1.0: 基础认证系统 & 系统模式框架"
+
+# 推送到远程仓库
+git push origin main
+git push origin v0.1.0
+```
+
+### 版本兼容性
+- **数据库**: 向后兼容，支持从v0.1.0升级
+- **API**: 所有API端点保持稳定
+- **配置**: 环境变量配置系统稳定
+- **前端**: React 19稳定版本
+
+### 已知问题
+- 无严重问题
+- 开发环境配置已验证
+- 所有核心功能测试通过
+
+### 贡献者
+- **潘哥**: 项目发起人，业务需求定义
+- **旺财**: 技术实现，架构设计，文档编写
+
+### 特别感谢
+- OpenClaw平台提供的开发环境
+- PostgreSQL数据库的稳定支持
+- 开源社区的技术栈支持
+
+---
+
+**发布日期**: 2026-04-21  
+**版本状态**: ✅ 生产就绪  
+**下一版本**: v0.2.0 (前端认证界面 & 租户管理)

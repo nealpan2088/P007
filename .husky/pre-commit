@@ -1,0 +1,54 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🔍 运行提交前检查..."
+
+# 运行硬编码检查
+echo "📋 检查硬编码配置..."
+cd apps/backend && npm run check:hardcoded
+BACKEND_CHECK_RESULT=$?
+
+cd ../frontend && npm run check:hardcoded
+FRONTEND_CHECK_RESULT=$?
+
+if [ $BACKEND_CHECK_RESULT -ne 0 ] || [ $FRONTEND_CHECK_RESULT -ne 0 ]; then
+    echo "❌ 硬编码检查失败，请修复后再提交"
+    echo "运行以下命令查看详细问题："
+    echo "  cd apps/backend && npm run check:hardcoded"
+    echo "  cd apps/frontend && npm run check:hardcoded"
+    exit 1
+fi
+
+echo "✅ 硬编码检查通过"
+
+# 运行配置验证
+echo "📋 验证配置系统..."
+cd ../backend && npm run check:config
+BACKEND_CONFIG_RESULT=$?
+
+cd ../frontend && npm run check:config
+FRONTEND_CONFIG_RESULT=$?
+
+if [ $BACKEND_CONFIG_RESULT -ne 0 ] || [ $FRONTEND_CONFIG_RESULT -ne 0 ]; then
+    echo "❌ 配置验证失败，请修复后再提交"
+    exit 1
+fi
+
+echo "✅ 配置验证通过"
+
+# 运行ESLint
+echo "📋 运行代码检查..."
+cd ../backend && npm run lint
+BACKEND_LINT_RESULT=$?
+
+cd ../frontend && npm run lint
+FRONTEND_LINT_RESULT=$?
+
+if [ $BACKEND_LINT_RESULT -ne 0 ] || [ $FRONTEND_LINT_RESULT -ne 0 ]; then
+    echo "❌ 代码检查失败，请修复后再提交"
+    exit 1
+fi
+
+echo "✅ 代码检查通过"
+
+echo "🎉 所有检查通过，可以提交！"

@@ -113,7 +113,6 @@ model Tenant {
   
   // 关系
   users           UserTenant[]
-  sessions        Session[]
   
   // 索引
   @@index([subdomain])

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ApiResponse } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import {
@@ -134,7 +135,7 @@ const CreateTenant: React.FC = () => {
         body: JSON.stringify({ subdomain }),
       });
 
-      const data = await response.json();
+      const data: ApiResponse<any> = await response.json();
       return data.success && data.data?.available === true;
     } catch (error) {
       console.error('检查子域名可用性错误:', error);
@@ -180,7 +181,7 @@ const CreateTenant: React.FC = () => {
         }),
       });
 
-      const data = await response.json();
+      const data: ApiResponse<any> = await response.json();
 
       if (!response.ok || !data.success) {
         throw new Error(data.message || '创建租户失败');

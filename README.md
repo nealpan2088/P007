@@ -50,6 +50,7 @@ P007/
 │           └── config/        # 前端配置
 ├── CHANGELOG-2026-04-21.md    # 版本更新日志
 └── README.md                  # 项目文档
+* [类型修复指南](docs/type-fix-guidelines.md) - TypeScript类型规范化修复流程
 ```
 
 ## 🚀 快速开始
@@ -456,3 +457,9 @@ cp .env.example .env.development
 4. **寻求帮助**: 如果无法解决，寻求技术支持
 
 记住：**自动化是为了提高效率，但安全永远是第一位的。**
+
+## 📚 开发文档
+
+### 类型安全
+* [类型修复快速参考](docs/type-fix-quick-reference.md) - 紧急情况下的快速修复指南
+* [类型修复指南](docs/type-fix-guidelines.md) - TypeScript类型规范化修复流程与最佳实践

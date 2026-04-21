@@ -424,7 +424,7 @@ const StoreListPage: React.FC = () => {
             >
               查看
             </Button>
-            <Dropdown overlay={menu} trigger={['click']}>
+            <Dropdown menu={{ items }} trigger={['click']}>
               <Button type="link" size="small" icon={<MoreOutlined />} />
             </Dropdown>
           </Space>

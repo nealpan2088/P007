@@ -25,7 +25,7 @@ apiClient.interceptors.request.use(
 // 响应拦截器
 apiClient.interceptors.response.use(
   response => {
-    return response.data;
+    return response.data.data;
   },
   error => {
     console.error('API请求错误:', error);
@@ -52,10 +52,10 @@ export async function fetchStoreMenu(storeId: string): Promise<MenuCategory[]> {
       `/stores/${storeId}/menu`
     );
     
-    if (response.success) {
-      return response.data;
+    if (response.data.success) {
+      return response.data.data;
     } else {
-      throw new Error(response.message || '获取菜单失败');
+      throw new Error(response.data.message || '获取菜单失败');
     }
   } catch (error) {
     console.error('获取店铺菜单失败:', error);
@@ -75,10 +75,10 @@ export async function submitOrder(
       orderData
     );
     
-    if (response.success) {
-      return response.data;
+    if (response.data.success) {
+      return response.data.data;
     } else {
-      throw new Error(response.message || '提交订单失败');
+      throw new Error(response.data.message || '提交订单失败');
     }
   } catch (error) {
     console.error('提交订单失败:', error);
@@ -95,10 +95,10 @@ export async function fetchOrderStatus(orderId: string): Promise<OrderStatus> {
       `/orders/${orderId}/status`
     );
     
-    if (response.success) {
-      return response.data;
+    if (response.data.success) {
+      return response.data.data;
     } else {
-      throw new Error(response.message || '获取订单状态失败');
+      throw new Error(response.data.message || '获取订单状态失败');
     }
   } catch (error) {
     console.error('获取订单状态失败:', error);
@@ -116,8 +116,8 @@ export async function fetchStoreInfo(storeId: string): Promise<any> {
       `/stores/${storeId}`
     );
     
-    if (response.success) {
-      return response.data;
+    if (response.data.success) {
+      return response.data.data;
     } else {
       // 如果API不存在，返回模拟数据
       return {
@@ -166,8 +166,8 @@ export async function fetchTableInfo(
       `/stores/${storeId}/tables/${tableId}`
     );
     
-    if (response.success) {
-      return response.data;
+    if (response.data.success) {
+      return response.data.data;
     } else {
       // 如果API不存在，返回模拟数据
       return {
@@ -197,7 +197,7 @@ export async function fetchTableInfo(
 export async function checkHealth(): Promise<boolean> {
   try {
     const response = await apiClient.get<ApiResponse>('/health');
-    return response.success;
+    return response.data.success;
   } catch (error) {
     console.error('健康检查失败:', error);
     return false;

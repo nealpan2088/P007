@@ -15,7 +15,7 @@ async function publicRoutes(fastify) {
       status: 'ok',
       service: 'qilin-public-api',
       timestamp: new Date().toISOString(),
-      version: '0.1.0'
+      version: '0.2.2'
     };
   });
 

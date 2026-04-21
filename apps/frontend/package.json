@@ -1,6 +1,6 @@
 {
   "name": "p007-frontend",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,7 +11,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "check:hardcoded": "../../scripts/check-hardcoded.sh",
-    "check:config": "tsc --noEmit && echo '✅ TypeScript配置验证通过'",
+    "check:config": "tsc --noEmit --project tsconfig.dev.json && echo '✅ TypeScript配置验证通过'",
     "check:routes": "echo '✅ 前端路由配置检查' && echo '路由配置文件: src/config/routes.ts' && echo '路由类型定义: src/config/routes-check.ts' && echo '状态: 路由系统配置完成'",
     "normalize:import": "../../scripts/normalize-import.sh",
     "check:all": "npm run check:hardcoded && npm run check:config && npm run check:routes",
@@ -24,9 +24,8 @@
     "@ant-design/icons": "^6.1.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@mui/icons-material": "^9.0.0",
-    "@mui/lab": "^9.0.0-beta.2",
-    "@mui/material": "^9.0.0",
+    "@mui/icons-material": "^5.18.0",
+    "@mui/material": "^5.18.0",
     "antd": "^6.3.6",
     "axios": "^1.15.1",
     "dayjs": "^1.11.20",
@@ -46,7 +45,7 @@
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.26",
-    "typescript": "^5.0.0",
+    "typescript": "^5.9.3",
     "vite": "^7.3.2",
     "vitest": "^1.0.0"
   }

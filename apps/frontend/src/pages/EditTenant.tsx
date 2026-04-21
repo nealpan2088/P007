@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ApiResponse } from '../types';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import apiRoutes from '../config/api-routes';
@@ -147,7 +148,7 @@ const EditTenant: React.FC = () => {
       setSuccess(null);
       
       // 这里应该调用更新租户的API
-      const response = await fetch(apiRoutes.buildUrl(apiRoutes.tenant.TENANT.UPDATE, { tenantId }), {
+      const fetchResponse = await fetch(apiRoutes.buildUrl(apiRoutes.tenant.TENANT.UPDATE, { tenantId }), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -167,20 +168,20 @@ const EditTenant: React.FC = () => {
         }),
       });
       
-      if (!response.ok) {
-        throw new Error(`更新失败: ${response.status}`);
+      if (!fetchResponse.ok) {
+        throw new Error(`更新失败: ${fetchResponse.status}`);
       }
       
-      const data = await response.json();
+      const response: ApiResponse<any> = await fetchResponse.json();
       
-      if (data.success) {
+      if (response.success) {
         setSuccess('租户信息更新成功！');
         // 3秒后返回租户管理页面
         setTimeout(() => {
           navigate('/tenants');
         }, 3000);
       } else {
-        throw new Error(data.message || '更新失败');
+        throw new Error(response.message || '更新失败');
       }
     } catch (err) {
       console.error('更新租户错误:', err);

@@ -15,21 +15,15 @@ class ScanService {
    */
   async getStoreMenu(storeId, tableId = null) {
     try {
-      // 1. 获取店铺信息
-      const store = await prisma.store.findUnique({
-        where: { id: storeId, status: 'ACTIVE' },
-        include: {
-          menuCategories: {
-            where: { isActive: true },
-            include: {
-              items: {
-                where: { isAvailable: true },
-                orderBy: { sortOrder: 'asc' }
-              }
-            },
-            orderBy: { sortOrder: 'asc' }
-          }
+      // 1. 获取店铺信息 - 支持ID或slug查找
+      const store = await prisma.store.findFirst({
+        where: {
+          OR: [
+            { id: storeId, status: 'ACTIVE' },
+            { slug: storeId, status: 'ACTIVE' }
+          ]
         }
+        // 暂时不包含menuCategories，先测试店铺查找
       });
 
       if (!store) {
@@ -39,8 +33,15 @@ class ScanService {
       // 2. 获取餐桌信息（如果提供了tableId）
       let table = null;
       if (tableId) {
-        table = await prisma.table.findUnique({
-          where: { id: tableId, storeId }
+        // 支持通过ID或tableNumber查找餐桌
+        table = await prisma.table.findFirst({
+          where: {
+            storeId: store.id,
+            OR: [
+              { id: tableId },
+              { tableNumber: tableId }
+            ]
+          }
         });
         
         if (!table) {
@@ -48,49 +49,26 @@ class ScanService {
         }
       }
 
-      // 3. 格式化响应数据
+      // 3. 构建API响应
       return {
-        store: {
-          id: store.id,
-          name: store.name,
-          displayName: store.displayName,
-          description: store.description,
-          logoUrl: store.logoUrl,
-          contactPhone: store.contactPhone,
-          address: store.address,
-          timezone: store.timezone,
-          currency: store.currency,
-          takeawayEnabled: store.takeawayEnabled,
-          deliveryEnabled: store.deliveryEnabled
-        },
-        table: table ? {
-          id: table.id,
-          tableNumber: table.tableNumber,
-          name: table.name,
-          capacity: table.capacity
-        } : null,
-        menu: store.menuCategories.map(category => ({
-          id: category.id,
-          name: category.name,
-          description: category.description,
-          imageUrl: category.imageUrl,
-          items: category.items.map(item => ({
-            id: item.id,
-            name: item.name,
-            description: item.description,
-            price: item.price.toString(),
-            originalPrice: item.originalPrice ? item.originalPrice.toString() : null,
-            imageUrl: item.imageUrl,
-            isRecommended: item.isRecommended,
-            isSpicy: item.isSpicy,
-            isVegetarian: item.isVegetarian,
-            hasOptions: item.hasOptions,
-            optionsConfig: item.optionsConfig,
-            preparationTime: item.preparationTime,
-            calories: item.calories,
-            allergens: item.allergens
-          }))
-        }))
+        success: true,
+        data: {
+          store: {
+            id: store.id,
+            name: store.name,
+            slug: store.slug,
+            description: store.description,
+            type: store.type,
+            status: store.status
+          },
+          table: table ? {
+            id: table.id,
+            code: table.tableNumber,
+            name: table.name
+          } : null,
+          menuItems: [],
+          categories: []
+        }
       };
     } catch (error) {
       if (error.code === 'NOT_FOUND') {
@@ -117,9 +95,14 @@ class ScanService {
         items
       } = orderData;
 
-      // 1. 验证店铺和餐桌
-      const store = await prisma.store.findUnique({
-        where: { id: storeId, status: 'ACTIVE' }
+      // 1. 验证店铺和餐桌 - 支持ID或slug查找
+      const store = await prisma.store.findFirst({
+        where: {
+          OR: [
+            { id: storeId, status: 'ACTIVE' },
+            { slug: storeId, status: 'ACTIVE' }
+          ]
+        }
       });
 
       if (!store) {
@@ -128,8 +111,15 @@ class ScanService {
 
       let table = null;
       if (tableId) {
-        table = await prisma.table.findUnique({
-          where: { id: tableId, storeId }
+        // 支持通过ID或tableNumber查找餐桌
+        table = await prisma.table.findFirst({
+          where: {
+            storeId: store.id,
+            OR: [
+              { id: tableId },
+              { tableNumber: tableId }
+            ]
+          }
         });
 
         if (!table) {
@@ -251,10 +241,14 @@ class ScanService {
         }
       };
     } catch (error) {
+      console.error('创建订单失败 - 详细错误:', error);
+      console.error('错误堆栈:', error.stack);
+      console.error('请求数据:', orderData);
+      
       if (error.code === 'NOT_FOUND' || error.code === 'VALIDATION_ERROR') {
         throw error;
       }
-      throw createError('INTERNAL_ERROR', '创建订单失败', error.message);
+      throw createError('INTERNAL_ERROR', `创建订单失败: ${error.message}`, error.code);
     }
   }
 

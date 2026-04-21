@@ -4,7 +4,7 @@ import { Store, StoreListResponse, StoreQueryParams, StoreRequest, StoreStats, A
 
 // 创建axios实例
 const apiClient = axios.create({
-  baseURL: '/api/v1',
+  baseURL: '/api/v1/admin',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -28,7 +28,8 @@ apiClient.interceptors.request.use(
 // 响应拦截器
 apiClient.interceptors.response.use(
   response => {
-    return response.data;
+    // 返回完整的响应，让调用者处理data
+    return response;
   },
   error => {
     console.error('API请求错误:', error);
@@ -69,10 +70,10 @@ export async function fetchStores(params: StoreQueryParams = {}): Promise<StoreL
       },
     });
     
-    if (response.success) {
-      return response.data;
+    if (response.data.success) {
+      return response.data.data;
     } else {
-      throw new Error(response.message || '获取店铺列表失败');
+      throw new Error(response.data.message || '获取店铺列表失败');
     }
   } catch (error) {
     console.error('获取店铺列表失败:', error);
@@ -87,10 +88,10 @@ export async function fetchStore(storeId: string): Promise<Store> {
   try {
     const response = await apiClient.get<ApiResponse<Store>>(`/stores/${storeId}`);
     
-    if (response.success) {
-      return response.data;
+    if (response.data.success) {
+      return response.data.data;
     } else {
-      throw new Error(response.message || '获取店铺详情失败');
+      throw new Error(response.data.message || '获取店铺详情失败');
     }
   } catch (error) {
     console.error('获取店铺详情失败:', error);
@@ -105,10 +106,10 @@ export async function createStore(storeData: StoreRequest): Promise<Store> {
   try {
     const response = await apiClient.post<ApiResponse<Store>>('/stores', storeData);
     
-    if (response.success) {
-      return response.data;
+    if (response.data.success) {
+      return response.data.data;
     } else {
-      throw new Error(response.message || '创建店铺失败');
+      throw new Error(response.data.message || '创建店铺失败');
     }
   } catch (error) {
     console.error('创建店铺失败:', error);
@@ -123,10 +124,10 @@ export async function updateStore(storeId: string, storeData: Partial<StoreReque
   try {
     const response = await apiClient.put<ApiResponse<Store>>(`/stores/${storeId}`, storeData);
     
-    if (response.success) {
-      return response.data;
+    if (response.data.success) {
+      return response.data.data;
     } else {
-      throw new Error(response.message || '更新店铺失败');
+      throw new Error(response.data.message || '更新店铺失败');
     }
   } catch (error) {
     console.error('更新店铺失败:', error);
@@ -141,8 +142,8 @@ export async function deleteStore(storeId: string): Promise<void> {
   try {
     const response = await apiClient.delete<ApiResponse<void>>(`/stores/${storeId}`);
     
-    if (!response.success) {
-      throw new Error(response.message || '删除店铺失败');
+    if (!response.data.success) {
+      throw new Error(response.data.message || '删除店铺失败');
     }
   } catch (error) {
     console.error('删除店铺失败:', error);
@@ -157,10 +158,10 @@ export async function updateStoreStatus(storeId: string, status: string): Promis
   try {
     const response = await apiClient.patch<ApiResponse<Store>>(`/stores/${storeId}/status`, { status });
     
-    if (response.success) {
-      return response.data;
+    if (response.data.success) {
+      return response.data.data;
     } else {
-      throw new Error(response.message || '更新店铺状态失败');
+      throw new Error(response.data.message || '更新店铺状态失败');
     }
   } catch (error) {
     console.error('更新店铺状态失败:', error);
@@ -175,8 +176,8 @@ export async function fetchStoreStats(): Promise<StoreStats> {
   try {
     const response = await apiClient.get<ApiResponse<StoreStats>>('/stores/stats');
     
-    if (response.success) {
-      return response.data;
+    if (response.data.success) {
+      return response.data.data;
     } else {
       // 如果API不存在，返回模拟数据
       return {
@@ -222,8 +223,8 @@ export async function uploadStoreImage(file: File): Promise<{ url: string }> {
       }
     );
     
-    if (response.success) {
-      return response.data;
+    if (response.data.success) {
+      return response.data.data;
     } else {
       // 如果上传API不存在，返回模拟URL
       return {
@@ -249,8 +250,8 @@ export async function batchUpdateStoreStatus(storeIds: string[], status: string)
       status,
     });
     
-    if (!response.success) {
-      throw new Error(response.message || '批量更新店铺状态失败');
+    if (!response.data.success) {
+      throw new Error(response.data.message || '批量更新店铺状态失败');
     }
   } catch (error) {
     console.error('批量更新店铺状态失败:', error);
@@ -268,7 +269,7 @@ export async function exportStores(params: StoreQueryParams = {}): Promise<Blob>
       responseType: 'blob',
     });
     
-    return response;
+    return response.data;
   } catch (error) {
     console.error('导出店铺数据失败:', error);
     throw error;

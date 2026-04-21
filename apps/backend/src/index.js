@@ -61,7 +61,7 @@ fastify.get(routes.public.HEALTH, async () => {
   return {
     status: 'ok',
     service: 'qilin-backend',
-    version: '0.1.0',
+    version: '0.2.2',
     environment: config.server.env,
     timestamp: new Date().toISOString(),
     config: {
@@ -91,12 +91,16 @@ registerTenantRoutes(fastify)
 import { registerSystemRoutes } from './routes/system.routes.js'
 registerSystemRoutes(fastify)
 
+// 注册管理API路由
+import { registerAdminRoutes } from './routes/admin.routes.register.js'
+registerAdminRoutes(fastify)
+
 // API示例端点 - 使用路由常量
 fastify.get(routes.public.PUBLIC.HELLO, async () => {
   return {
     message: '欢迎使用麒麟云点餐SaaS API!',
     service: 'qilin-backend',
-    version: '0.1.0',
+    version: '0.2.2',
     timestamp: new Date().toISOString(),
     documentation: {
       health: routes.public.HEALTH,
@@ -116,7 +120,7 @@ fastify.get(routes.public.PUBLIC.HELLO, async () => {
 fastify.get(routes.public.PUBLIC.VERSION, async () => {
   return {
     name: '麒麟云点餐SaaS',
-    version: '0.1.0',
+    version: '0.2.2',
     apiVersion: config.server.apiVersion,
     environment: config.server.env,
     buildDate: new Date().toISOString(),

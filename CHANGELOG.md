@@ -1,5 +1,63 @@
 # P007麒麟项目 - 更新日志
 
+## v0.2.3 (2026-04-21)
+
+### 🚀 功能版本：店铺管理界面完善与文档系统建立
+
+#### **新增功能**
+1. **店铺管理界面完整开发**
+   - 店铺列表页面: Ant Design Table组件，搜索筛选，分页排序，状态管理
+   - 创建店铺页面: 完整信息表单，图片上传，营业时间配置
+   - 店铺详情页面: 详细信息展示，状态时间线，快速操作
+   - 编辑店铺页面: 表单预填充，数据验证，状态更新
+   - 技术栈: React 19 + TypeScript + Ant Design + Formik + Yup
+
+2. **文档系统建立**
+   - 创建 `docs/` 目录，包含完整的技术文档
+   - `type-fix-guidelines.md`: TypeScript错误修复指南
+   - `type-fix-log.md`: TypeScript修复日志记录
+   - `type-fix-quick-reference.md`: TypeScript快速参考
+   - `README.md`: 文档索引和导航
+
+3. **工具函数库创建**
+   - `src/types/index.ts`: 完整的店铺相关类型定义
+   - `src/utils/fetch-utils.ts`: 统一的API调用工具函数
+   - `src/components/MuiAdapter.tsx`: MUI v9适配器组件
+
+#### **技术改进**
+1. **API工具函数优化**
+   - 统一的axios实例配置，自动Token添加
+   - 完整的错误处理和用户友好提示
+   - 模拟数据支持，提高开发体验
+
+2. **代码质量提升**
+   - 完整的TypeScript类型定义系统
+   - 模块化设计: 类型定义、工具函数、组件分离
+   - 高内聚低耦合，易于维护和测试
+
+3. **路由系统完善**
+   - 管理API路由: `/api/v1/admin/stores` 和 `/api/v1/admin/stores/stats`
+   - 公开API路由: `/api/public/stores/{storeId}/menu`
+   - 路由注册系统: 正确注册所有API路由
+
+#### **修复问题**
+1. **MUI v9兼容性修复**
+   - 修复 `paragraph` 属性使用方式 (boolean属性直接使用)
+   - 修复React Router Future Flag警告
+   - 创建CustomRouter组件启用v7特性
+
+2. **TypeScript错误修复**
+   - 修复变量未定义错误 (`menuItems` → `items`)
+   - 修复API路径配置错误
+   - 修复所有编译警告和错误
+
+#### **文件变更统计**
+- **新增文件**: 8个 (类型定义、工具函数、文档、组件)
+- **修改文件**: 18个 (店铺管理页面、API工具、配置)
+- **代码行数**: ~2,500行新增，~200行删除
+
+---
+
 ## v0.2.2 (2026-04-21)
 
 ### 🔧 修复版本：路由配置修复与配置验证优化

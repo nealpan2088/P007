@@ -517,7 +517,7 @@ export const authHandlers = {
         status: 'ok',
         service: 'qilin-auth',
         timestamp: new Date().toISOString(),
-        version: '0.1.0',
+        version: '0.2.2',
       })
     } catch (error) {
       console.error('健康检查处理错误:', error)

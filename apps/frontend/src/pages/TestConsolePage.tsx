@@ -78,7 +78,7 @@ export default function TestConsolePage() {
         <Typography variant="h6" gutterBottom>
           测试说明
         </Typography>
-        <Typography paragraph>
+        <Typography paragraph={true}>
           此页面用于验证React Router v7未来标志是否生效。我们已经创建了<code>CustomRouter</code>组件，
           启用了以下未来标志：
         </Typography>
@@ -96,7 +96,7 @@ export default function TestConsolePage() {
           </li>
         </Box>
         
-        <Typography paragraph>
+        <Typography paragraph={true}>
           这些标志可以：
         </Typography>
         

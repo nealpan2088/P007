@@ -141,7 +141,7 @@ check_backend_api() {
     check_http_service "http://localhost:33037/api/public/health" "后端公开API"
     
     # 检查店铺API（如果存在）
-    local store_response=$(curl -s --max-time 3 "http://localhost:33037/api/v1/stores" 2>/dev/null)
+    local store_response=$(curl -s --max-time 3 "http://localhost:33037/api/stores" 2>/dev/null)
     if [[ -n "$store_response" ]]; then
         local store_count=$(echo "$store_response" | jq '.data | length' 2>/dev/null || echo "0")
         print_info "店铺API返回数据: $store_count 条记录"
@@ -154,8 +154,8 @@ check_frontend_pages() {
     
     local pages=(
         "http://localhost:5177/ 首页"
-        "http://localhost:5177/stores 店铺列表"
-        "http://localhost:5177/stores/create 创建店铺"
+        "http://localhost:5177/dashboard/stores 店铺列表"
+        "http://localhost:5177/dashboard/stores/create 创建店铺"
         "http://localhost:5177/scan/test-store/A01 扫码点餐测试"
         "http://localhost:5177/auth/login 登录页面"
         "http://localhost:5177/tenants 租户管理"
@@ -194,7 +194,7 @@ check_database() {
             print_info "数据库表数量: $table_count"
             
             # 检查关键表是否存在
-            local key_tables=("users" "tenants" "stores" "menus" "orders")
+            local key_tables=("User" "Tenant" "Store" "MenuCategory" "Order")
             for table in "${key_tables[@]}"; do
                 if echo "$tables" | grep -q -i "$table"; then
                     print_success "关键表 '$table' 存在"
@@ -283,7 +283,7 @@ generate_status_report() {
     echo ""
     echo "📋 访问地址:"
     echo "  前端首页: http://localhost:5177/"
-    echo "  店铺管理: http://localhost:5177/stores"
+    echo "  店铺管理: http://localhost:5177/dashboard/stores"
     echo "  扫码点餐: http://localhost:5177/scan/test-store/A01"
     echo "  后端API: http://localhost:33037/api/health"
     echo ""

@@ -30,7 +30,7 @@ const request = async <T>(
   };
   
   try {
-    const response = await fetch(url, {
+    const fetchResponse = await fetch(url, {
       ...options,
       headers: {
         ...defaultHeaders,
@@ -41,7 +41,7 @@ const request = async <T>(
     
     clearTimeout(timeoutId);
     
-    if (!response.ok) {
+    if (!fetchResponse.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
         errorData.message || `HTTP ${response.status}: ${response.statusText}`

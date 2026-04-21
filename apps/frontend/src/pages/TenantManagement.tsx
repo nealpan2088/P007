@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ApiResponse } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { TENANT_ROUTES } from '../config/routes';
@@ -81,33 +82,33 @@ const TenantManagement: React.FC = () => {
 
       console.log('调用租户列表API，Token长度:', token.length);
       
-      const response = await fetch(apiRoutes.tenant.TENANT.LIST, {
+      const fetchResponse = await fetch(apiRoutes.tenant.TENANT.LIST, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
 
-      console.log('API响应状态:', response.status);
+      console.log('API响应状态:', fetchResponse.status);
       
-      if (!response.ok) {
-        if (response.status === 401) {
+      if (!fetchResponse.ok) {
+        if (fetchResponse.status === 401) {
           // Token无效，清除登录状态
           localStorage.removeItem('qilin_access_token');
           localStorage.removeItem('qilin_user');
           localStorage.removeItem('qilin_session_id');
           throw new Error('认证已过期，请重新登录');
         }
-        throw new Error(`获取租户列表失败: ${response.status}`);
+        throw new Error(`获取租户列表失败: ${fetchResponse.status}`);
       }
 
-      const data = await response.json();
-      console.log('API响应数据:', data);
+      const response: ApiResponse<any> = await fetchResponse.json();
+      console.log('API响应数据:', response);
       
-      if (data.success) {
-        setTenants(data.data || []);
+      if (response.success) {
+        setTenants(response.data || []);
       } else {
-        throw new Error(data.message || '获取租户列表失败');
+        throw new Error(response.message || '获取租户列表失败');
       }
     } catch (err) {
       console.error('获取租户列表错误:', err);

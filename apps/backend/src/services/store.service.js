@@ -1,257 +1,695 @@
 // 麒麟项目 - 店铺服务
-// 根据系统模式提供不同的店铺管理实现
+// 提供店铺管理相关的业务逻辑
 
-import systemMode from '../utils/system-mode.js';
-import db from '../db/index.js';
+import { publicDb } from '../db/index.js';
+import { createError } from '../utils/error-handler.js';
+import { validateStoreData, validateBusinessHours } from '../validators/store.validator.js';
 
 /**
  * 店铺服务类
- * 根据系统模式提供统一的店铺管理接口
+ * 提供店铺创建、查询、更新、删除等业务逻辑
  */
 class StoreService {
   constructor() {
-    this.prisma = db.publicDb;
-    this.systemMode = systemMode;
+    this.db = publicDb;
   }
-  
+
   /**
-   * 获取店铺列表
-   * @param {string} tenantId 租户ID（多租户模式）
-   * @returns {Promise<Array>} 店铺列表
+   * 创建新店铺
+   * @param {Object} storeData 店铺数据
+   * @param {string} tenantId 租户ID
+   * @param {string} userId 用户ID
+   * @returns {Promise<Object>} 创建的店铺
    */
-  async getStores(tenantId = null) {
-    return this.systemMode.executeByMode(
-      // 单店模式实现
-      async () => {
-        // 单店模式：返回默认店铺信息
-        const singleStoreConfig = this.systemMode.getSingleStoreConfig();
-        
-        return [{
-          id: singleStoreConfig.storeId,
-          name: singleStoreConfig.storeName,
-          subdomain: singleStoreConfig.subdomain,
-          description: '单店模式默认店铺',
-          status: 'active',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          mode: 'single',
-        }];
-      },
-      
-      // 多租户模式实现
-      async () => {
-        // 多租户模式：从数据库查询店铺
-        if (!tenantId) {
-          throw new Error('多租户模式需要提供租户ID');
-        }
-        
-        // 这里应该查询租户的店铺表
-        // 由于我们还没有创建租户Schema，这里返回模拟数据
-        return [{
-          id: 'store_001',
-          tenantId: tenantId,
-          name: '示例店铺1',
-          description: '多租户模式示例店铺',
-          status: 'active',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          mode: 'multi',
-        }];
+  async createStore(storeData, tenantId, userId) {
+    try {
+      // 验证店铺数据
+      const validationResult = validateStoreData(storeData);
+      if (!validationResult.valid) {
+        throw createError('VALIDATION_ERROR', `店铺数据验证失败: ${validationResult.errors.join(', ')}`);
       }
-    );
+
+      // 检查租户是否存在
+      const tenant = await this.db.tenant.findUnique({
+        where: { id: tenantId, status: 'ACTIVE' }
+      });
+
+      if (!tenant) {
+        throw createError('NOT_FOUND', '租户不存在或已停用');
+      }
+
+      // 检查用户是否有权限
+      const userTenant = await this.db.userTenant.findFirst({
+        where: {
+          userId,
+          tenantId,
+          status: 'ACTIVE',
+          role: { in: ['ADMIN', 'MANAGER'] }
+        }
+      });
+
+      if (!userTenant) {
+        throw createError('FORBIDDEN', '没有权限创建店铺');
+      }
+
+      // 生成slug（URL友好标识）
+      const slug = await this.generateUniqueSlug(storeData.name, tenantId);
+
+      // 创建店铺
+      const store = await this.db.store.create({
+        data: {
+          ...storeData,
+          slug,
+          tenantId,
+          status: 'DRAFT', // 默认草稿状态
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        include: {
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+              subdomain: true
+            }
+          }
+        }
+      });
+
+      // 创建默认营业时间（每天9:00-22:00）
+      await this.createDefaultBusinessHours(store.id);
+
+      // 创建店铺员工关联（创建者默认为OWNER）
+      await this.db.storeStaff.create({
+        data: {
+          storeId: store.id,
+          userId,
+          role: 'OWNER',
+          isActive: true,
+          joinedAt: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      });
+
+      return {
+        success: true,
+        message: '店铺创建成功',
+        data: store
+      };
+    } catch (error) {
+      console.error('创建店铺失败:', error);
+      throw error;
+    }
   }
-  
+
+  /**
+   * 生成唯一的slug
+   * @param {string} name 店铺名称
+   * @param {string} tenantId 租户ID
+   * @returns {Promise<string>} 唯一的slug
+   */
+  async generateUniqueSlug(name, tenantId) {
+    // 将中文转换为拼音，移除特殊字符，转换为小写，用连字符连接
+    const baseSlug = name
+      .toLowerCase()
+      .replace(/[^\w\u4e00-\u9fa5]+/g, '-') // 保留中文和字母数字
+      .replace(/^-+|-+$/g, '') // 移除首尾连字符
+      .replace(/-+/g, '-'); // 合并多个连字符
+
+    let slug = baseSlug;
+    let counter = 1;
+    let isUnique = false;
+
+    while (!isUnique) {
+      const existingStore = await this.db.store.findFirst({
+        where: {
+          slug,
+          tenantId
+        }
+      });
+
+      if (!existingStore) {
+        isUnique = true;
+      } else {
+        slug = `${baseSlug}-${counter}`;
+        counter++;
+      }
+    }
+
+    return slug;
+  }
+
+  /**
+   * 创建默认营业时间
+   * @param {string} storeId 店铺ID
+   */
+  async createDefaultBusinessHours(storeId) {
+    const defaultHours = [];
+    
+    // 周一到周日，每天9:00-22:00
+    for (let day = 0; day < 7; day++) {
+      defaultHours.push({
+        storeId,
+        dayOfWeek: day,
+        isOpen: true,
+        openTime: '09:00',
+        closeTime: '22:00',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    }
+
+    await this.db.storeBusinessHours.createMany({
+      data: defaultHours
+    });
+  }
+
+  /**
+   * 获取租户下的所有店铺
+   * @param {string} tenantId 租户ID
+   * @param {string} userId 用户ID
+   * @param {Object} options 查询选项
+   * @returns {Promise<Object>} 店铺列表
+   */
+  async getStoresByTenant(tenantId, userId, options = {}) {
+    try {
+      const {
+        page = 1,
+        limit = 20,
+        status,
+        type,
+        search,
+        sortBy = 'createdAt',
+        sortOrder = 'desc'
+      } = options;
+
+      const skip = (page - 1) * limit;
+
+      // 构建查询条件
+      const where = {
+        tenantId,
+        deletedAt: null // 不返回已删除的店铺
+      };
+
+      if (status) {
+        where.status = status;
+      }
+
+      if (type) {
+        where.type = type;
+      }
+
+      if (search) {
+        where.OR = [
+          { name: { contains: search, mode: 'insensitive' } },
+          { slug: { contains: search, mode: 'insensitive' } },
+          { displayName: { contains: search, mode: 'insensitive' } }
+        ];
+      }
+
+      // 检查用户权限
+      const userTenant = await this.db.userTenant.findFirst({
+        where: {
+          userId,
+          tenantId,
+          status: 'ACTIVE'
+        }
+      });
+
+      if (!userTenant) {
+        throw createError('FORBIDDEN', '没有权限查看店铺');
+      }
+
+      // 查询店铺
+      const [stores, total] = await Promise.all([
+        this.db.store.findMany({
+          where,
+          include: {
+            tenant: {
+              select: {
+                id: true,
+                name: true,
+                subdomain: true
+              }
+            },
+            _count: {
+              select: {
+                tables: true,
+                menuCategories: true,
+                orders: true
+              }
+            }
+          },
+          orderBy: {
+            [sortBy]: sortOrder
+          },
+          skip,
+          take: limit
+        }),
+        this.db.store.count({ where })
+      ]);
+
+      return {
+        success: true,
+        data: stores,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          totalPages: Math.ceil(total / limit)
+        }
+      };
+    } catch (error) {
+      console.error('获取店铺列表失败:', error);
+      throw error;
+    }
+  }
+
   /**
    * 获取店铺详情
    * @param {string} storeId 店铺ID
-   * @param {string} tenantId 租户ID（多租户模式）
+   * @param {string} userId 用户ID
    * @returns {Promise<Object>} 店铺详情
    */
-  async getStoreById(storeId, tenantId = null) {
-    return this.systemMode.executeByMode(
-      // 单店模式实现
-      async () => {
-        const singleStoreConfig = this.systemMode.getSingleStoreConfig();
-        
-        // 单店模式只能访问默认店铺
-        if (storeId !== singleStoreConfig.storeId) {
-          throw new Error('单店模式只能访问默认店铺');
-        }
-        
-        return {
-          id: singleStoreConfig.storeId,
-          name: singleStoreConfig.storeName,
-          subdomain: singleStoreConfig.subdomain,
-          description: '单店模式默认店铺',
-          address: '默认地址',
-          phone: '默认电话',
-          email: 'default@store.com',
-          settings: {
-            taxRate: 0.1,
-            serviceCharge: 0.05,
-            currency: 'CNY',
-            timezone: 'Asia/Shanghai',
-          },
-          status: 'active',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          mode: 'single',
-        };
-      },
-      
-      // 多租户模式实现
-      async () => {
-        if (!tenantId) {
-          throw new Error('多租户模式需要提供租户ID');
-        }
-        
-        // 这里应该从租户Schema查询店铺详情
-        // 返回模拟数据
-        return {
+  async getStoreById(storeId, userId) {
+    try {
+      const store = await this.db.store.findUnique({
+        where: {
           id: storeId,
-          tenantId: tenantId,
-          name: '示例店铺',
-          description: '多租户模式示例店铺',
-          address: '示例地址',
-          phone: '13800138000',
-          email: 'store@example.com',
-          settings: {
-            taxRate: 0.1,
-            serviceCharge: 0.05,
-            currency: 'CNY',
-            timezone: 'Asia/Shanghai',
+          deletedAt: null
+        },
+        include: {
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+              subdomain: true
+            }
           },
-          status: 'active',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          mode: 'multi',
-        };
-      }
-    );
-  }
-  
-  /**
-   * 创建店铺
-   * @param {Object} storeData 店铺数据
-   * @param {string} tenantId 租户ID（多租户模式）
-   * @returns {Promise<Object>} 创建的店铺
-   */
-  async createStore(storeData, tenantId = null) {
-    return this.systemMode.executeByMode(
-      // 单店模式实现
-      async () => {
-        throw new Error('单店模式不支持创建新店铺');
-      },
-      
-      // 多租户模式实现
-      async () => {
-        if (!tenantId) {
-          throw new Error('多租户模式需要提供租户ID');
+          businessHours: {
+            orderBy: {
+              dayOfWeek: 'asc'
+            }
+          },
+          tables: {
+            where: {
+              deletedAt: null
+            },
+            orderBy: {
+              tableNumber: 'asc'
+            },
+            take: 10
+          },
+          menuCategories: {
+            where: {
+              isActive: true
+            },
+            orderBy: {
+              sortOrder: 'asc'
+            },
+            include: {
+              _count: {
+                select: {
+                  items: {
+                    where: {
+                      isAvailable: true
+                    }
+                  }
+                }
+              }
+            },
+            take: 10
+          },
+          _count: {
+            select: {
+              tables: true,
+              menuCategories: true,
+              orders: true
+            }
+          }
         }
-        
-        // 这里应该在租户Schema中创建店铺
-        // 返回模拟数据
-        return {
-          id: `store_${Date.now()}`,
-          tenantId: tenantId,
-          ...storeData,
-          status: 'active',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          mode: 'multi',
-        };
+      });
+
+      if (!store) {
+        throw createError('NOT_FOUND', '店铺不存在或已删除');
       }
-    );
+
+      // 检查用户权限
+      const hasAccess = await this.checkStoreAccess(storeId, userId);
+      if (!hasAccess) {
+        throw createError('FORBIDDEN', '没有权限查看此店铺');
+      }
+
+      return {
+        success: true,
+        data: store
+      };
+    } catch (error) {
+      console.error('获取店铺详情失败:', error);
+      throw error;
+    }
   }
-  
+
   /**
-   * 更新店铺
+   * 更新店铺信息
    * @param {string} storeId 店铺ID
    * @param {Object} updateData 更新数据
-   * @param {string} tenantId 租户ID（多租户模式）
+   * @param {string} userId 用户ID
    * @returns {Promise<Object>} 更新后的店铺
    */
-  async updateStore(storeId, updateData, tenantId = null) {
-    return this.systemMode.executeByMode(
-      // 单店模式实现
-      async () => {
-        const singleStoreConfig = this.systemMode.getSingleStoreConfig();
-        
-        if (storeId !== singleStoreConfig.storeId) {
-          throw new Error('单店模式只能更新默认店铺');
-        }
-        
-        // 单店模式：更新默认店铺配置
-        return {
-          id: singleStoreConfig.storeId,
-          name: updateData.name || singleStoreConfig.storeName,
-          subdomain: singleStoreConfig.subdomain,
-          ...updateData,
-          updatedAt: new Date(),
-          mode: 'single',
-        };
-      },
-      
-      // 多租户模式实现
-      async () => {
-        if (!tenantId) {
-          throw new Error('多租户模式需要提供租户ID');
-        }
-        
-        // 这里应该在租户Schema中更新店铺
-        // 返回模拟数据
-        return {
+  async updateStore(storeId, updateData, userId) {
+    try {
+      // 检查店铺是否存在
+      const store = await this.db.store.findUnique({
+        where: {
           id: storeId,
-          tenantId: tenantId,
-          ...updateData,
-          updatedAt: new Date(),
-          mode: 'multi',
-        };
+          deletedAt: null
+        }
+      });
+
+      if (!store) {
+        throw createError('NOT_FOUND', '店铺不存在或已删除');
       }
-    );
+
+      // 检查用户权限（需要OWNER或MANAGER角色）
+      const staff = await this.db.storeStaff.findFirst({
+        where: {
+          storeId,
+          userId,
+          isActive: true,
+          role: { in: ['OWNER', 'MANAGER'] }
+        }
+      });
+
+      if (!staff) {
+        throw createError('FORBIDDEN', '没有权限更新店铺信息');
+      }
+
+      // 如果更新名称，需要重新生成slug
+      let updatePayload = { ...updateData, updatedAt: new Date() };
+      
+      if (updateData.name && updateData.name !== store.name) {
+        const newSlug = await this.generateUniqueSlug(updateData.name, store.tenantId);
+        updatePayload.slug = newSlug;
+      }
+
+      // 更新店铺
+      const updatedStore = await this.db.store.update({
+        where: { id: storeId },
+        data: updatePayload,
+        include: {
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+              subdomain: true
+            }
+          }
+        }
+      });
+
+      return {
+        success: true,
+        message: '店铺更新成功',
+        data: updatedStore
+      };
+    } catch (error) {
+      console.error('更新店铺失败:', error);
+      throw error;
+    }
   }
-  
+
   /**
-   * 获取系统模式信息
-   * @returns {Object} 系统模式信息
-   */
-  getSystemInfo() {
-    return this.systemMode.getSystemInfo();
-  }
-  
-  /**
-   * 验证店铺访问权限
-   * @param {Object} user 用户对象
+   * 删除店铺（软删除）
    * @param {string} storeId 店铺ID
-   * @param {string} tenantId 租户ID（多租户模式）
+   * @param {string} userId 用户ID
+   * @returns {Promise<Object>} 删除结果
+   */
+  async deleteStore(storeId, userId) {
+    try {
+      // 检查店铺是否存在
+      const store = await this.db.store.findUnique({
+        where: {
+          id: storeId,
+          deletedAt: null
+        }
+      });
+
+      if (!store) {
+        throw createError('NOT_FOUND', '店铺不存在或已删除');
+      }
+
+      // 检查用户权限（需要OWNER角色）
+      const staff = await this.db.storeStaff.findFirst({
+        where: {
+          storeId,
+          userId,
+          isActive: true,
+          role: 'OWNER'
+        }
+      });
+
+      if (!staff) {
+        throw createError('FORBIDDEN', '只有店铺所有者可以删除店铺');
+      }
+
+      // 软删除：设置deletedAt时间戳
+      await this.db.store.update({
+        where: { id: storeId },
+        data: {
+          status: 'DELETED',
+          deletedAt: new Date(),
+          updatedAt: new Date()
+        }
+      });
+
+      return {
+        success: true,
+        message: '店铺删除成功'
+      };
+    } catch (error) {
+      console.error('删除店铺失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 更新营业时间
+   * @param {string} storeId 店铺ID
+   * @param {Array} businessHours 营业时间数组
+   * @param {string} userId 用户ID
+   * @returns {Promise<Object>} 更新结果
+   */
+  async updateBusinessHours(storeId, businessHours, userId) {
+    try {
+      // 验证营业时间数据
+      const validationResult = validateBusinessHours(businessHours);
+      if (!validationResult.valid) {
+        throw createError('VALIDATION_ERROR', `营业时间数据验证失败: ${validationResult.errors.join(', ')}`);
+      }
+
+      // 检查店铺是否存在
+      const store = await this.db.store.findUnique({
+        where: {
+          id: storeId,
+          deletedAt: null
+        }
+      });
+
+      if (!store) {
+        throw createError('NOT_FOUND', '店铺不存在或已删除');
+      }
+
+      // 检查用户权限（需要OWNER或MANAGER角色）
+      const staff = await this.db.storeStaff.findFirst({
+        where: {
+          storeId,
+          userId,
+          isActive: true,
+          role: { in: ['OWNER', 'MANAGER'] }
+        }
+      });
+
+      if (!staff) {
+        throw createError('FORBIDDEN', '没有权限更新营业时间');
+      }
+
+      // 删除旧的营业时间
+      await this.db.storeBusinessHours.deleteMany({
+        where: { storeId }
+      });
+
+      // 创建新的营业时间
+      const hoursData = businessHours.map(hour => ({
+        storeId,
+        dayOfWeek: hour.dayOfWeek,
+        isOpen: hour.isOpen,
+        openTime: hour.openTime,
+        closeTime: hour.closeTime,
+        breakStart: hour.breakStart,
+        breakEnd: hour.breakEnd,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }));
+
+      await this.db.storeBusinessHours.createMany({
+        data: hoursData
+      });
+
+      // 获取更新后的营业时间
+      const updatedHours = await this.db.storeBusinessHours.findMany({
+        where: { storeId },
+        orderBy: { dayOfWeek: 'asc' }
+      });
+
+      return {
+        success: true,
+        message: '营业时间更新成功',
+        data: updatedHours
+      };
+    } catch (error) {
+      console.error('更新营业时间失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 检查用户对店铺的访问权限
+   * @param {string} storeId 店铺ID
+   * @param {string} userId 用户ID
    * @returns {Promise<boolean>} 是否有权限
    */
-  async validateStoreAccess(user, storeId, tenantId = null) {
-    return this.systemMode.executeByMode(
-      // 单店模式实现
-      async () => {
-        const singleStoreConfig = this.systemMode.getSingleStoreConfig();
-        
-        // 单店模式：所有认证用户都可以访问默认店铺
-        if (storeId !== singleStoreConfig.storeId) {
-          return false;
+  async checkStoreAccess(storeId, userId) {
+    try {
+      // 检查是否是店铺员工
+      const staff = await this.db.storeStaff.findFirst({
+        where: {
+          storeId,
+          userId,
+          isActive: true
         }
-        
-        return !!user;
-      },
-      
-      // 多租户模式实现
-      async () => {
-        if (!tenantId) {
-          return false;
-        }
-        
-        // 多租户模式：需要验证用户-租户-店铺关系
-        // 这里可以添加复杂的权限验证逻辑
-        // 简化实现：假设用户有权限
+      });
+
+      if (staff) {
         return true;
       }
-    );
+
+      // 检查是否是租户管理员
+      const store = await this.db.store.findUnique({
+        where: { id: storeId },
+        select: { tenantId: true }
+      });
+
+      if (!store) {
+        return false;
+      }
+
+      const userTenant = await this.db.userTenant.findFirst({
+        where: {
+          userId,
+          tenantId: store.tenantId,
+          status: 'ACTIVE',
+          role: { in: ['ADMIN', 'MANAGER'] }
+        }
+      });
+
+      return !!userTenant;
+    } catch (error) {
+      console.error('检查店铺访问权限失败:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 获取用户的店铺列表
+   * @param {string} userId 用户ID
+   * @param {Object} options 查询选项
+   * @returns {Promise<Object>} 店铺列表
+   */
+  async getStoresByUser(userId, options = {}) {
+    try {
+      const {
+        page = 1,
+        limit = 20,
+        status,
+        role
+      } = options;
+
+      const skip = (page - 1) * limit;
+
+      // 构建查询条件
+      const where = {
+        staff: {
+          some: {
+            userId,
+            isActive: true
+          }
+        },
+        deletedAt: null
+      };
+
+      if (status) {
+        where.status = status;
+      }
+
+      if (role) {
+        where.staff.some.role = role;
+      }
+
+      // 查询店铺
+      const [stores, total] = await Promise.all([
+        this.db.store.findMany({
+          where,
+          include: {
+            tenant: {
+              select: {
+                id: true,
+                name: true,
+                subdomain: true
+              }
+            },
+            staff: {
+              where: {
+                userId,
+                isActive: true
+              },
+              select: {
+                role: true,
+                joinedAt: true
+              }
+            },
+            _count: {
+              select: {
+                tables: true,
+                menuCategories: true,
+                orders: true
+              }
+            }
+          },
+          orderBy: {
+            createdAt: 'desc'
+          },
+          skip,
+          take: limit
+        }),
+        this.db.store.count({ where })
+      ]);
+
+      return {
+        success: true,
+        data: stores,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          totalPages: Math.ceil(total / limit)
+        }
+      };
+    } catch (error) {
+      console.error('获取用户店铺列表失败:', error);
+      throw error;
+    }
   }
 }
 

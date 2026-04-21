@@ -1,0 +1,278 @@
+// 扫码点餐自定义Hook
+import { useState, useEffect, useCallback } from 'react';
+import { ScanOrderState, MenuCategory, CartItem, OrderStatus } from '../types';
+import * as apiUtils from '../utils/api.utils';
+import * as cartUtils from '../utils/cart.utils';
+
+export function useScanOrder(storeId: string, tableId: string) {
+  // 初始状态
+  const initialState: ScanOrderState = {
+    storeId,
+    tableId,
+    storeInfo: null,
+    tableInfo: null,
+    categories: [],
+    selectedCategory: null,
+    cartItems: [],
+    isCartOpen: false,
+    orderStatus: null,
+    isLoading: true,
+    error: null,
+  };
+
+  const [state, setState] = useState<ScanOrderState>(initialState);
+
+  // 加载初始数据
+  useEffect(() => {
+    loadInitialData();
+  }, [storeId, tableId]);
+
+  // 加载购物车数据
+  useEffect(() => {
+    if (storeId && tableId) {
+      const savedCart = cartUtils.loadCartFromLocalStorage(storeId, tableId);
+      setState(prev => ({
+        ...prev,
+        cartItems: savedCart,
+      }));
+    }
+  }, [storeId, tableId]);
+
+  // 保存购物车到本地存储
+  useEffect(() => {
+    if (storeId && tableId && state.cartItems.length > 0) {
+      cartUtils.saveCartToLocalStorage(storeId, tableId, state.cartItems);
+    }
+  }, [state.cartItems, storeId, tableId]);
+
+  // 加载初始数据函数
+  const loadInitialData = async () => {
+    try {
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+
+      // 并行加载数据
+      const [storeInfo, tableInfo, categories] = await Promise.all([
+        apiUtils.fetchStoreInfo(storeId),
+        apiUtils.fetchTableInfo(storeId, tableId),
+        apiUtils.fetchStoreMenu(storeId),
+      ]);
+
+      setState(prev => ({
+        ...prev,
+        storeInfo,
+        tableInfo,
+        categories,
+        selectedCategory: categories.length > 0 ? categories[0].id : null,
+        isLoading: false,
+      }));
+    } catch (error) {
+      console.error('加载初始数据失败:', error);
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error instanceof Error ? error.message : '加载数据失败',
+      }));
+    }
+  };
+
+  // 选择分类
+  const selectCategory = useCallback((categoryId: string) => {
+    setState(prev => ({
+      ...prev,
+      selectedCategory: categoryId,
+    }));
+  }, []);
+
+  // 添加到购物车
+  const addToCart = useCallback((menuItemId: string, quantity: number = 1) => {
+    const menuItem = findMenuItem(menuItemId);
+    if (!menuItem) return;
+
+    const updatedCart = cartUtils.addItemToCart(state.cartItems, menuItem, quantity);
+    
+    setState(prev => ({
+      ...prev,
+      cartItems: updatedCart,
+    }));
+  }, [state.cartItems, state.categories]);
+
+  // 更新购物车项数量
+  const updateCartItemQuantity = useCallback((menuItemId: string, quantity: number) => {
+    const updatedCart = cartUtils.updateCartItemQuantity(
+      state.cartItems,
+      menuItemId,
+      quantity
+    );
+    
+    setState(prev => ({
+      ...prev,
+      cartItems: updatedCart,
+    }));
+  }, [state.cartItems]);
+
+  // 从购物车移除项
+  const removeFromCart = useCallback((menuItemId: string) => {
+    const updatedCart = cartUtils.removeItemFromCart(state.cartItems, menuItemId);
+    
+    setState(prev => ({
+      ...prev,
+      cartItems: updatedCart,
+    }));
+  }, [state.cartItems]);
+
+  // 清空购物车
+  const clearCart = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      cartItems: [],
+    }));
+    cartUtils.clearCartFromLocalStorage(storeId, tableId);
+  }, [storeId, tableId]);
+
+  // 切换购物车显示状态
+  const toggleCart = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      isCartOpen: !prev.isCartOpen,
+    }));
+  }, []);
+
+  // 打开购物车
+  const openCart = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      isCartOpen: true,
+    }));
+  }, []);
+
+  // 关闭购物车
+  const closeCart = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      isCartOpen: false,
+    }));
+  }, []);
+
+  // 提交订单
+  const submitOrder = useCallback(async (specialRequest?: string) => {
+    try {
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+
+      // 准备订单数据
+      const orderData = {
+        storeId,
+        tableId,
+        items: state.cartItems.map(item => ({
+          menuItemId: item.menuItemId,
+          quantity: item.quantity,
+        })),
+        specialRequest,
+      };
+
+      // 提交订单
+      const result = await apiUtils.submitOrder(orderData);
+
+      // 清空购物车
+      clearCart();
+
+      // 获取订单状态
+      const orderStatus = await apiUtils.fetchOrderStatus(result.orderId);
+
+      setState(prev => ({
+        ...prev,
+        orderStatus,
+        isCartOpen: false,
+        isLoading: false,
+      }));
+
+      return result.orderId;
+    } catch (error) {
+      console.error('提交订单失败:', error);
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error instanceof Error ? error.message : '提交订单失败',
+      }));
+      throw error;
+    }
+  }, [storeId, tableId, state.cartItems, clearCart]);
+
+  // 刷新订单状态
+  const refreshOrderStatus = useCallback(async (orderId: string) => {
+    try {
+      const orderStatus = await apiUtils.fetchOrderStatus(orderId);
+      setState(prev => ({
+        ...prev,
+        orderStatus,
+      }));
+      return orderStatus;
+    } catch (error) {
+      console.error('刷新订单状态失败:', error);
+      throw error;
+    }
+  }, []);
+
+  // 重新加载菜单
+  const reloadMenu = useCallback(async () => {
+    try {
+      setState(prev => ({ ...prev, isLoading: true }));
+      const categories = await apiUtils.fetchStoreMenu(storeId);
+      setState(prev => ({
+        ...prev,
+        categories,
+        isLoading: false,
+      }));
+    } catch (error) {
+      console.error('重新加载菜单失败:', error);
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error instanceof Error ? error.message : '重新加载菜单失败',
+      }));
+    }
+  }, [storeId]);
+
+  // 辅助函数：查找菜品
+  const findMenuItem = (menuItemId: string) => {
+    for (const category of state.categories) {
+      const menuItem = category.items.find(item => item.id === menuItemId);
+      if (menuItem) return menuItem;
+    }
+    return null;
+  };
+
+  // 计算购物车总金额
+  const cartTotal = cartUtils.calculateCartTotal(state.cartItems);
+  
+  // 计算购物车总数量
+  const cartItemCount = cartUtils.calculateCartItemCount(state.cartItems);
+
+  // 获取当前选中的分类
+  const currentCategory = state.categories.find(
+    cat => cat.id === state.selectedCategory
+  );
+
+  return {
+    // 状态
+    ...state,
+    cartTotal,
+    cartItemCount,
+    currentCategory,
+    
+    // 操作方法
+    selectCategory,
+    addToCart,
+    updateCartItemQuantity,
+    removeFromCart,
+    clearCart,
+    toggleCart,
+    openCart,
+    closeCart,
+    submitOrder,
+    refreshOrderStatus,
+    reloadMenu,
+    
+    // 工具函数
+    formatPrice: cartUtils.formatPrice,
+  };
+}

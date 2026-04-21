@@ -1,0 +1,285 @@
+// ============================================
+// 店铺管理相关模型
+// ============================================
+
+// 店铺状态枚举
+enum StoreStatus {
+  DRAFT      // 草稿
+  ACTIVE     // 活跃
+  INACTIVE   // 停用
+  MAINTENANCE // 维护中
+  DELETED    // 已删除
+}
+
+// 店铺类型枚举
+enum StoreType {
+  RESTAURANT     // 餐厅
+  CAFE           // 咖啡馆
+  FAST_FOOD      // 快餐店
+  BAKERY         // 面包店
+  BAR            // 酒吧
+  FOOD_TRUCK     // 餐车
+  CATERING       // 餐饮服务
+  OTHER          // 其他
+}
+
+// 营业时间模型
+model StoreBusinessHours {
+  id          String   @id @default(cuid())
+  storeId     String
+  dayOfWeek   Int      // 0=周日, 1=周一, ..., 6=周六
+  isOpen      Boolean  @default(true)
+  openTime    String?  // HH:MM格式，如 "09:00"
+  closeTime   String?  // HH:MM格式，如 "22:00"
+  breakStart  String?  // 休息开始时间
+  breakEnd    String?  // 休息结束时间
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, dayOfWeek])
+  @@index([storeId])
+  @@index([dayOfWeek])
+}
+
+// 店铺模型
+model Store {
+  id               String                @id @default(cuid())
+  tenantId         String
+  name             String
+  slug             String               @unique // URL友好标识
+  displayName      String?
+  description      String?
+  type             StoreType            @default(RESTAURANT)
+  status           StoreStatus          @default(DRAFT)
+  
+  // 联系信息
+  contactPhone     String?
+  contactEmail     String?
+  address          String?
+  city             String?
+  state            String?
+  country          String?              @default("中国")
+  postalCode       String?
+  latitude         Float?
+  longitude        Float?
+  
+  // 配置
+  timezone         String?              @default("Asia/Shanghai")
+  currency         String?              @default("CNY")
+  language         String?              @default("zh-CN")
+  logoUrl          String?
+  coverImageUrl    String?
+  themeColor       String?              @default("#1976d2")
+  
+  // 业务设置
+  tableCount       Int?                 @default(20)      // 餐桌数量
+  printerEnabled   Boolean              @default(false)   // 是否启用打印机
+  printerConfig    Json?                                 // 打印机配置
+  qrCodeEnabled    Boolean              @default(true)    // 是否启用二维码
+  takeawayEnabled  Boolean              @default(true)    // 是否支持外卖
+  deliveryEnabled  Boolean              @default(false)   // 是否支持配送
+  
+  // 时间戳
+  openedAt         DateTime?            // 开业时间
+  trialEndsAt      DateTime?            // 试用结束时间
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  deletedAt        DateTime?
+  
+  // 关系
+  tenant           Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  businessHours    StoreBusinessHours[] // 营业时间
+  tables           Table[]              // 餐桌
+  menuCategories   MenuCategory[]       // 菜单分类
+  orders           Order[]              // 订单
+  
+  @@index([tenantId])
+  @@index([slug])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// 餐桌模型
+model Table {
+  id          String   @id @default(cuid())
+  storeId     String
+  tableNumber String   // 桌号，如 "A01", "B12"
+  name        String?  // 餐桌名称，如 "靠窗雅座"
+  capacity    Int      @default(4) // 容纳人数
+  status      String   @default("AVAILABLE") // AVAILABLE, OCCUPIED, RESERVED, CLEANING
+  qrCodeUrl   String?  // 二维码URL
+  qrCodeData  String?  // 二维码数据（加密）
+  notes       String?  // 备注
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  
+  @@unique([storeId, tableNumber])
+  @@index([storeId])
+  @@index([tableNumber])
+  @@index([status])
+}
+
+// 菜单分类模型
+model MenuCategory {
+  id          String   @id @default(cuid())
+  storeId     String
+  name        String
+  description String?
+  sortOrder   Int      @default(0) // 排序顺序
+  isActive    Boolean  @default(true)
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  items       MenuItem[]
+  
+  @@index([storeId])
+  @@index([sortOrder])
+  @@unique([storeId, name])
+}
+
+// 菜单项模型
+model MenuItem {
+  id               String   @id @default(cuid())
+  categoryId       String
+  name             String
+  description      String?
+  price            Decimal  @db.Decimal(10, 2) // 价格，保留2位小数
+  originalPrice    Decimal? @db.Decimal(10, 2) // 原价（用于显示折扣）
+  costPrice        Decimal? @db.Decimal(10, 2) // 成本价
+  imageUrl         String?
+  isAvailable      Boolean  @default(true)
+  isRecommended    Boolean  @default(false)    // 是否推荐
+  isSpicy          Boolean  @default(false)    // 是否辣
+  isVegetarian     Boolean  @default(false)    // 是否素食
+  hasOptions       Boolean  @default(false)    // 是否有选项（如辣度、大小）
+  optionsConfig    Json?                       // 选项配置
+  preparationTime  Int?     @default(15)       // 准备时间（分钟）
+  calories         Int?                        // 卡路里
+  allergens        String?                     // 过敏原
+  sortOrder        Int      @default(0)        // 排序顺序
+  sku              String?                     // 库存单位
+  stockQuantity    Int?                        // 库存数量
+  lowStockAlert    Int?     @default(10)       // 低库存预警
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  category         MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems       OrderItem[]
+  
+  @@index([categoryId])
+  @@index([isAvailable])
+  @@index([isRecommended])
+  @@index([sortOrder])
+  @@unique([categoryId, name])
+}
+
+// 订单状态枚举
+enum OrderStatus {
+  PENDING        // 待确认
+  CONFIRMED      // 已确认
+  PREPARING      // 制作中
+  READY          // 已就绪
+  SERVED         // 已上菜
+  COMPLETED      // 已完成
+  CANCELLED      // 已取消
+  REFUNDED       // 已退款
+}
+
+// 订单支付状态枚举
+enum PaymentStatus {
+  PENDING        // 待支付
+  PROCESSING     // 支付处理中
+  PAID           // 已支付
+  FAILED         // 支付失败
+  REFUNDED       // 已退款
+  CANCELLED      // 支付取消
+}
+
+// 订单模型
+model Order {
+  id               String        @id @default(cuid())
+  storeId          String
+  tableId          String?
+  orderNumber      String        @unique // 订单号，如 "ORD-20240421-001"
+  customerName     String?               // 顾客姓名
+  customerPhone    String?               // 顾客电话
+  customerNotes    String?               // 顾客备注
+  orderType        String        @default("DINE_IN") // DINE_IN, TAKEAWAY, DELIVERY
+  status           OrderStatus   @default(PENDING)
+  paymentStatus    PaymentStatus @default(PENDING)
+  subtotal         Decimal       @db.Decimal(10, 2) // 小计
+  taxAmount        Decimal       @db.Decimal(10, 2) @default(0) // 税费
+  discountAmount   Decimal       @db.Decimal(10, 2) @default(0) // 折扣
+  deliveryFee      Decimal       @db.Decimal(10, 2) @default(0) // 配送费
+  totalAmount      Decimal       @db.Decimal(10, 2) // 总计
+  paidAmount       Decimal       @db.Decimal(10, 2) @default(0) // 已支付金额
+  changeAmount     Decimal       @db.Decimal(10, 2) @default(0) // 找零
+  paymentMethod    String?               // 支付方式
+  paymentReference String?               // 支付参考号
+  estimatedReadyAt DateTime?             // 预计就绪时间
+  readyAt          DateTime?             // 实际就绪时间
+  servedAt         DateTime?             // 上菜时间
+  completedAt      DateTime?             // 完成时间
+  cancelledAt      DateTime?             // 取消时间
+  cancellationReason String?             // 取消原因
+  printerStatus    String?               // 打印机状态
+  printedAt        DateTime?             // 打印时间
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  store            Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  table            Table?        @relation(fields: [tableId], references: [id])
+  items            OrderItem[]
+  
+  @@index([storeId])
+  @@index([orderNumber])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+}
+
+// 订单项模型
+model OrderItem {
+  id               String   @id @default(cuid())
+  orderId          String
+  menuItemId       String
+  quantity         Int      @default(1)
+  unitPrice        Decimal  @db.Decimal(10, 2) // 单价
+  totalPrice       Decimal  @db.Decimal(10, 2) // 总价
+  specialInstructions String?               // 特殊要求
+  options          Json?                    // 选项选择
+  status           String   @default("PENDING") // PENDING, PREPARING, READY, SERVED
+  notes            String?                  // 内部备注
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  order            Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem         MenuItem @relation(fields: [menuItemId], references: [id])
+  
+  @@index([orderId])
+  @@index([menuItemId])
+  @@index([status])
+}
+
+// 店铺员工关联模型
+model StoreStaff {
+  id          String   @id @default(cuid())
+  storeId     String
+  userId      String
+  role        String   @default("STAFF") // OWNER, MANAGER, STAFF, CASHIER, CHEF
+  permissions Json     @default("[]")
+  isActive    Boolean  @default(true)
+  joinedAt    DateTime @default(now())
+  leftAt      DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([storeId, userId])
+  @@index([storeId])
+  @@index([userId])
+  @@index([role])
+  @@index([isActive])
+}

@@ -316,7 +316,7 @@ const CreateTenant: React.FC = () => {
             <Step>
               <StepLabel>选择套餐计划</StepLabel>
               <StepContent>
-                <FormControl fullWidth error={false}>
+                <FormControl fullWidth>
                   <InputLabel>套餐计划</InputLabel>
                   <Select
                     name="plan"

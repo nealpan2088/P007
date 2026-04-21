@@ -243,7 +243,7 @@ const TenantManagement: React.FC = () => {
         <BusinessIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
         我的租户
       </Typography>
-      <Typography variant="body1" color="text.secondary" paragraph={true}>
+      <Typography variant="body1" color="text.secondary" paragraph>
         您可以管理以下租户。每个租户代表一个独立的餐厅或业务。
       </Typography>
 
@@ -255,7 +255,7 @@ const TenantManagement: React.FC = () => {
           <Typography variant="h6" color="text.secondary" gutterBottom>
             暂无租户
           </Typography>
-          <Typography variant="body1" color="text.secondary" paragraph={true}>
+          <Typography variant="body1" color="text.secondary" paragraph>
             您还没有创建任何租户。租户代表一个独立的餐厅或业务。
           </Typography>
           <Button

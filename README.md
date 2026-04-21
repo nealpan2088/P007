@@ -6,8 +6,14 @@
 
 ## 📊 当前版本状态
 
-**版本**: v0.2.2 (2026年4月21日)
-**状态**: ✅ **路由配置修复与配置验证优化**
+**版本**: v0.2.3 (2026年4月21日)
+**状态**: ✅ **店铺管理界面完善与文档系统建立**
+
+### 🎯 版本亮点
+1. **店铺管理界面完整开发** - Ant Design现代化UI，完整CRUD操作
+2. **文档系统建立** - 完整的技术文档和TypeScript修复指南
+3. **工具函数库创建** - 统一的API调用和类型定义系统
+4. **代码质量提升** - 完整的TypeScript类型定义和模块化设计
 
 ### ✅ 已完成功能
 1. **用户认证系统** - 完整的注册/登录流程
@@ -26,6 +32,27 @@
 - **表单**: Formik + Yup 表单验证
 - **认证**: JWT Token + 刷新令牌机制
 - **部署**: 多环境配置支持
+
+## 🌐 访问地址
+
+### 开发环境
+- **前端服务器**: http://localhost:5177
+- **后端服务器**: http://localhost:33037
+- **数据库**: PostgreSQL (localhost:5432, database: qilin_dev)
+
+### 主要页面
+1. **登录页面**: http://localhost:5177/auth/login
+2. **注册页面**: http://localhost:5177/auth/register
+3. **店铺管理**: http://localhost:5177/dashboard/stores
+4. **创建店铺**: http://localhost:5177/dashboard/stores/create
+5. **租户管理**: http://localhost:5177/dashboard/tenants
+6. **扫码点餐**: http://localhost:5177/scan/{storeId}/{tableId}
+
+### API端点
+1. **健康检查**: http://localhost:33037/api/health
+2. **公开API**: http://localhost:33037/api/public/health
+3. **店铺API**: http://localhost:33037/api/stores
+4. **租户API**: http://localhost:33037/api/v1/tenants
 
 ## 🏗️ 项目结构
 

@@ -1,4 +1,4 @@
-// 麒麟项目 - 统一配置管理系统
+// 麒麟项目 - 统一配置管理系统（动态版本）
 // 所有配置通过环境变量管理，禁止硬编码
 
 import dotenv from 'dotenv';
@@ -6,17 +6,17 @@ import dotenv from 'dotenv';
 // 加载环境变量
 dotenv.config();
 
-// 必需的环境变量列表
-const requiredEnvVars = [
-  'NODE_ENV',
-  'PORT',
-  'DATABASE_URL',
-  'JWT_SECRET',
-  'API_PREFIX'
-];
-
 // 配置验证函数
 export const validate = () => {
+  // 必需的环境变量列表
+  const requiredEnvVars = [
+    'NODE_ENV',
+    'PORT',
+    'DATABASE_URL',
+    'JWT_SECRET',
+    'API_PREFIX'
+  ];
+  
   const missingVars = [];
   
   for (const envVar of requiredEnvVars) {
@@ -43,8 +43,8 @@ export const validate = () => {
   return true;
 };
 
-// 服务器配置
-export const serverConfig = {
+// 服务器配置（使用getter函数动态读取环境变量）
+export const getServerConfig = () => ({
   // 环境
   env: process.env.NODE_ENV || 'development',
   isProduction: process.env.NODE_ENV === 'production',
@@ -68,17 +68,17 @@ export const serverConfig = {
   // 日志
   logLevel: process.env.LOG_LEVEL || 'info',
   logFormat: process.env.LOG_FORMAT || 'json',
-};
+});
 
 // 数据库配置
-export const databaseConfig = {
+export const getDatabaseConfig = () => ({
   url: process.env.DATABASE_URL,
   maxConnections: parseInt(process.env.DB_MAX_CONNECTIONS || '10', 10),
   connectionTimeout: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000', 10),
   idleTimeout: parseInt(process.env.DB_IDLE_TIMEOUT || '30000', 10),
   
   // 多租户配置
-  publicSchema: process.env.DB_PUBLIC_SCHEMA || 'p007_public',
+  publicSchema: process.env.DB_PUBLIC_SCHEMA || 'public',
   tenantSchemaPrefix: process.env.DB_TENANT_SCHEMA_PREFIX || 'tenant_',
   
   // 连接池
@@ -88,10 +88,10 @@ export const databaseConfig = {
     acquireTimeout: parseInt(process.env.DB_POOL_ACQUIRE_TIMEOUT || '30000', 10),
     idleTimeout: parseInt(process.env.DB_POOL_IDLE_TIMEOUT || '10000', 10),
   },
-};
+});
 
 // 认证配置
-export const authConfig = {
+export const getAuthConfig = () => ({
   // JWT
   jwtSecret: process.env.JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
@@ -111,10 +111,10 @@ export const authConfig = {
   sessionCookieHttpOnly: process.env.SESSION_COOKIE_HTTP_ONLY === 'true',
   sessionCookieSameSite: process.env.SESSION_COOKIE_SAME_SITE || 'strict',
   sessionMaxAge: parseInt(process.env.SESSION_MAX_AGE || '86400000', 10), // 24小时
-};
+});
 
 // 租户配置
-export const tenantConfig = {
+export const getTenantConfig = () => ({
   // 子域名
   subdomainRegex: process.env.SUBDOMAIN_REGEX || '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$',
   reservedSubdomains: (process.env.RESERVED_SUBDOMAINS || 'www,app,api,admin,test,demo').split(','),
@@ -149,10 +149,10 @@ export const tenantConfig = {
     monthly: process.env.BILLING_CYCLE_MONTHLY_PRICE || '299',
     yearly: process.env.BILLING_CYCLE_YEARLY_PRICE || '2999',
   },
-};
+});
 
 // 业务配置
-export const businessConfig = {
+export const getBusinessConfig = () => ({
   // 店铺
   defaultStoreSettings: {
     taxRate: parseFloat(process.env.DEFAULT_TAX_RATE || '0.06'),
@@ -179,10 +179,10 @@ export const businessConfig = {
     baseUrl: process.env.SHANGPENG_BASE_URL || 'https://open.spyun.net/v1/',
     timeout: parseInt(process.env.SHANGPENG_TIMEOUT || '10000', 10),
   },
-};
+});
 
 // 安全配置
-export const securityConfig = {
+export const getSecurityConfig = () => ({
   // 速率限制
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10), // 15分钟
@@ -206,10 +206,10 @@ export const securityConfig = {
   // 审计日志
   auditLogEnabled: process.env.AUDIT_LOG_ENABLED === 'true',
   auditLogLevel: process.env.AUDIT_LOG_LEVEL || 'info',
-};
+});
 
 // 监控配置
-export const monitoringConfig = {
+export const getMonitoringConfig = () => ({
   // 健康检查
   healthCheckInterval: parseInt(process.env.HEALTH_CHECK_INTERVAL || '30000', 10),
   
@@ -225,54 +225,31 @@ export const monitoringConfig = {
     responseTime: parseInt(process.env.ALERT_RESPONSE_TIME_THRESHOLD || '1000', 10),
     errorRate: parseFloat(process.env.ALERT_ERROR_RATE_THRESHOLD || '5'),
   },
-};
+});
 
-// 导出所有配置
+// 导出所有配置（使用getter函数）
 export default {
-  server: serverConfig,
-  database: databaseConfig,
-  auth: authConfig,
-  tenant: tenantConfig,
-  business: businessConfig,
-  security: securityConfig,
-  monitoring: monitoringConfig,
+  get server() { return getServerConfig(); },
+  get database() { return getDatabaseConfig(); },
+  get auth() { return getAuthConfig(); },
+  get tenant() { return getTenantConfig(); },
+  get business() { return getBusinessConfig(); },
+  get security() { return getSecurityConfig(); },
+  get monitoring() { return getMonitoringConfig(); },
   
   // 工具函数
   getFullConfig() {
     return {
-      server: serverConfig,
-      database: databaseConfig,
-      auth: authConfig,
-      tenant: tenantConfig,
-      business: businessConfig,
-      security: securityConfig,
-      monitoring: monitoringConfig,
+      server: getServerConfig(),
+      database: getDatabaseConfig(),
+      auth: getAuthConfig(),
+      tenant: getTenantConfig(),
+      business: getBusinessConfig(),
+      security: getSecurityConfig(),
+      monitoring: getMonitoringConfig(),
     };
   },
   
   // 验证配置
-  validate() {
-    const errors = [];
-    
-    // 验证端口
-    if (serverConfig.port < 1024 || serverConfig.port > 65535) {
-      errors.push(`端口必须在1024-65535之间: ${serverConfig.port}`);
-    }
-    
-    // 验证JWT密钥
-    if (authConfig.jwtSecret.length < 32) {
-      errors.push('JWT密钥必须至少32个字符');
-    }
-    
-    // 验证数据库URL
-    if (!databaseConfig.url.includes('postgresql://')) {
-      errors.push('数据库URL必须是PostgreSQL连接字符串');
-    }
-    
-    if (errors.length > 0) {
-      throw new Error(`配置验证失败:\n${errors.join('\n')}`);
-    }
-    
-    return true;
-  },
+  validate,
 };

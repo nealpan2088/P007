@@ -46,6 +46,16 @@ export const TENANT_ROUTES = {
   // 租户仪表板
   DASHBOARD: '/dashboard',
   
+  // 租户管理（用户自己的租户）
+  TENANTS: {
+    LIST: '/tenants',
+    CREATE: '/tenants/create',
+    DETAIL: '/tenants/:tenantId',
+    EDIT: '/tenants/:tenantId/edit',
+    SETTINGS: '/tenants/:tenantId/settings',
+    SWITCH: '/tenants/switch/:tenantId',
+  },
+  
   // 店铺管理
   STORES: {
     LIST: '/dashboard/stores',

@@ -1,11 +1,11 @@
 // 麒麟项目 - API路由常量管理系统
 // 所有API路由通过常量管理，禁止硬编码
 
-import { serverConfig } from './index.js';
+import config from './index.js';
 
 // API基础路径
-const API_PREFIX = serverConfig.apiPrefix;
-const API_VERSION = serverConfig.apiVersion;
+const API_PREFIX = config.server.apiPrefix;
+const API_VERSION = config.server.apiVersion;
 const BASE_PATH = `${API_PREFIX}/${API_VERSION}`;
 
 // 公共API路由（无需认证）
@@ -43,8 +43,24 @@ export const PUBLIC_ROUTES = {
 export const TENANT_ROUTES = {
   // 租户管理
   TENANT: {
+    // 租户注册和检查（公开）
+    REGISTER: `${BASE_PATH}/tenant/register`,
+    CHECK_SUBDOMAIN: `${BASE_PATH}/tenant/check-subdomain`,
+    
+    // 租户信息管理（需要认证）
     INFO: `${BASE_PATH}/tenant`,
-    UPDATE: `${BASE_PATH}/tenant`,
+    LIST: `${BASE_PATH}/tenant/list`,
+    DETAIL: `${BASE_PATH}/tenant/:tenantId`,
+    UPDATE: `${BASE_PATH}/tenant/:tenantId`,
+    STATS: `${BASE_PATH}/tenant/:tenantId/stats`,
+    HEALTH: `${BASE_PATH}/tenant/health`,
+    
+    // 租户用户管理
+    ADD_USER: `${BASE_PATH}/tenant/:tenantId/users`,
+    REMOVE_USER: `${BASE_PATH}/tenant/:tenantId/users/:userId`,
+    UPDATE_USER_ROLE: `${BASE_PATH}/tenant/:tenantId/users/:userId/role`,
+    
+    // 租户业务功能
     BILLING: `${BASE_PATH}/tenant/billing`,
     SUBSCRIPTION: `${BASE_PATH}/tenant/subscription`,
     SETTINGS: `${BASE_PATH}/tenant/settings`,

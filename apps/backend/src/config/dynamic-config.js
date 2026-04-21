@@ -34,7 +34,7 @@ export const getDatabaseConfig = () => ({
   idleTimeout: parseInt(process.env.DB_IDLE_TIMEOUT || '30000', 10),
   
   // 多租户配置
-  publicSchema: process.env.DB_PUBLIC_SCHEMA || 'p007_public',
+  publicSchema: process.env.DB_PUBLIC_SCHEMA || 'public',
   tenantSchemaPrefix: process.env.DB_TENANT_SCHEMA_PREFIX || 'tenant_',
   
   // 连接池

@@ -79,6 +79,10 @@ fastify.get(routes.public.HEALTH, async () => {
 // 注册认证路由
 registerAuthRoutes(fastify)
 
+// 注册租户路由
+import { registerTenantRoutes } from './routes/tenant.routes.js'
+registerTenantRoutes(fastify)
+
 // 注册系统模式路由
 import { registerSystemRoutes } from './routes/system.routes.js'
 registerSystemRoutes(fastify)

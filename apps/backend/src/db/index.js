@@ -5,16 +5,17 @@ import { PrismaClient } from '@prisma/client'
 import config from '../config/index.js'
 
 // 创建Prisma客户端实例
-export const createPrismaClient = (schema = 'p007_public') => {
+export const createPrismaClient = (schema = 'public') => {
   const databaseUrl = config.database.url
+  const publicSchema = config.database.publicSchema || 'public'
   
   // 设置搜索路径（Schema）
-  const searchPath = schema === 'p007_public' 
-    ? 'p007_public' 
-    : `"${schema}", p007_public`
+  const searchPath = schema === publicSchema 
+    ? publicSchema 
+    : `${schema}, ${publicSchema}`
   
   // 构建带Schema的连接字符串
-  const urlWithSchema = `${databaseUrl}?schema=${searchPath}&connection_limit=${config.database.maxConnections}`
+  const urlWithSchema = `${databaseUrl}?search_path=${searchPath}&connection_limit=${config.database.maxConnections}`
   
   return new PrismaClient({
     datasources: {
@@ -29,7 +30,7 @@ export const createPrismaClient = (schema = 'p007_public') => {
 }
 
 // 公共数据库客户端（访问公共Schema）
-export const publicDb = createPrismaClient('p007_public')
+export const publicDb = createPrismaClient('public')
 
 // 租户数据库客户端工厂
 export const createTenantDb = (tenantId) => {

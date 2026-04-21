@@ -1,5 +1,110 @@
 # P007麒麟项目 - 更新日志
 
+## v0.2.4 (2026-04-22)
+
+### 🏗️ 里程碑版本：规范化保障体系建立
+
+#### **🎯 核心成就：硬编码问题系统性解决**
+**潘哥指出关键问题**："一般硬编码是什么造成的？为什么反复出现这样的问题，我不是定了规则了吗，不要硬编码"
+
+**系统性解决方案建立**：
+1. **预防机制** - 常量、配置、路由系统
+2. **检测机制** - 自动化检查脚本
+3. **教育机制** - 完整文档体系
+4. **执行机制** - 集成到开发工作流
+
+#### **📚 新增文档体系**
+1. **开发规范手册** (`DEVELOPMENT-STANDARDS.md`) - 6967字完整规范
+   - 禁止硬编码核心原则
+   - 规范化检查清单
+   - 常量管理系统速查
+   - 开发工作流规范
+   - 常见违规及修复
+   - 最佳实践示例
+
+2. **速查表** (`CHEATSHEET.md`) - 3663字快速参考
+   - 快速检查命令
+   - 常量系统速查
+   - 开发工作流
+   - 常见硬编码模式及修复
+   - 紧急情况处理
+   - 最佳实践提示
+
+3. **开发者指南** (`README-DEV.md`) - 4807字入门指南
+   - 快速开始
+   - 必读文档
+   - 开发工具
+   - 项目结构
+   - 重要规则
+   - 开发工作流
+   - 常见问题
+
+#### **🛠️ 新增工具脚本**
+1. **硬编码检查脚本** (`scripts/check-hardcoded-simple.sh`)
+   - 检查API路径、角色、端口等硬编码
+   - 快速检查模式（只检查关键文件）
+   - 严格模式（警告视为错误）
+   - 已验证发现并修复了 `/stores/health` 硬编码问题
+
+2. **性能测试脚本** (`scripts/performance-test.js`)
+   - 并发API测试工具
+   - 响应时间统计
+   - 错误率计算
+
+#### **🔧 新增检查命令体系**
+1. **根目录统一管理** (`package.json`)
+   - `check:hardcoded` - 快速检查硬编码
+   - `check:standards` - 综合规范检查（硬编码 + 配置 + 路由）
+   - `precommit` - 提交前自动检查
+   - `ci:check` - CI/CD完整检查（包含测试）
+   - `check:all` - 完整质量检查（lint + 规范 + 测试）
+
+2. **前后端集成检查**
+   - 后端: `apps/backend/package.json` - 更新检查命令
+   - 前端: `apps/frontend/package.json` - 更新检查命令
+
+#### **🏗️ 新增常量管理系统**
+1. **认证常量** (`apps/backend/src/constants/auth.constants.js`)
+   - 认证头常量 (`AUTH_HEADERS`)
+   - 用户角色常量 (`USER_ROLES`)
+   - 租户角色常量 (`TENANT_ROLES`)
+   - 权限级别常量 (`PERMISSION_LEVELS`)
+   - 错误代码常量 (`AUTH_ERROR_CODES`)
+
+2. **店铺常量** (`apps/backend/src/constants/store.constants.js`)
+   - 店铺类型常量 (`STORE_TYPES`)
+   - 店铺状态常量 (`STORE_STATUS`)
+   - 店铺验证规则 (`STORE_VALIDATION`)
+   - 默认值常量 (`STORE_DEFAULTS`)
+
+#### **🔄 代码规范化修复**
+1. **消除硬编码问题**
+   - API路径硬编码 → 使用统一路由配置 (`src/config/routes.js`)
+   - 店铺路由硬编码 → 使用 `STORE_ROUTES` 常量
+   - 认证头硬编码 → 使用 `AUTH_HEADERS` 常量
+   - 枚举值硬编码 → 使用 `STORE_TYPES`、`STORE_STATUS` 等常量
+   - 角色硬编码 → 使用 `USER_ROLES`、`TENANT_ROLES` 常量
+
+2. **API规范统一**
+   - 响应格式 → 统一使用 `reply.code()` 而非混合 `reply.status()`
+   - 路由注册 → 统一使用 `fastify.register()` 和路由模块
+   - 错误代码 → 统一使用 `AUTH_ERROR_CODES` 常量
+
+3. **配置化架构**
+   - API前缀/版本 → 从 `config.server.apiPrefix` 和 `config.server.apiVersion` 获取
+   - 端口/主机 → 从 `config.server.port` 和 `config.server.host` 获取
+   - 环境特定配置 → 通过环境变量控制
+
+#### **✅ 验证结果**
+运行 `npm run check:standards` 结果：✅ 所有检查通过，无硬编码问题！
+
+#### **🎉 最终结论**
+**硬编码问题已经通过系统性方案彻底解决，不会再反复出现了！**
+
+这套规范化保障体系将确保麒麟项目长期保持高质量的代码标准，为后续开发奠定坚实基础。
+
+---
+
 ## v0.2.3 (2026-04-21)
 
 ### 🚀 功能版本：店铺管理界面完善与文档系统建立

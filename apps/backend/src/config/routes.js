@@ -73,6 +73,7 @@ export const TENANT_ROUTES = {
     DETAIL: `${BASE_PATH}/stores/:storeId`,
     UPDATE: `${BASE_PATH}/stores/:storeId`,
     DELETE: `${BASE_PATH}/stores/:storeId`,
+    HEALTH: `${BASE_PATH}/stores/health`,
     STATS: `${BASE_PATH}/stores/:storeId/stats`,
     
     // 店铺配置

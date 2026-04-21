@@ -1,0 +1,55 @@
+// 麒麟项目 - 认证相关常量
+// 避免硬编码，统一管理
+
+// 认证头
+export const AUTH_HEADERS = {
+  AUTHORIZATION: 'authorization',
+  BEARER_PREFIX: 'Bearer ',
+  TENANT_ID: 'x-tenant-id'
+};
+
+// 用户角色
+export const USER_ROLES = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  ADMIN: 'ADMIN',
+  OWNER: 'OWNER',
+  MANAGER: 'MANAGER',
+  STAFF: 'STAFF',
+  USER: 'USER',
+  GUEST: 'GUEST'
+};
+
+// 租户角色
+export const TENANT_ROLES = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  MANAGER: 'MANAGER',
+  STAFF: 'STAFF'
+};
+
+// 权限级别
+export const PERMISSION_LEVELS = {
+  SUPER_ADMIN: ['SUPER_ADMIN'],
+  TENANT_ADMIN: ['OWNER', 'ADMIN'],
+  TENANT_MANAGER: ['OWNER', 'ADMIN', 'MANAGER'],
+  TENANT_STAFF: ['OWNER', 'ADMIN', 'MANAGER', 'STAFF']
+};
+
+// 错误代码
+export const AUTH_ERROR_CODES = {
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  INVALID_TOKEN: 'INVALID_TOKEN',
+  TOKEN_EXPIRED: 'TOKEN_EXPIRED',
+  FORBIDDEN: 'FORBIDDEN',
+  MISSING_TENANT_ID: 'MISSING_TENANT_ID',
+  TENANT_ACCESS_DENIED: 'TENANT_ACCESS_DENIED'
+};
+
+// 导出所有常量
+export default {
+  AUTH_HEADERS,
+  USER_ROLES,
+  TENANT_ROLES,
+  PERMISSION_LEVELS,
+  AUTH_ERROR_CODES
+};

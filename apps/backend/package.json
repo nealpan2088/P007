@@ -1,6 +1,6 @@
 {
   "name": "p007-backend",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,12 +10,15 @@
     "db:studio": "prisma studio",
     "lint": "eslint . --ext js,mjs --report-unused-disable-directives --max-warnings 0",
     "test": "vitest",
-    "check:hardcoded": "../../scripts/check-hardcoded.sh",
+    "check:hardcoded": "../../scripts/check-hardcoded-simple.sh",
     "check:config": "node -e \"import('./src/config/index.js').then(c => { c.validate(); console.log('✅ 配置验证通过'); }).catch(e => { console.error('❌ 配置验证失败:', e.message); process.exit(1); })\"",
     "check:routes": "node -e \"import('./src/config/routes.js').then(r => { const routes = r.default || r; console.log('✅ 路由系统正常'); console.log('可用路由:', Object.keys(routes.getAllRoutes()).join(', ')); }).catch(e => { console.error('❌ 路由系统错误:', e.message); process.exit(1); })\"",
     "normalize:import": "../../scripts/normalize-import.sh",
     "check:all": "./scripts/check-all.sh",
-    "check:simple": "echo '✅ 配置验证通过' && echo '✅ 路由系统正常'"
+    "check:simple": "echo '✅ 配置验证通过' && echo '✅ 路由系统正常'",
+    "check:standards": "../../scripts/check-hardcoded.sh --strict && npm run check:config && npm run check:routes",
+    "precommit": "npm run check:standards",
+    "ci:check": "npm run lint && npm run check:standards && npm test"
   },
   "dependencies": {
     "@fastify/cors": "^11.2.0",

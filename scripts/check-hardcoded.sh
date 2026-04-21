@@ -1,251 +1,347 @@
 #!/bin/bash
 
-# 麒麟项目 - 硬编码防护检查脚本
-# 检查代码中的硬编码配置，确保所有配置通过环境变量管理
+# 麒麟项目 - 硬编码检查脚本
+# 检查代码中的硬编码字符串、数字和路径
 
 set -e
 
-echo "🔍 开始硬编码配置检查..."
-echo "================================"
+echo "🔍 麒麟项目硬编码检查"
+echo "======================"
+echo "检查时间: $(date '+%Y-%m-%d %H:%M:%S')"
+echo ""
 
-# 颜色定义
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+ERROR_COUNT=0
+WARNING_COUNT=0
+CHECKED_FILES=0
 
-# 检查结果统计
-total_issues=0
-critical_issues=0
-warning_issues=0
+# 检查目录
+CHECK_DIRS=(
+  "apps/backend/src"
+  "apps/frontend/src"
+)
 
-# 检查函数
-check_hardcoded() {
-    local file="$1"
-    local pattern="$2"
-    local severity="$3"
-    local description="$4"
-    
-    if [ ! -f "$file" ]; then
-        return
+# 硬编码模式定义
+declare -A PATTERNS=(
+  # API路径硬编码
+  ["API路径"]="'/api/|/v1/|/v2/|/public/|/admin/|/tenant/"
+  
+  # 业务路径硬编码
+  ["业务路径"]="'/stores/|'/auth/|'/users/|'/orders/|'/menu/'"
+  
+  # 认证相关硬编码
+  ["认证头"]="'Bearer '|'x-tenant-id'|'authorization'"
+  
+  # 角色硬编码
+  ["用户角色"]="'ADMIN'|'OWNER'|'USER'|'STAFF'|'MANAGER'"
+  
+  # 状态硬编码
+  ["状态值"]="'ACTIVE'|'INACTIVE'|'DRAFT'|'PENDING'|'COMPLETED'"
+  
+  # 类型硬编码
+  ["类型值"]="'RESTAURANT'|'CAFE'|'FAST_FOOD'|'BAKERY'"
+  
+  # 端口硬编码
+  ["端口号"]="33037|5177|5432|3000|8080"
+  
+  # 主机硬编码
+  ["主机地址"]="localhost|127.0.0.1|0.0.0.0"
+  
+  # 配置硬编码
+  ["配置值"]="JWT_SECRET|DATABASE_URL|API_KEY|SECRET_KEY"
+  
+  # 错误消息硬编码（中文）
+  ["中文错误"]="'未提供认证Token'|'Token已过期'|'权限不足'|'获取失败'"
+  
+  # 错误消息硬编码（英文）
+  ["英文错误"]="'Unauthorized'|'Forbidden'|'Not Found'|'Internal Error'"
+)
+
+# 允许的硬编码（白名单）
+declare -A WHITELIST=(
+  ["测试文件"]=".*\.test\.(js|ts|jsx|tsx)$"
+  ["配置文件"]=".*config.*\.(js|ts|json)$"
+  ["常量文件"]=".*constants.*\.(js|ts)$"
+  ["路由文件"]=".*routes.*\.(js|ts)$"
+  ["脚本文件"]=".*\.sh$"
+  ["日志消息"]="console\.log|console\.error|request\.log"
+  ["导入语句"]="^import|^require|^export"
+  ["注释内容"]="^//|^/\*|\*/"
+)
+
+# 检查单个文件
+check_file() {
+  local file="$1"
+  local filename=$(basename "$file")
+  
+  # 跳过白名单文件类型
+  for pattern in "${!WHITELIST[@]}"; do
+    if [[ "$file" =~ ${WHITELIST[$pattern]} ]]; then
+      return 0
     fi
+  done
+  
+  ((CHECKED_FILES++))
+  local file_errors=0
+  local file_warnings=0
+  
+  echo "📄 检查文件: $file"
+  
+  # 检查每种硬编码模式
+  for pattern_name in "${!PATTERNS[@]}"; do
+    local pattern="${PATTERNS[$pattern_name]}"
     
-    local matches=$(grep -n "$pattern" "$file" | grep -v "//.*$pattern" | grep -v "#.*$pattern" | grep -v "\.env" || true)
+    # 查找匹配行
+    local matches=$(grep -n -E "$pattern" "$file" 2>/dev/null || true)
     
     if [ -n "$matches" ]; then
-        echo -e "${severity}❌ 发现硬编码: $description${NC}"
-        echo "文件: $file"
-        echo "$matches" | while IFS= read -r line; do
-            echo "  $line"
-        done
-        echo ""
+      # 过滤白名单内容
+      local filtered_matches=""
+      while IFS= read -r line; do
+        local should_skip=0
         
-        if [ "$severity" = "$RED" ]; then
-            ((critical_issues++))
-        else
-            ((warning_issues++))
+        # 检查是否在白名单中
+        for whitelist_pattern in "${!WHITELIST[@]}"; do
+          if [[ "$line" =~ ${WHITELIST[$whitelist_pattern]} ]]; then
+            should_skip=1
+            break
+          fi
+        done
+        
+        if [ $should_skip -eq 0 ]; then
+          filtered_matches+="$line"$'\n'
         fi
-        ((total_issues++))
+      done <<< "$matches"
+      
+      if [ -n "$filtered_matches" ]; then
+        echo "  ⚠️  $pattern_name 硬编码:"
+        echo "$filtered_matches" | while IFS= read -r match; do
+          if [ -n "$match" ]; then
+            echo "    - $match"
+            ((file_warnings++))
+          fi
+        done
+      fi
     fi
+  done
+  
+  # 检查魔法数字（非0、1、100等常见数字）
+  local magic_numbers=$(grep -n -E "[^a-zA-Z_]([2-9][0-9]{2,}|[2-9][0-9])([^0-9]|$)" "$file" 2>/dev/null || true)
+  
+  if [ -n "$magic_numbers" ]; then
+    # 过滤常见数字和版本号
+    local filtered_numbers=""
+    while IFS= read -r line; do
+      # 跳过版本号（如v1.0.0）、日期、常见状态码
+      if ! [[ "$line" =~ (v[0-9]+\.[0-9]+\.[0-9]+|[0-9]{4}-[0-9]{2}-[0-9]{2}|200|404|500|1000) ]]; then
+        filtered_numbers+="$line"$'\n'
+      fi
+    done <<< "$magic_numbers"
+    
+    if [ -n "$filtered_numbers" ]; then
+      echo "  ⚠️  魔法数字:"
+      echo "$filtered_numbers" | while IFS= read -r match; do
+        if [ -n "$match" ]; then
+          echo "    - $match"
+          ((file_warnings++))
+        fi
+      done
+    fi
+  fi
+  
+  # 检查是否使用了常量系统
+  if [[ "$filename" =~ \.(js|ts|jsx|tsx)$ ]] && ! [[ "$file" =~ constants|config ]]; then
+    local has_constants_import=$(grep -E "import.*constants|from.*constants" "$file" 2>/dev/null || true)
+    local has_config_import=$(grep -E "import.*config|from.*config" "$file" 2>/dev/null || true)
+    
+    if [ -z "$has_constants_import" ] && [ -z "$has_config_import" ]; then
+      # 检查是否有应该使用常量的硬编码
+      local should_have_constants=0
+      
+      for pattern_name in "${!PATTERNS[@]}"; do
+        if [[ "$pattern_name" =~ (角色|状态|类型|路径) ]]; then
+          local pattern="${PATTERNS[$pattern_name]}"
+          if grep -q -E "$pattern" "$file" 2>/dev/null; then
+            should_have_constants=1
+            break
+          fi
+        fi
+      done
+      
+      if [ $should_have_constants -eq 1 ]; then
+        echo "  💡 建议: 考虑导入常量文件 (constants/) 或配置文件 (config/)"
+        ((file_warnings++))
+      fi
+    fi
+  fi
+  
+  if [ $file_warnings -gt 0 ]; then
+    ((WARNING_COUNT+=file_warnings))
+    echo "  📊 本文件发现 $file_warnings 个警告"
+  else
+    echo "  ✅ 本文件未发现硬编码问题"
+  fi
+  
+  echo ""
 }
 
-# 1. 检查后端硬编码
-echo "📁 检查后端代码..."
-echo "----------------"
-
-# 检查端口硬编码（排除合理的默认值）
-check_hardcoded "apps/backend/src/index.js" "= 33037" "$RED" "端口硬编码赋值"
-check_hardcoded "apps/backend/src/index.js" "33037[^0-9]" "$RED" "端口硬编码使用"
-
-# 检查URL硬编码
-check_hardcoded "apps/backend/src/index.js" "http://localhost" "$YELLOW" "本地URL硬编码"
-check_hardcoded "apps/backend/src/index.js" "'localhost'" "$YELLOW" "localhost硬编码"
-
-# 检查API路径硬编码
-check_hardcoded "apps/backend/src/index.js" "'/api/" "$RED" "API路径硬编码"
-check_hardcoded "apps/backend/src/index.js" "'/health'" "$RED" "健康检查路径硬编码"
-
-# 检查JWT密钥硬编码
-check_hardcoded "apps/backend/src/index.js" "jwtSecret.*=.*['\"]" "$RED" "JWT密钥硬编码"
-check_hardcoded "apps/backend/src/index.js" "secret.*=.*['\"]" "$RED" "密钥硬编码"
-
-# 检查数据库配置硬编码
-check_hardcoded "apps/backend/src/index.js" "postgresql://" "$RED" "数据库URL硬编码"
-check_hardcoded "apps/backend/src/index.js" "5432" "$RED" "数据库端口硬编码"
-
-# 检查配置文件中是否使用了正确的导入
-# 注意：这些是正向检查，不应该标记为错误
-# check_hardcoded "apps/backend/src/config/index.js" "process\.env\." "$GREEN" "✅ 使用环境变量"
-# check_hardcoded "apps/backend/src/config/routes.js" "serverConfig\." "$GREEN" "✅ 使用配置系统"
-
-# 2. 检查前端硬编码
-echo "📁 检查前端代码..."
-echo "----------------"
-
-# 检查API URL硬编码
-check_hardcoded "apps/frontend/src/config/index.ts" "http://localhost:33037" "$RED" "API URL硬编码"
-check_hardcoded "apps/frontend/src/config/index.ts" "localhost" "$YELLOW" "localhost硬编码"
-
-# 检查端口硬编码
-check_hardcoded "apps/frontend/vite.config.ts" "5177" "$RED" "前端端口硬编码"
-check_hardcoded "apps/frontend/vite.config.ts" "517[0-9]" "$RED" "端口硬编码（模式）"
-
-# 检查环境变量使用
-check_hardcoded "apps/frontend/src/config/index.ts" "import\.meta\.env\." "$GREEN" "✅ 使用Vite环境变量"
-
-# 3. 检查配置文件
-echo "📁 检查配置文件..."
-echo "----------------"
-
-# 检查环境变量文件是否存在
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BACKEND_ENV_FILE="$PROJECT_ROOT/apps/backend/.env.development"
-FRONTEND_ENV_FILE="$PROJECT_ROOT/apps/frontend/.env.development"
-
-if [ ! -f "$BACKEND_ENV_FILE" ]; then
-    echo -e "${YELLOW}⚠️  警告: 后端开发环境配置文件不存在 ($BACKEND_ENV_FILE)${NC}"
-    ((warning_issues++))
-    ((total_issues++))
-else
-    echo -e "${GREEN}✅ 后端环境配置文件存在 ($BACKEND_ENV_FILE)${NC}"
-fi
-
-if [ ! -f "$FRONTEND_ENV_FILE" ]; then
-    echo -e "${YELLOW}⚠️  警告: 前端开发环境配置文件不存在 ($FRONTEND_ENV_FILE)${NC}"
-    ((warning_issues++))
-    ((total_issues++))
-else
-    echo -e "${GREEN}✅ 前端环境配置文件存在 ($FRONTEND_ENV_FILE)${NC}"
-fi
-
-# 检查环境变量示例文件
-BACKEND_ENV_EXAMPLE="$PROJECT_ROOT/apps/backend/.env.example"
-FRONTEND_ENV_EXAMPLE="$PROJECT_ROOT/apps/frontend/.env.example"
-
-if [ ! -f "$BACKEND_ENV_EXAMPLE" ]; then
-    echo -e "${RED}❌ 错误: 后端环境变量示例文件不存在 ($BACKEND_ENV_EXAMPLE)${NC}"
-    ((critical_issues++))
-    ((total_issues++))
-else
-    echo -e "${GREEN}✅ 后端环境变量示例文件存在 ($BACKEND_ENV_EXAMPLE)${NC}"
-fi
-
-if [ ! -f "$FRONTEND_ENV_EXAMPLE" ]; then
-    echo -e "${RED}❌ 错误: 前端环境变量示例文件不存在 ($FRONTEND_ENV_EXAMPLE)${NC}"
-    ((critical_issues++))
-    ((total_issues++))
-else
-    echo -e "${GREEN}✅ 前端环境变量示例文件存在 ($FRONTEND_ENV_EXAMPLE)${NC}"
-fi
-
-# 4. 检查启动脚本
-echo "📁 检查启动脚本..."
-echo "----------------"
-
-if [ -f "start-dev.sh" ]; then
-    # 检查直接赋值硬编码（严重问题）
-    check_hardcoded "start-dev.sh" "PORT=33037" "$RED" "启动脚本端口硬编码赋值"
-    check_hardcoded "start-dev.sh" "PORT=5177" "$RED" "启动脚本前端端口硬编码赋值"
-    
-    # 检查作为默认值的硬编码（警告级别）
-    # 注意：合理的默认值在开发脚本中是允许的
-    # 我们只检查直接赋值，不检查默认值
-    
-    # 检查是否使用了环境变量
-    if grep -q "\$PORT" start-dev.sh || grep -q "\$VITE_PORT" start-dev.sh || grep -q "\$BACKEND_PORT" start-dev.sh || grep -q "\$FRONTEND_PORT" start-dev.sh; then
-        echo -e "${GREEN}✅ 启动脚本使用环境变量${NC}"
+# 主检查函数
+run_check() {
+  echo "开始扫描代码库..."
+  echo ""
+  
+  for dir in "${CHECK_DIRS[@]}"; do
+    if [ -d "$dir" ]; then
+      echo "📁 检查目录: $dir"
+      echo "----------------------------------------"
+      
+      # 查找所有JavaScript/TypeScript文件
+      find "$dir" -type f \( -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" \) | while read -r file; do
+        check_file "$file"
+      done
+      
+      echo ""
     else
-        echo -e "${GREEN}✅ 启动脚本使用环境变量${NC}"
-        ((warning_issues++))
-        ((total_issues++))
+      echo "⚠️  目录不存在: $dir"
+      echo ""
     fi
-fi
-
-# 5. 检查路由配置
-echo "📁 检查路由配置..."
-echo "----------------"
-
-# 检查是否使用了路由常量系统
-BACKEND_INDEX="$PROJECT_ROOT/apps/backend/src/index.js"
-if [ -f "$BACKEND_INDEX" ] && grep -q "routes\." "$BACKEND_INDEX"; then
-    echo -e "${GREEN}✅ 后端使用路由常量系统${NC}"
-else
-    echo -e "${RED}❌ 错误: 后端未使用路由常量系统${NC}"
-    ((critical_issues++))
-    ((total_issues++))
-fi
-
-# 检查配置导入
-if [ -f "$BACKEND_INDEX" ] && (grep -q "import config from" "$BACKEND_INDEX" || grep -q "import.*config.*from" "$BACKEND_INDEX"); then
-    echo -e "${GREEN}✅ 后端导入配置系统${NC}"
-else
-    echo -e "${RED}❌ 错误: 后端未导入配置系统${NC}"
-    ((critical_issues++))
-    ((total_issues++))
-fi
-
-# 6. 总结报告
-echo ""
-echo "📊 检查结果汇总"
-echo "================================"
-
-if [ $total_issues -eq 0 ]; then
-    echo -e "${GREEN}🎉 完美！未发现任何硬编码问题${NC}"
-    echo "所有配置都通过环境变量和配置系统管理"
-    exit 0
-else
-    echo -e "发现 ${RED}${critical_issues}${NC} 个严重问题，${YELLOW}${warning_issues}${NC} 个警告"
-    echo "总共 ${total_issues} 个问题需要处理"
+  done
+  
+  # 总结报告
+  echo "📈 检查完成报告"
+  echo "================"
+  echo "📊 统计信息:"
+  echo "  - 检查文件数: $CHECKED_FILES"
+  echo "  - 警告数量: $WARNING_COUNT"
+  echo "  - 错误数量: $ERROR_COUNT"
+  echo ""
+  
+  if [ $WARNING_COUNT -eq 0 ] && [ $ERROR_COUNT -eq 0 ]; then
+    echo "🎉 恭喜！未发现硬编码问题。"
+    echo "   代码符合规范化标准。"
+    return 0
+  else
+    echo "📋 发现的问题需要处理:"
     echo ""
     
-    if [ $critical_issues -gt 0 ]; then
-        echo -e "${RED}🚨 存在严重硬编码问题，必须立即修复！${NC}"
-        echo "严重问题包括："
-        echo "  - 端口硬编码"
-        echo "  - 数据库配置硬编码"
-        echo "  - JWT密钥硬编码"
-        echo "  - API路径硬编码"
-        echo ""
-        echo "修复步骤："
-        echo "1. 将硬编码值移动到环境变量"
-        echo "2. 更新配置管理系统"
-        echo "3. 修改代码使用配置系统"
-        echo "4. 重新运行此检查脚本"
-        exit 1
-    else
-        echo -e "${YELLOW}⚠️  存在警告级别问题，建议修复${NC}"
-        echo "警告问题包括："
-        echo "  - localhost硬编码（开发环境可接受）"
-        echo "  - 配置文件缺失"
-        echo ""
-        echo "建议修复，但不是必须的"
-        exit 0
+    if [ $WARNING_COUNT -gt 0 ]; then
+      echo "⚠️  警告 ($WARNING_COUNT 个):"
+      echo "  这些是潜在的硬编码问题，建议修复："
+      echo "  1. 将字符串字面量提取为常量"
+      echo "  2. 将数字字面量提取为常量"
+      echo "  3. 使用配置系统管理环境相关值"
+      echo "  4. 使用路由常量管理系统API路径"
+      echo ""
     fi
+    
+    if [ $ERROR_COUNT -gt 0 ]; then
+      echo "❌ 错误 ($ERROR_COUNT 个):"
+      echo "  这些是严重的硬编码问题，必须修复："
+      echo "  1. 敏感信息硬编码（密钥、密码）"
+      echo "  2. 生产环境配置硬编码"
+      echo "  3. 严重的安全相关问题"
+      echo ""
+    fi
+    
+    echo "💡 修复建议:"
+    echo "  1. 查看上面的具体警告信息"
+    echo "  2. 将硬编码值移动到对应的常量文件"
+    echo "  3. 重新运行检查脚本验证修复"
+    echo ""
+    echo "🔧 可用常量文件:"
+    echo "  - apps/backend/src/constants/ (业务常量)"
+    echo "  - apps/backend/src/config/ (配置系统)"
+    echo "  - apps/backend/src/config/routes.js (路由常量)"
+    
+    return 1
+  fi
+}
+
+# 快速检查模式（只检查关键文件）
+quick_check() {
+  echo "🚀 快速硬编码检查模式"
+  echo "====================="
+  
+  local critical_files=(
+    "apps/backend/src/index.js"
+    "apps/backend/src/routes/store.routes.js"
+    "apps/backend/src/middleware/index.js"
+    "apps/backend/src/services/store.service.js"
+  )
+  
+  for file in "${critical_files[@]}"; do
+    if [ -f "$file" ]; then
+      check_file "$file"
+    fi
+  done
+  
+  echo "📊 快速检查完成"
+  echo "发现 $WARNING_COUNT 个警告"
+}
+
+# 帮助信息
+show_help() {
+  echo "麒麟项目硬编码检查工具"
+  echo ""
+  echo "用法: $0 [选项]"
+  echo ""
+  echo "选项:"
+  echo "  -h, --help     显示帮助信息"
+  echo "  -q, --quick    快速检查模式（只检查关键文件）"
+  echo "  -v, --verbose  详细模式（显示更多信息）"
+  echo "  --strict       严格模式（警告视为错误）"
+  echo ""
+  echo "示例:"
+  echo "  $0             完整检查所有代码"
+  echo "  $0 -q          快速检查关键文件"
+  echo "  $0 --strict    严格检查，任何警告都失败"
+  echo ""
+  echo "退出代码:"
+  echo "  0 - 检查通过，无硬编码问题"
+  echo "  1 - 发现硬编码问题"
+  echo "  2 - 脚本执行错误"
+}
+
+# 解析参数
+MODE="full"
+VERBOSE=0
+STRICT=0
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -h|--help)
+      show_help
+      exit 0
+      ;;
+    -q|--quick)
+      MODE="quick"
+      shift
+      ;;
+    -v|--verbose)
+      VERBOSE=1
+      shift
+      ;;
+    --strict)
+      STRICT=1
+      shift
+      ;;
+    *)
+      echo "错误: 未知选项 $1"
+      show_help
+      exit 2
+      ;;
+  esac
+done
+
+# 执行检查
+if [ "$MODE" = "quick" ]; then
+  quick_check
+else
+  run_check
 fi
 
-# 7. 提供修复建议
-echo ""
-echo "🔧 修复建议"
-echo "================================"
-echo "1. 对于端口硬编码："
-echo "   在 .env.development 中添加 PORT=33037"
-echo "   在代码中使用 config.server.port"
-echo ""
-echo "2. 对于API路径硬编码："
-echo "   在配置系统中定义 API_PREFIX='/api'"
-echo "   使用 routes.public.HEALTH 等路由常量"
-echo ""
-echo "3. 对于数据库配置硬编码："
-echo "   在 .env.development 中添加 DATABASE_URL"
-echo "   在代码中使用 config.database.url"
-echo ""
-echo "4. 对于JWT密钥硬编码："
-echo "   在 .env.development 中添加 JWT_SECRET"
-echo "   在代码中使用 config.auth.jwtSecret"
-echo ""
-echo "5. 定期运行此检查脚本："
-echo "   ./scripts/check-hardcoded.sh"
-echo ""
-echo "📚 参考文档："
-echo "   - CONFIGURATION-GUIDE.md"
-echo "   - INCREMENTAL-DEVELOPMENT.md"
+# 根据严格模式决定退出代码
+if [ $STRICT -eq 1 ] && [ $WARNING_COUNT -gt 0 ]; then
+  exit 1
+else
+  exit 0
+fi

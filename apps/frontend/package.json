@@ -1,6 +1,6 @@
 {
   "name": "p007-frontend",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,7 +10,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "check:hardcoded": "../../scripts/check-hardcoded.sh",
+    "check:hardcoded": "../../scripts/check-hardcoded-simple.sh",
     "check:config": "tsc --noEmit --project tsconfig.dev.json && echo '✅ TypeScript配置验证通过'",
     "check:routes": "echo '✅ 前端路由配置检查' && echo '路由配置文件: src/config/routes.ts' && echo '路由类型定义: src/config/routes-check.ts' && echo '状态: 路由系统配置完成'",
     "normalize:import": "../../scripts/normalize-import.sh",

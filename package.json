@@ -1,0 +1,68 @@
+{
+  "name": "p007-qilin",
+  "version": "0.2.4",
+  "private": true,
+  "description": "麒麟项目 - 多店扫码点餐云打印SaaS平台",
+  "workspaces": [
+    "apps/backend",
+    "apps/frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd apps/backend && npm run dev",
+    "dev:frontend": "cd apps/frontend && npm run dev",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd apps/backend && npm run build",
+    "build:frontend": "cd apps/frontend && npm run build",
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "start:backend": "cd apps/backend && npm run start",
+    "start:frontend": "cd apps/frontend && npm run preview",
+    "lint": "npm run lint:backend && npm run lint:frontend",
+    "lint:backend": "cd apps/backend && npm run lint",
+    "lint:frontend": "cd apps/frontend && npm run lint",
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:backend": "cd apps/backend && npm run test",
+    "test:frontend": "cd apps/frontend && npm run test",
+    "check:hardcoded": "./scripts/check-hardcoded-simple.sh",
+    "check:config": "npm run check:config:backend && npm run check:config:frontend",
+    "check:config:backend": "cd apps/backend && npm run check:config",
+    "check:config:frontend": "cd apps/frontend && npm run check:config",
+    "check:routes": "npm run check:routes:backend && npm run check:routes:frontend",
+    "check:routes:backend": "cd apps/backend && npm run check:routes",
+    "check:routes:frontend": "cd apps/frontend && npm run check:routes",
+    "check:standards": "npm run check:hardcoded && npm run check:config && npm run check:routes",
+    "check:all": "npm run lint && npm run check:standards && npm run test",
+    "db:migrate": "cd apps/backend && npm run db:migrate",
+    "db:studio": "cd apps/backend && npm run db:studio",
+    "ci:check": "npm run check:all",
+    "precommit": "npm run check:standards",
+    "clean": "rm -rf node_modules apps/backend/node_modules apps/frontend/node_modules",
+    "clean:install": "npm run clean && npm install",
+    "setup": "npm install && npm run db:migrate",
+    "health": "echo '=== 麒麟项目健康检查 ===' && echo '后端: http://localhost:33037/api/health' && echo '前端: http://localhost:5177' && echo '数据库: PostgreSQL on localhost:5432'"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "restaurant",
+    "ordering",
+    "saas",
+    "point-of-sale",
+    "cloud-printing"
+  ],
+  "author": "麒麟项目团队",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:nealpan2088/P007.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nealpan2088/P007/issues"
+  },
+  "homepage": "https://github.com/nealpan2088/P007#readme"
+}

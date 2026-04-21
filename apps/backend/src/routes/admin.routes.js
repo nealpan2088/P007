@@ -2,6 +2,7 @@
 // 店铺管理、租户管理等
 
 import { PrismaClient } from '@prisma/client';
+import { authenticate, requestTimer, requestLogger } from '../middleware/index.js';
 
 const prisma = new PrismaClient();
 
@@ -10,6 +11,13 @@ const prisma = new PrismaClient();
  * @param {FastifyInstance} fastify - Fastify实例
  */
 async function adminRoutes(fastify) {
+  // 添加性能监控中间件
+  fastify.addHook('preHandler', requestTimer());
+  fastify.addHook('preHandler', requestLogger());
+  
+  // 添加认证中间件到所有管理API
+  fastify.addHook('preHandler', authenticate);
+  
   // 获取店铺列表（需要认证）
   fastify.get('/stores', {
     schema: {
@@ -78,7 +86,13 @@ async function adminRoutes(fastify) {
         }
       };
     } catch (error) {
-      console.error('获取店铺列表失败:', error);
+      request.log.error({
+        msg: '获取店铺列表失败',
+        error: error.message,
+        stack: error.stack,
+        query: request.query
+      });
+      
       return reply.code(500).send({
         success: false,
         error: '获取店铺列表失败',
@@ -118,7 +132,7 @@ async function adminRoutes(fastify) {
         }
       };
     } catch (error) {
-      console.error('获取店铺统计失败:', error);
+      request.log.error({ msg: '获取店铺统计失败', error: error.message, stack: error.stack });
       return reply.code(500).send({
         success: false,
         error: '获取店铺统计失败',

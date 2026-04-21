@@ -31,7 +31,6 @@ import {
   CheckCircle as CheckCircleIcon,
   AccessTime as AccessTimeIcon,
 } from '@mui/icons-material';
-import { TENANT_ROUTES } from '../config/routes';
 
 interface Tenant {
   id: string;

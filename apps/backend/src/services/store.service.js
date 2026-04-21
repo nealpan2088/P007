@@ -2,7 +2,7 @@
 // 根据系统模式提供不同的店铺管理实现
 
 import systemMode from '../utils/system-mode.js';
-import { createPrismaClient } from '../db/index.js';
+import db from '../db/index.js';
 
 /**
  * 店铺服务类
@@ -10,7 +10,7 @@ import { createPrismaClient } from '../db/index.js';
  */
 class StoreService {
   constructor() {
-    this.prisma = createPrismaClient();
+    this.prisma = db.publicDb;
     this.systemMode = systemMode;
   }
   

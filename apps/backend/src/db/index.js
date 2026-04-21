@@ -5,8 +5,8 @@ import { PrismaClient } from '@prisma/client'
 import config from '../config/index.js'
 
 // 创建Prisma客户端实例
-const createPrismaClient = (schema = 'p007_public') => {
-  const databaseUrl = new URL(config.database.url)
+export const createPrismaClient = (schema = 'p007_public') => {
+  const databaseUrl = config.database.url
   
   // 设置搜索路径（Schema）
   const searchPath = schema === 'p007_public' 
@@ -14,7 +14,7 @@ const createPrismaClient = (schema = 'p007_public') => {
     : `"${schema}", p007_public`
   
   // 构建带Schema的连接字符串
-  const urlWithSchema = `${databaseUrl.origin}${databaseUrl.pathname}?schema=${searchPath}&connection_limit=${config.database.maxConnections}`
+  const urlWithSchema = `${databaseUrl}?schema=${searchPath}&connection_limit=${config.database.maxConnections}`
   
   return new PrismaClient({
     datasources: {

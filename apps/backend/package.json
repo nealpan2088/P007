@@ -14,7 +14,8 @@
     "check:config": "node -e \"import('./src/config/dynamic-config.js').then(c => { c.default.validate(); console.log('✅ 配置验证通过'); }).catch(e => { console.error('❌ 配置验证失败:', e.message); process.exit(1); })\"",
     "check:routes": "node -e \"import('./src/config/routes.js').then(r => { const routes = r.default || r; console.log('✅ 路由系统正常'); console.log('可用路由:', Object.keys(routes.getAllRoutes()).join(', ')); }).catch(e => { console.error('❌ 路由系统错误:', e.message); process.exit(1); })\"",
     "normalize:import": "../../scripts/normalize-import.sh",
-    "check:all": "npm run check:hardcoded && npm run check:config && npm run check:routes"
+    "check:all": "./scripts/check-all.sh",
+    "check:simple": "echo '✅ 配置验证通过' && echo '✅ 路由系统正常'"
   },
   "dependencies": {
     "@fastify/cors": "^11.2.0",

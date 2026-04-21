@@ -98,37 +98,44 @@ echo "📁 检查配置文件..."
 echo "----------------"
 
 # 检查环境变量文件是否存在
-if [ ! -f "apps/backend/.env.development" ]; then
-    echo -e "${YELLOW}⚠️  警告: 后端开发环境配置文件不存在${NC}"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+BACKEND_ENV_FILE="$PROJECT_ROOT/apps/backend/.env.development"
+FRONTEND_ENV_FILE="$PROJECT_ROOT/apps/frontend/.env.development"
+
+if [ ! -f "$BACKEND_ENV_FILE" ]; then
+    echo -e "${YELLOW}⚠️  警告: 后端开发环境配置文件不存在 ($BACKEND_ENV_FILE)${NC}"
     ((warning_issues++))
     ((total_issues++))
 else
-    echo -e "${GREEN}✅ 后端环境配置文件存在${NC}"
+    echo -e "${GREEN}✅ 后端环境配置文件存在 ($BACKEND_ENV_FILE)${NC}"
 fi
 
-if [ ! -f "apps/frontend/.env.development" ]; then
-    echo -e "${YELLOW}⚠️  警告: 前端开发环境配置文件不存在${NC}"
+if [ ! -f "$FRONTEND_ENV_FILE" ]; then
+    echo -e "${YELLOW}⚠️  警告: 前端开发环境配置文件不存在 ($FRONTEND_ENV_FILE)${NC}"
     ((warning_issues++))
     ((total_issues++))
 else
-    echo -e "${GREEN}✅ 前端环境配置文件存在${NC}"
+    echo -e "${GREEN}✅ 前端环境配置文件存在 ($FRONTEND_ENV_FILE)${NC}"
 fi
 
 # 检查环境变量示例文件
-if [ ! -f "apps/backend/.env.example" ]; then
-    echo -e "${RED}❌ 错误: 后端环境变量示例文件不存在${NC}"
+BACKEND_ENV_EXAMPLE="$PROJECT_ROOT/apps/backend/.env.example"
+FRONTEND_ENV_EXAMPLE="$PROJECT_ROOT/apps/frontend/.env.example"
+
+if [ ! -f "$BACKEND_ENV_EXAMPLE" ]; then
+    echo -e "${RED}❌ 错误: 后端环境变量示例文件不存在 ($BACKEND_ENV_EXAMPLE)${NC}"
     ((critical_issues++))
     ((total_issues++))
 else
-    echo -e "${GREEN}✅ 后端环境变量示例文件存在${NC}"
+    echo -e "${GREEN}✅ 后端环境变量示例文件存在 ($BACKEND_ENV_EXAMPLE)${NC}"
 fi
 
-if [ ! -f "apps/frontend/.env.example" ]; then
-    echo -e "${RED}❌ 错误: 前端环境变量示例文件不存在${NC}"
+if [ ! -f "$FRONTEND_ENV_EXAMPLE" ]; then
+    echo -e "${RED}❌ 错误: 前端环境变量示例文件不存在 ($FRONTEND_ENV_EXAMPLE)${NC}"
     ((critical_issues++))
     ((total_issues++))
 else
-    echo -e "${GREEN}✅ 前端环境变量示例文件存在${NC}"
+    echo -e "${GREEN}✅ 前端环境变量示例文件存在 ($FRONTEND_ENV_EXAMPLE)${NC}"
 fi
 
 # 4. 检查启动脚本
@@ -156,7 +163,8 @@ echo "📁 检查路由配置..."
 echo "----------------"
 
 # 检查是否使用了路由常量系统
-if grep -q "routes\." apps/backend/src/index.js; then
+BACKEND_INDEX="$PROJECT_ROOT/apps/backend/src/index.js"
+if [ -f "$BACKEND_INDEX" ] && grep -q "routes\." "$BACKEND_INDEX"; then
     echo -e "${GREEN}✅ 后端使用路由常量系统${NC}"
 else
     echo -e "${RED}❌ 错误: 后端未使用路由常量系统${NC}"
@@ -165,7 +173,7 @@ else
 fi
 
 # 检查配置导入
-if grep -q "import config from" apps/backend/src/index.js || grep -q "import.*config.*from" apps/backend/src/index.js; then
+if [ -f "$BACKEND_INDEX" ] && (grep -q "import config from" "$BACKEND_INDEX" || grep -q "import.*config.*from" "$BACKEND_INDEX"); then
     echo -e "${GREEN}✅ 后端导入配置系统${NC}"
 else
     echo -e "${RED}❌ 错误: 后端未导入配置系统${NC}"

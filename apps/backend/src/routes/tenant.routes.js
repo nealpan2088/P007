@@ -406,7 +406,7 @@ export async function registerTenantRoutes(fastify) {
       status: 'ok',
       service: 'qilin-tenant',
       timestamp: new Date().toISOString(),
-      version: '0.2.2',
+      version: '0.2.3',
     };
   });
 

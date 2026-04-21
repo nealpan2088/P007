@@ -61,7 +61,7 @@ fastify.get(routes.public.HEALTH, async () => {
   return {
     status: 'ok',
     service: 'qilin-backend',
-    version: '0.2.2',
+    version: '0.2.3',
     environment: config.server.env,
     timestamp: new Date().toISOString(),
     config: {
@@ -100,7 +100,7 @@ fastify.get(routes.public.PUBLIC.HELLO, async () => {
   return {
     message: '欢迎使用麒麟云点餐SaaS API!',
     service: 'qilin-backend',
-    version: '0.2.2',
+    version: '0.2.3',
     timestamp: new Date().toISOString(),
     documentation: {
       health: routes.public.HEALTH,
@@ -120,7 +120,7 @@ fastify.get(routes.public.PUBLIC.HELLO, async () => {
 fastify.get(routes.public.PUBLIC.VERSION, async () => {
   return {
     name: '麒麟云点餐SaaS',
-    version: '0.2.2',
+    version: '0.2.3',
     apiVersion: config.server.apiVersion,
     environment: config.server.env,
     buildDate: new Date().toISOString(),

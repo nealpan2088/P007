@@ -1,0 +1,28 @@
+{
+  "id": "P007",
+  "name": "待定项目",
+  "codename": "P007",
+  "version": "0.1.0",
+  "status": "initialized",
+  "type": "待定",
+  "path": "/home/admin/projects/P007",
+  "description": "P007项目，正在初始化中",
+  "services": [
+    {
+      "name": "前端开发服务器",
+      "url": "http://localhost:5177/",
+      "port": 5177,
+      "status": "ready"
+    },
+    {
+      "name": "后端API服务器",
+      "url": "http://localhost:33037/",
+      "port": 33037,
+      "status": "ready"
+    }
+  ],
+  "owner": "潘哥",
+  "created": "2026-04-21",
+  "updated": "2026-04-21",
+  "current_task": "项目初始化和需求确认"
+}

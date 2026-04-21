@@ -1,0 +1,438 @@
+// P007 云点餐SaaS平台 - Prisma Schema
+// 多租户架构：公共schema + 租户独立schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// 公共Schema (p007_public)
+// ============================================
+
+// 租户表 - 存储所有餐厅（租户）信息
+model Tenant {
+  id                String    @id @default(uuid())
+  
+  // 基本信息
+  name              String    @db.VarChar(255)
+  subdomain         String    @unique @db.VarChar(100)
+  displayName       String?   @db.VarChar(255) @map("display_name")
+  
+  // 联系信息
+  contactEmail      String?   @db.VarChar(255) @map("contact_email")
+  contactPhone      String?   @db.VarChar(50) @map("contact_phone")
+  contactPerson     String?   @db.VarChar(100) @map("contact_person")
+  
+  // 业务信息
+  plan              String    @default("free") @db.VarChar(50) // free, basic, premium, enterprise
+  status            String    @default("active") @db.VarChar(50) // active, suspended, cancelled
+  trialEndsAt       DateTime? @map("trial_ends_at")
+  billingCycle      String    @default("monthly") @db.VarChar(50) @map("billing_cycle") // monthly, yearly
+  
+  // 配置
+  settings          Json      @default("{}")
+  features          Json      @default("{}")
+  
+  // 时间戳
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
+  
+  // 关系
+  users             User[]
+  
+  @@map("p007_public.tenants")
+  @@index([subdomain])
+  @@index([status])
+  @@index([plan])
+}
+
+// 用户表 - 平台用户，支持多租户
+model User {
+  id                String    @id @default(uuid())
+  tenantId          String    @map("tenant_id")
+  
+  // 认证信息
+  email             String    @unique @db.VarChar(255)
+  passwordHash      String    @db.VarChar(255) @map("password_hash")
+  passwordResetToken String?  @db.VarChar(255) @map("password_reset_token")
+  passwordResetExpiresAt DateTime? @map("password_reset_expires_at")
+  
+  // 个人信息
+  fullName          String?   @db.VarChar(255) @map("full_name")
+  avatarUrl         String?   @db.VarChar(500) @map("avatar_url")
+  phone             String?   @db.VarChar(50)
+  
+  // 权限和角色
+  role              String    @default("staff") @db.VarChar(50) // super_admin, admin, manager, staff
+  permissions       Json      @default("[]")
+  
+  // 状态
+  isActive          Boolean   @default(true) @map("is_active")
+  isVerified        Boolean   @default(false) @map("is_verified")
+  lastLoginAt       DateTime? @map("last_login_at")
+  
+  // 时间戳
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
+  
+  // 关系
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sessions          Session[]
+  
+  @@map("p007_public.users")
+  @@index([tenantId])
+  @@index([role])
+  @@index([isActive])
+}
+
+// 会话表 - 用户会话管理
+model Session {
+  id                String    @id @default(uuid())
+  userId            String    @map("user_id")
+  
+  // 会话信息
+  token             String    @db.VarChar(500)
+  deviceInfo        Json?     @map("device_info")
+  ipAddress         String?   @db.Inet @map("ip_address")
+  userAgent         String?   @db.Text @map("user_agent")
+  
+  // 有效期
+  expiresAt         DateTime  @map("expires_at")
+  revokedAt         DateTime? @map("revoked_at")
+  
+  // 时间戳
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  
+  // 关系
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("p007_public.sessions")
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+// ============================================
+// 租户Schema模型定义
+// 注意：这些模型在实际部署时会动态创建到 tenant_{tenant_id} schema中
+// ============================================
+
+// 店铺表 - 一个租户可以有多个店铺（分店）
+model Store {
+  id                String    @id @default(uuid())
+  
+  // 基本信息
+  name              String    @db.VarChar(255)
+  code              String    @unique @db.VarChar(50) // ST001, ST002
+  
+  // 联系信息
+  address           String?
+  phone             String?   @db.VarChar(50)
+  email             String?   @db.VarChar(255)
+  
+  // 位置信息
+  latitude          Float?    @db.Decimal(10, 8)
+  longitude         Float?    @db.Decimal(11, 8)
+  timezone          String    @default("Asia/Shanghai") @db.VarChar(50)
+  
+  // 营业信息
+  openingHours      Json      @default("{}") @map("opening_hours")
+  is24Hours         Boolean   @default(false) @map("is_24_hours")
+  isActive          Boolean   @default(true) @map("is_active")
+  
+  // 配置
+  settings          Json      @default("{\"tax_rate\": 0.06, \"service_charge\": 0.10, \"currency\": \"CNY\", \"language\": \"zh-CN\"}")
+  
+  // 时间戳
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
+  
+  // 关系
+  tables            Table[]
+  menuCategories    MenuCategory[]
+  menuItems         MenuItem[]
+  orders            Order[]
+  printers          Printer[]
+  
+  @@map("stores")
+  @@index([code])
+  @@index([isActive])
+}
+
+// 餐桌表
+model Table {
+  id                String    @id @default(uuid())
+  storeId           String    @map("store_id")
+  
+  // 基本信息
+  tableNumber       String    @db.VarChar(50) @map("table_number")
+  displayName       String?   @db.VarChar(100) @map("display_name")
+  
+  // 餐桌属性
+  capacity          Int       @default(4)
+  minCapacity       Int?      @default(1) @map("min_capacity")
+  maxCapacity       Int?      @default(10) @map("max_capacity")
+  area              String?   @db.VarChar(100) // 大厅, 包间, 露台
+  
+  // 状态
+  status            String    @default("available") @db.VarChar(50) // available, occupied, reserved, cleaning, maintenance
+  currentOrderId    String?   @map("current_order_id")
+  
+  // 二维码
+  qrCodeUrl         String?   @db.VarChar(500) @map("qr_code_url")
+  qrCodeData        String?   @db.Text @map("qr_code_data")
+  
+  // 时间戳
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  
+  // 关系
+  store             Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  orders            Order[]
+  
+  @@map("tables")
+  @@index([storeId])
+  @@index([tableNumber])
+  @@index([status])
+  @@unique([storeId, tableNumber])
+}
+
+// 菜单分类表
+model MenuCategory {
+  id                String    @id @default(uuid())
+  storeId           String    @map("store_id")
+  
+  // 基本信息
+  name              String    @db.VarChar(255)
+  description       String?
+  
+  // 显示属性
+  icon              String?   @db.VarChar(100)
+  color             String?   @db.VarChar(50)
+  sortOrder         Int       @default(0) @map("sort_order")
+  
+  // 状态
+  isActive          Boolean   @default(true) @map("is_active")
+  isFeatured        Boolean   @default(false) @map("is_featured")
+  
+  // 时间戳
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
+  
+  // 关系
+  store             Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  menuItems         MenuItem[]
+  
+  @@map("menu_categories")
+  @@index([storeId])
+  @@index([sortOrder])
+  @@index([isActive])
+}
+
+// 菜品表
+model MenuItem {
+  id                String    @id @default(uuid())
+  categoryId        String    @map("category_id")
+  storeId           String    @map("store_id")
+  
+  // 基本信息
+  name              String    @db.VarChar(255)
+  description       String?
+  
+  // 价格信息
+  price             Float     @db.Decimal(10, 2)
+  originalPrice     Float?    @db.Decimal(10, 2) @map("original_price")
+  costPrice         Float?    @db.Decimal(10, 2) @map("cost_price")
+  
+  // 属性
+  unit              String    @default("份") @db.VarChar(50)
+  preparationTime   Int?      @map("preparation_time") // 分钟
+  spiceLevel        Int       @default(0) @map("spice_level") // 0-5
+  tags              Json      @default("[]") // ["推荐", "招牌", "辣", "素食"]
+  
+  // 图片和展示
+  imageUrl          String?   @db.VarChar(500) @map("image_url")
+  thumbnailUrl      String?   @db.VarChar(500) @map("thumbnail_url")
+  sortOrder         Int       @default(0) @map("sort_order")
+  
+  // 库存和状态
+  stockQuantity     Int?      @map("stock_quantity") // null表示无限库存
+  isAvailable       Boolean   @default(true) @map("is_available")
+  isRecommended     Boolean   @default(false) @map("is_recommended")
+  
+  // 营养成分
+  nutrition         Json      @default("{}")
+  
+  // 时间戳
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
+  
+  // 关系
+  category          MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  store             Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  
+  @@map("menu_items")
+  @@index([categoryId])
+  @@index([storeId])
+  @@index([price])
+  @@index([isAvailable])
+  @@index([sortOrder])
+}
+
+// 订单表
+model Order {
+  id                String    @id @default(uuid())
+  storeId           String    @map("store_id")
+  tableId           String?   @map("table_id")
+  
+  // 订单标识
+  orderNumber       String    @unique @db.VarChar(100) @map("order_number") // ORD{日期}{序号}
+  
+  // 顾客信息
+  customerInfo      Json      @default("{\"name\": \"\", \"phone\": \"\", \"guest_count\": 1, \"notes\": \"\"}") @map("customer_info")
+  
+  // 订单内容
+  items             Json      // [{id, name, price, quantity, total, notes}]
+  subtotal          Float     @db.Decimal(10, 2)
+  taxAmount         Float     @default(0) @db.Decimal(10, 2) @map("tax_amount")
+  serviceCharge     Float     @default(0) @db.Decimal(10, 2) @map("service_charge")
+  discountAmount    Float     @default(0) @db.Decimal(10, 2) @map("discount_amount")
+  totalAmount       Float     @db.Decimal(10, 2) @map("total_amount")
+  
+  // 订单状态
+  status            String    @default("pending") @db.VarChar(50) // pending, confirmed, preparing, ready, served, completed, cancelled
+  statusHistory     Json      @default("[]") @map("status_history") // [{status, timestamp, notes}]
+  
+  // 支付信息
+  paymentStatus     String    @default("unpaid") @db.VarChar(50) @map("payment_status") // unpaid, paid, refunded, partially_refunded
+  paymentMethod     String?   @db.VarChar(50) @map("payment_method")
+  paymentReference  String?   @db.VarChar(255) @map("payment_reference")
+  paidAt            DateTime? @map("paid_at")
+  
+  // 打印信息
+  printStatus       String    @default("pending") @db.VarChar(50) @map("print_status") // pending, printed, failed
+  printJobId        String?   @db.VarChar(255) @map("print_job_id")
+  printAttempts     Int       @default(0) @map("print_attempts")
+  
+  // 时间戳
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  completedAt       DateTime? @map("completed_at")
+  cancelledAt       DateTime? @map("cancelled_at")
+  
+  // 关系
+  store             Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  table             Table?    @relation(fields: [tableId], references: [id])
+  printJobs         PrintJob[]
+  
+  @@map("orders")
+  @@index([storeId])
+  @@index([tableId])
+  @@index([orderNumber])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+}
+
+// 打印机表
+model Printer {
+  id                String    @id @default(uuid())
+  storeId           String    @map("store_id")
+  
+  // 基本信息
+  name              String    @db.VarChar(255)
+  code              String    @db.VarChar(50) // KITCHEN, BAR, CASHIER
+  
+  // 打印机类型
+  type              String    @db.VarChar(50) // shangpeng, local_network, usb, bluetooth
+  brand             String?   @db.VarChar(100)
+  model             String?   @db.VarChar(100)
+  
+  // 配置信息
+  config            Json
+  paperWidth        Int       @default(80) @map("paper_width") // 纸张宽度(mm)
+  paperType         String    @default("thermal") @db.VarChar(50) @map("paper_type") // thermal, normal
+  
+  // 连接状态
+  connectionStatus  String    @default("disconnected") @db.VarChar(50) @map("connection_status") // connected, disconnected, error
+  lastConnectedAt   DateTime? @map("last_connected_at")
+  lastError         String?   @db.Text @map("last_error")
+  
+  // 打印统计
+  totalPrints       Int       @default(0) @map("total_prints")
+  successfulPrints  Int       @default(0) @map("successful_prints")
+  failedPrints      Int       @default(0) @map("failed_prints")
+  
+  // 状态
+  isActive          Boolean   @default(true) @map("is_active")
+  isDefault         Boolean   @default(false) @map("is_default") // 默认打印机
+  
+  // 时间戳
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  
+  // 关系
+  store             Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  printJobs         PrintJob[]
+  
+  @@map("printers")
+  @@index([storeId])
+  @@index([type])
+  @@index([isActive])
+  @@unique([storeId, code])
+}
+
+// 打印任务表
+model PrintJob {
+  id                String    @id @default(uuid())
+  printerId         String    @map("printer_id")
+  orderId           String?   @map("order_id")
+  
+  // 任务信息
+  jobType           String    @db.VarChar(50) @map("job_type") // order, receipt, test, report
+  content           String    @db.Text
+  contentType       String    @default("text") @db.VarChar(50) @map("content_type") // text, html, image
+  
+  // 任务状态
+  status            String    @default("pending") @db.VarChar(50) // pending, processing, completed, failed, cancelled
+  attempts          Int       @default(0)
+  maxAttempts       Int       @default(3) @map("max_attempts")
+  
+  // 执行信息
+  startedAt         DateTime? @map("started_at")
+  completedAt       DateTime? @map("completed_at")
+  errorMessage      String?   @db.Text @map("error_message")
+  
+  // 结果
+  externalJobId     String?   @db.VarChar(255) @map("external_job_id")
+  printResult       Json?     @map("print_result")
+  
+  // 优先级
+  priority          Int       @default(0) // 0=normal, 1=high, 2=urgent
+  
+  // 时间戳
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  
+  // 关系
+  printer           Printer   @relation(fields: [printerId], references: [id], onDelete: Cascade)
+  order             Order?    @relation(fields: [orderId], references: [id])
+  
+  @@map("print_jobs")
+  @@index([printerId])
+  @@index([orderId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([priority])
+}

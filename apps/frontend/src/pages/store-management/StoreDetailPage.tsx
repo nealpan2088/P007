@@ -33,6 +33,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Store } from './types';
 import * as apiUtils from './utils/api.utils';
 import * as storeUtils from './utils/store.utils';
+import { TENANT_ROUTES, CUSTOMER_ROUTES } from '../../config/routes';
 
 const StoreDetailPage: React.FC = () => {
   const { storeId } = useParams<{ storeId: string }>();
@@ -58,7 +59,7 @@ const StoreDetailPage: React.FC = () => {
     } catch (error) {
       console.error('加载店铺数据失败:', error);
       message.error('加载店铺数据失败，请稍后重试');
-      navigate('/stores');
+      navigate(TENANT_ROUTES.STORES.LIST);
     } finally {
       setLoading(false);
     }
@@ -67,13 +68,13 @@ const StoreDetailPage: React.FC = () => {
   // 处理编辑
   const handleEdit = () => {
     if (store) {
-      navigate(`/stores/${store.id}/edit`);
+      navigate(TENANT_ROUTES.STORES.EDIT.replace(':storeId', store.id));
     }
   };
 
   // 处理返回
   const handleBack = () => {
-    navigate('/stores');
+    navigate(TENANT_ROUTES.STORES.LIST);
   };
 
   // 生成二维码
@@ -366,7 +367,7 @@ const StoreDetailPage: React.FC = () => {
               
               <Button
                 block
-                onClick={() => navigate(`/scan/${store.id}`)}
+                onClick={() => navigate(CUSTOMER_ROUTES.MENU.replace(':storeId', store.id))}
                 icon={<QrcodeOutlined />}
               >
                 扫码点餐测试

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import StoreForm from '../store-management/components/StoreForm';
 import { StoreRequest } from '../store-management/types';
 import * as apiUtils from '../store-management/utils/api.utils';
+import { TENANT_ROUTES } from '../../config/routes';
 
 const CreateStorePage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ const CreateStorePage: React.FC = () => {
       message.success(`店铺 "${createdStore.name}" 创建成功`);
       
       // 创建成功后跳转到店铺列表
-      navigate('/stores');
+      navigate(TENANT_ROUTES.STORES.LIST);
     } catch (error) {
       console.error('创建店铺失败:', error);
       message.error('创建店铺失败，请稍后重试');
@@ -31,7 +32,7 @@ const CreateStorePage: React.FC = () => {
 
   // 处理取消
   const handleCancel = () => {
-    navigate('/stores');
+    navigate(TENANT_ROUTES.STORES.LIST);
   };
 
   return (

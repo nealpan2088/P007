@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import StoreForm from '../store-management/components/StoreForm';
 import { Store, StoreRequest } from '../store-management/types';
 import * as apiUtils from '../store-management/utils/api.utils';
+import { TENANT_ROUTES } from '../../config/routes';
 
 const EditStorePage: React.FC = () => {
   const { storeId } = useParams<{ storeId: string }>();
@@ -30,7 +31,7 @@ const EditStorePage: React.FC = () => {
     } catch (error) {
       console.error('加载店铺数据失败:', error);
       message.error('加载店铺数据失败，请稍后重试');
-      navigate('/stores');
+      navigate(TENANT_ROUTES.STORES.LIST);
     } finally {
       setLoading(false);
     }
@@ -49,7 +50,7 @@ const EditStorePage: React.FC = () => {
       message.success(`店铺 "${updatedStore.name}" 更新成功`);
       
       // 更新成功后跳转到店铺列表
-      navigate('/stores');
+      navigate(TENANT_ROUTES.STORES.LIST);
     } catch (error) {
       console.error('更新店铺失败:', error);
       message.error('更新店铺失败，请稍后重试');
@@ -60,7 +61,7 @@ const EditStorePage: React.FC = () => {
 
   // 处理取消
   const handleCancel = () => {
-    navigate('/stores');
+    navigate(TENANT_ROUTES.STORES.LIST);
   };
 
   if (loading) {

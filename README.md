@@ -6,8 +6,8 @@
 
 ## 📊 当前版本状态
 
-**版本**: v0.2.0 (2026年4月21日)
-**状态**: ✅ **店铺管理界面开发完成**
+**版本**: v0.2.2 (2026年4月21日)
+**状态**: ✅ **路由配置修复与配置验证优化**
 
 ### ✅ 已完成功能
 1. **用户认证系统** - 完整的注册/登录流程
@@ -16,6 +16,9 @@
 4. **扫码点餐MVP** - 顾客端点餐界面
 5. **打印机扩展架构** - 支持多种打印机类型
 6. **Ant Design集成** - 现代化UI组件库
+7. **路由配置系统** - 统一的路由常量管理
+8. **配置验证系统** - 自动化环境变量检查
+9. **服务器监控工具** - 一键状态检查脚本
 
 ### 🔧 技术架构
 - **后端**: Node.js + Fastify + PostgreSQL + Prisma
@@ -75,18 +78,52 @@ cd apps/backend
 npx prisma migrate dev --name init
 ```
 
-### 3. 启动服务
+### 3. 环境配置
+```bash
+# 复制环境配置文件模板
+cd apps/backend && cp .env.example .env
+cd ../frontend && cp .env.example .env
+
+# 编辑环境配置文件，设置您的配置
+# 后端 .env 需要设置: DATABASE_URL, JWT_SECRET 等
+# 前端 .env 需要设置: VITE_API_BASE_URL 等
+```
+
+### 4. 配置验证
+```bash
+# 验证后端配置
+cd apps/backend
+npm run check:config  # 检查环境变量配置
+npm run check:routes  # 检查路由系统
+
+# 验证前端配置
+cd ../frontend
+npm run type-check    # TypeScript类型检查
+npm run lint          # 代码规范检查
+```
+
+### 5. 启动服务
 ```bash
 # 启动后端服务 (端口33037)
 cd apps/backend
-SYSTEM_MODE=multi NODE_ENV=development PORT=33037 \
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/p007_development" \
-JWT_SECRET="your-jwt-secret-minimum-32-characters" \
-API_PREFIX=/api npm run dev
+npm run dev
 
 # 启动前端服务 (端口5177)
-cd apps/frontend
+cd ../frontend
 npm run dev
+```
+
+### 6. 服务器状态检查
+```bash
+# 使用一键检查脚本
+cd /home/admin/projects/P007
+./check-servers.sh
+
+# 脚本功能:
+# - 系统资源检查 (CPU, 内存, 磁盘)
+# - 服务状态检查 (前后端进程, 端口监听)
+# - 页面访问测试 (所有重要页面HTTP状态)
+# - 数据库连接检查 (PostgreSQL服务状态)
 ```
 
 ## 📡 API文档

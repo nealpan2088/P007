@@ -1,5 +1,76 @@
 # P007麒麟项目 - 更新日志
 
+## v0.2.2 (2026-04-21)
+
+### 🔧 修复版本：路由配置修复与配置验证优化
+
+#### **修复问题**
+1. **路由配置不一致修复**
+   - 统一店铺管理路径为 `/dashboard/stores/*` (原 `/stores/*`)
+   - 修复路由顺序问题 (React Router v6更具体的路由放前面)
+   - 所有导航使用路由常量，消除硬编码路径
+   - 更新文件: App.tsx, StoreListPage.tsx, CreateStorePage.tsx, EditStorePage.tsx, StoreDetailPage.tsx
+
+2. **配置验证脚本修复**
+   - 修复 `check:config` 脚本引用不存在的 `dynamic-config.js` 文件
+   - 更新为引用正确的 `index.js` 配置文件
+   - 创建完整的前后端 `.env` 环境配置文件
+   - 验证所有必需环境变量配置正确
+
+3. **服务器管理工具**
+   - 创建一键检查脚本 `check-servers.sh` (356行)
+   - 提供5种手动关闭后端服务器的方法
+   - 完整的服务器状态监控和验证功能
+
+#### **新增功能**
+1. **环境变量管理系统**
+   - 后端 `.env` 文件: 包含所有必需配置和打印机API配置
+   - 前端 `.env` 文件: 包含开发环境配置和API连接配置
+   - 配置验证函数: 自动检查环境变量完整性和有效性
+
+2. **路由常量管理系统**
+   - 所有前端路由通过常量管理，禁止硬编码
+   - 支持路径参数替换: `TENANT_ROUTES.STORES.EDIT.replace(':storeId', storeId)`
+   - 路由工具函数: 构建URL、提取参数、匹配模式
+
+3. **服务器状态监控**
+   - 系统资源检查: CPU、内存、磁盘使用率
+   - 服务状态检查: 前后端进程、端口监听、健康检查
+   - 页面访问测试: 所有重要页面HTTP状态验证
+   - 数据库连接检查: PostgreSQL服务状态和表结构
+
+#### **技术改进**
+1. **配置验证自动化**
+   - `npm run check:config`: 验证环境变量配置
+   - `npm run check:routes`: 验证路由系统正常
+   - 预提交检查: 防止配置问题进入代码库
+
+2. **错误处理优化**
+   - 清晰的错误信息: "❌ 必需的环境变量缺失: NODE_ENV, PORT, DATABASE_URL, JWT_SECRET, API_PREFIX"
+   - 友好的修复建议: 提供具体的环境变量设置方法
+   - 自动化验证: 脚本自动退出并返回错误码
+
+3. **文档完善**
+   - 更新CHANGELOG.md: 记录所有修复和改进
+   - 更新README.md: 添加环境配置说明和使用指南
+   - 技术决策记录: 记录路由配置修复和配置管理方案
+
+#### **修复的文件**
+1. **`apps/backend/package.json`**: 修复 `check:config` 脚本引用
+2. **`apps/frontend/src/App.tsx`**: 修复路由配置和导航链接
+3. **`apps/frontend/src/pages/store-management/*.tsx`**: 修复所有店铺管理页面的导航路径
+4. **`apps/backend/.env`**: 创建完整的环境变量配置文件
+5. **`apps/frontend/.env`**: 创建前端环境变量配置文件
+6. **`check-servers.sh`**: 创建服务器状态检查脚本 (新文件)
+
+#### **验证结果**
+- ✅ **配置检查**: `npm run check:config` 通过
+- ✅ **路由检查**: `npm run check:routes` 通过 (可用路由: public, tenant, customer, admin)
+- ✅ **页面访问**: 所有店铺管理页面可访问 (`/dashboard/stores/*`)
+- ✅ **服务器状态**: 前后端运行正常，响应时间优秀
+
+---
+
 ## v0.2.0 (2026-04-21)
 
 ### 🎉 里程碑：店铺管理界面开发完成

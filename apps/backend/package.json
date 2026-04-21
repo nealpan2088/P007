@@ -1,6 +1,6 @@
 {
   "name": "p007-backend",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,7 +11,7 @@
     "lint": "eslint . --ext js,mjs --report-unused-disable-directives --max-warnings 0",
     "test": "vitest",
     "check:hardcoded": "../../scripts/check-hardcoded.sh",
-    "check:config": "node -e \"import('./src/config/dynamic-config.js').then(c => { c.default.validate(); console.log('✅ 配置验证通过'); }).catch(e => { console.error('❌ 配置验证失败:', e.message); process.exit(1); })\"",
+    "check:config": "node -e \"import('./src/config/index.js').then(c => { c.validate(); console.log('✅ 配置验证通过'); }).catch(e => { console.error('❌ 配置验证失败:', e.message); process.exit(1); })\"",
     "check:routes": "node -e \"import('./src/config/routes.js').then(r => { const routes = r.default || r; console.log('✅ 路由系统正常'); console.log('可用路由:', Object.keys(routes.getAllRoutes()).join(', ')); }).catch(e => { console.error('❌ 路由系统错误:', e.message); process.exit(1); })\"",
     "normalize:import": "../../scripts/normalize-import.sh",
     "check:all": "./scripts/check-all.sh",

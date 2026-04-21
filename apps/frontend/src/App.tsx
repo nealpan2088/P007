@@ -32,7 +32,7 @@ function App() {
               <li><Link to={PUBLIC_ROUTES.PUBLIC.ABOUT}>关于</Link></li>
               <li><Link to="/test-console">控制台测试</Link></li>
               <li><Link to="/scan/test-store/A01">扫码点餐测试</Link></li>
-              <li><Link to="/stores">店铺管理</Link></li>
+              <li><Link to={TENANT_ROUTES.STORES.LIST}>店铺管理</Link></li>
             </ul>
           </nav>
           <main>
@@ -59,11 +59,11 @@ function App() {
               <Route path="/scan/:storeId" element={<ScanOrderPage />} />
               <Route path="/scan" element={<ScanOrderPage />} />
               
-              {/* 店铺管理页面 */}
-              <Route path="/stores" element={<StoreListPage />} />
-              <Route path="/stores/create" element={<CreateStorePage />} />
-              <Route path="/stores/:storeId" element={<StoreDetailPage />} />
-              <Route path="/stores/:storeId/edit" element={<EditStorePage />} />
+              {/* 店铺管理页面 - 使用路由常量 */}
+              <Route path={TENANT_ROUTES.STORES.CREATE} element={<CreateStorePage />} />
+              <Route path={TENANT_ROUTES.STORES.EDIT} element={<EditStorePage />} />
+              <Route path={TENANT_ROUTES.STORES.DETAIL} element={<StoreDetailPage />} />
+              <Route path={TENANT_ROUTES.STORES.LIST} element={<StoreListPage />} />
               
               {/* 默认重定向到首页 */}
               <Route path="*" element={<Navigate to={PUBLIC_ROUTES.HOME} replace />} />

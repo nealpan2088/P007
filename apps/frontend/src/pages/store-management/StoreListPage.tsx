@@ -31,6 +31,7 @@ import { useNavigate } from 'react-router-dom';
 import { Store, StoreQueryParams, StoreStatus, StoreType } from './types';
 import * as apiUtils from './utils/api.utils';
 import * as storeUtils from './utils/store.utils';
+import { TENANT_ROUTES } from '../../config/routes';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -190,17 +191,17 @@ const StoreListPage: React.FC = () => {
 
   // 创建新店铺
   const handleCreateStore = () => {
-    navigate('/stores/create');
+    navigate(TENANT_ROUTES.STORES.CREATE);
   };
 
   // 查看店铺详情
   const handleViewStore = (storeId: string) => {
-    navigate(`/stores/${storeId}`);
+    navigate(TENANT_ROUTES.STORES.DETAIL.replace(':storeId', storeId));
   };
 
   // 编辑店铺
   const handleEditStore = (storeId: string) => {
-    navigate(`/stores/${storeId}/edit`);
+    navigate(TENANT_ROUTES.STORES.EDIT.replace(':storeId', storeId));
   };
 
   // 删除店铺

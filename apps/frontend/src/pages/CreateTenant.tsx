@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { ApiResponse } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { ApiResponse, CreateTenantFormData } from '../types';
 import {
   Container,
   Box,
@@ -40,23 +40,31 @@ const CreateTenant: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [createdTenant, setCreatedTenant] = useState<any>(null);
 
-  // 表单数据
-  const [formData, setFormData] = useState({
-    name: '',
-    subdomain: '',
+  // 表单数据（多店模式：租户=品牌，自动创建第一个店铺）
+  const [formData, setFormData] = useState<CreateTenantFormData>({
+    // 租户信息（品牌/公司）
+    tenantName: '',
+    tenantSlug: '',
     plan: 'FREE',
+    
+    // 第一个店铺信息（自动创建）
+    storeName: '',
+    storeSlug: '',
+    
+    // 所有者信息
+    ownerEmail: '',
+    ownerPassword: '',
+    ownerName: '',
   });
 
   const [validationErrors, setValidationErrors] = useState({
-    name: '',
-    subdomain: '',
+    tenantName: '',
+    tenantSlug: '',
+    storeName: '',
+    storeSlug: '',
+    ownerEmail: '',
+    ownerPassword: '',
   });
-
-  const steps = [
-    '填写基本信息',
-    '选择套餐计划',
-    '确认创建',
-  ];
 
   const plans = [
     { value: 'FREE', label: '免费版', description: '适合初创餐厅，基础功能' },
@@ -71,6 +79,21 @@ const CreateTenant: React.FC = () => {
       ...prev,
       [name]: value,
     }));
+
+    // 自动生成相关字段
+    if (name === 'tenantName' && value.trim() && !formData.storeName) {
+      setFormData(prev => ({
+        ...prev,
+        storeName: `${value.trim()}总店`,
+      }));
+    }
+    
+    if (name === 'tenantSlug' && value.trim() && !formData.storeSlug) {
+      setFormData(prev => ({
+        ...prev,
+        storeSlug: `${value.trim()}-main`,
+      }));
+    }
 
     // 清除对应字段的错误
     if (validationErrors[name as keyof typeof validationErrors]) {
@@ -93,20 +116,53 @@ const CreateTenant: React.FC = () => {
     const errors: any = {};
 
     if (step === 0) {
-      if (!formData.name.trim()) {
-        errors.name = '租户名称不能为空';
-      } else if (formData.name.length < 2) {
-        errors.name = '租户名称至少2个字符';
+      // 租户名称验证（品牌/公司名称）
+      if (!formData.tenantName.trim()) {
+        errors.tenantName = '品牌/公司名称不能为空';
+      } else if (formData.tenantName.length < 2) {
+        errors.tenantName = '品牌名称至少2个字符';
       }
 
-      if (!formData.subdomain.trim()) {
-        errors.subdomain = '子域名不能为空';
-      } else if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(formData.subdomain)) {
-        errors.subdomain = '子域名只能包含小写字母、数字和连字符，且不能以连字符开头或结尾';
-      } else if (formData.subdomain.length < 3) {
-        errors.subdomain = '子域名至少3个字符';
-      } else if (formData.subdomain.length > 30) {
-        errors.subdomain = '子域名最多30个字符';
+      // 租户标识符验证（URL路径）
+      if (!formData.tenantSlug.trim()) {
+        errors.tenantSlug = '品牌标识符不能为空';
+      } else if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(formData.tenantSlug)) {
+        errors.tenantSlug = '标识符只能包含小写字母、数字和连字符，且不能以连字符开头或结尾';
+      } else if (formData.tenantSlug.length < 3) {
+        errors.tenantSlug = '标识符至少3个字符';
+      } else if (formData.tenantSlug.length > 30) {
+        errors.tenantSlug = '标识符最多30个字符';
+      }
+
+      // 店铺名称验证（第一个店铺）
+      if (!formData.storeName.trim()) {
+        errors.storeName = '第一个店铺名称不能为空';
+      } else if (formData.storeName.length < 2) {
+        errors.storeName = '店铺名称至少2个字符';
+      }
+
+      // 店铺标识符验证
+      if (!formData.storeSlug.trim()) {
+        errors.storeSlug = '店铺标识符不能为空';
+      } else if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(formData.storeSlug)) {
+        errors.storeSlug = '店铺标识符只能包含小写字母、数字和连字符';
+      } else if (formData.storeSlug.length < 3) {
+        errors.storeSlug = '店铺标识符至少3个字符';
+      }
+    }
+
+    if (step === 1) {
+      // 所有者信息验证
+      if (!formData.ownerEmail.trim()) {
+        errors.ownerEmail = '邮箱不能为空';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.ownerEmail)) {
+        errors.ownerEmail = '邮箱格式不正确';
+      }
+
+      if (!formData.ownerPassword.trim()) {
+        errors.ownerPassword = '密码不能为空';
+      } else if (formData.ownerPassword.length < 6) {
+        errors.ownerPassword = '密码至少6个字符';
       }
     }
 
@@ -124,21 +180,20 @@ const CreateTenant: React.FC = () => {
     setActiveStep((prevStep) => prevStep - 1);
   };
 
-  const checkSubdomainAvailability = async (subdomain: string): Promise<boolean> => {
+  const checkSlugAvailability = async (slug: string): Promise<boolean> => {
     try {
-      const response = await fetch(apiRoutes.tenant.TENANT.CHECK_SUBDOMAIN, {
+      const response = await fetch('/api/v1/tenant/check-slug', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('qilin_access_token')}`,
         },
-        body: JSON.stringify({ subdomain }),
+        body: JSON.stringify({ slug }),
       });
 
       const data: ApiResponse<any> = await response.json();
       return data.success && data.data?.available === true;
     } catch (error) {
-      console.error('检查子域名可用性错误:', error);
+      console.error('检查标识符可用性错误:', error);
       return false;
     }
   };
@@ -152,31 +207,33 @@ const CreateTenant: React.FC = () => {
     setError(null);
 
     try {
-      // 检查子域名可用性
-      const isAvailable = await checkSubdomainAvailability(formData.subdomain);
-      if (!isAvailable) {
-        throw new Error(`子域名 "${formData.subdomain}" 不可用，请尝试其他子域名`);
+      // 检查租户标识符可用性
+      const isTenantSlugAvailable = await checkSlugAvailability(formData.tenantSlug);
+      if (!isTenantSlugAvailable) {
+        throw new Error(`品牌标识符 "${formData.tenantSlug}" 不可用，请尝试其他标识符`);
       }
 
-      // 创建租户
+      // 创建租户（多店模式）
       const response = await fetch('/api/v1/tenant/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('qilin_access_token')}`,
         },
         body: JSON.stringify({
           tenant: {
-            name: formData.name,
-            subdomain: formData.subdomain,
+            name: formData.tenantName,
+            slug: formData.tenantSlug,
             plan: formData.plan,
           },
           owner: {
-            email: user?.email,
-            username: user?.username,
-            fullName: user?.fullName,
-            phone: user?.phone || '',
-            password: '', // 密码不需要，用户已经登录
+            email: formData.ownerEmail,
+            password: formData.ownerPassword,
+            fullName: formData.ownerName || '',
+          },
+          // 自动创建第一个店铺
+          store: {
+            name: formData.storeName,
+            slug: formData.storeSlug,
           },
         }),
       });
@@ -205,7 +262,7 @@ const CreateTenant: React.FC = () => {
   const handleGoToTenant = () => {
     if (createdTenant?.tenant?.subdomain) {
       // 这里可以跳转到租户管理页面
-      navigate(`/dashboard`);
+      navigate('/dashboard');
     }
   };
 
@@ -272,10 +329,10 @@ const CreateTenant: React.FC = () => {
                       fullWidth
                       label="租户名称"
                       name="name"
-                      value={formData.name}
+                      value={formData.tenantName}
                       onChange={handleInputChange}
-                      error={!!validationErrors.name}
-                      helperText={validationErrors.name || '例如: 凤凰餐厅、美味小吃店等'}
+                      error={!!validationErrors.tenantName}
+                      helperText={validationErrors.tenantName || '例如: 凤凰餐厅、美味小吃店等'}
                       placeholder="请输入租户名称"
                       disabled={loading}
                     />
@@ -285,10 +342,10 @@ const CreateTenant: React.FC = () => {
                       fullWidth
                       label="子域名"
                       name="subdomain"
-                      value={formData.subdomain}
+                      value={formData.tenantSlug}
                       onChange={handleInputChange}
-                      error={!!validationErrors.subdomain}
-                      helperText={validationErrors.subdomain || '例如: phoenix、meiwei 等，将用于访问您的餐厅页面'}
+                      error={!!validationErrors.tenantSlug}
+                      helperText={validationErrors.tenantSlug || '例如: phoenix、meiwei 等，将用于访问您的餐厅页面'}
                       placeholder="请输入子域名"
                       disabled={loading}
                       InputProps={{
@@ -369,14 +426,14 @@ const CreateTenant: React.FC = () => {
                       <Typography variant="body2" color="text.secondary">
                         租户名称:
                       </Typography>
-                      <Typography variant="body1">{formData.name}</Typography>
+                      <Typography variant="body1">{formData.tenantName}</Typography>
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="body2" color="text.secondary">
                         子域名:
                       </Typography>
                       <Typography variant="body1">
-                        {formData.subdomain}.qilin.com
+                        {formData.tenantSlug}.qilin.com
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>

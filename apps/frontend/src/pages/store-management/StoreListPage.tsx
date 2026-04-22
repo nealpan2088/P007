@@ -25,7 +25,7 @@ import {
   MoreOutlined,
   ReloadOutlined,
   ExportOutlined,
-  FilterOutlined,
+
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { Store, StoreQueryParams, StoreStatus, StoreType } from './types';
@@ -153,11 +153,11 @@ const StoreListPage: React.FC = () => {
   };
 
   // 处理表格排序
-  const handleTableChange = (pagination: any, filters: any, sorter: any) => {
+  const handleTableChange = (_pagination: any, _filters: any, _sorter: any) => {
     setQueryParams(prev => ({
       ...prev,
-      sortBy: sorter.field,
-      sortOrder: sorter.order === 'ascend' ? 'asc' : 'desc',
+      sortBy: _sorter.field,
+      sortOrder: _sorter.order === 'ascend' ? 'asc' : 'desc',
     }));
   };
 
@@ -424,7 +424,7 @@ const StoreListPage: React.FC = () => {
             >
               查看
             </Button>
-            <Dropdown menu={{ items }} trigger={['click']}>
+            <Dropdown menu={{ items: [] }} trigger={['click']}>
               <Button type="link" size="small" icon={<MoreOutlined />} />
             </Dropdown>
           </Space>

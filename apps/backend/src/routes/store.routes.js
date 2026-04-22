@@ -4,7 +4,8 @@
 import storeService from '../services/store.service.js';
 import { requireTenantAccess } from '../middleware/index.js';
 import { STORE_TYPES, STORE_STATUS, STORE_VALIDATION, STORE_DEFAULTS } from '../constants/store.constants.js';
-import { STORE_ROUTES } from '../config/routes.js';
+import routes from '../config/routes.js';
+const STORES = routes.tenant.STORES;
 
 /**
  * 店铺管理路由注册
@@ -15,7 +16,7 @@ async function storeRoutes(fastify) {
   const authWithTenant = requireTenantAccess('header');
   
   // 获取店铺列表
-  fastify.get(STORE_ROUTES.LIST, {
+  fastify.get(STORES.LIST, {
     preHandler: authWithTenant
   }, async (request, reply) => {
     try {
@@ -50,7 +51,7 @@ async function storeRoutes(fastify) {
   });
 
   // 获取店铺详情
-  fastify.get(STORE_ROUTES.DETAIL, {
+  fastify.get(STORES.DETAIL, {
     schema: {
       params: {
         type: 'object',
@@ -97,7 +98,7 @@ async function storeRoutes(fastify) {
   });
 
   // 创建新店铺
-  fastify.post(STORE_ROUTES.CREATE, {
+  fastify.post(STORES.CREATE, {
     schema: {
       body: {
         type: 'object',
@@ -170,7 +171,7 @@ async function storeRoutes(fastify) {
   });
 
   // 更新店铺
-  fastify.put(STORE_ROUTES.UPDATE, {
+  fastify.put(STORES.UPDATE, {
     schema: {
       params: {
         type: 'object',
@@ -232,7 +233,7 @@ async function storeRoutes(fastify) {
   });
 
   // 删除店铺（软删除）
-  fastify.delete(STORE_ROUTES.DELETE, {
+  fastify.delete(STORES.DELETE, {
     schema: {
       params: {
         type: 'object',
@@ -279,7 +280,7 @@ async function storeRoutes(fastify) {
   });
 
   // 店铺健康检查
-  fastify.get(STORE_ROUTES.HEALTH, async (request, reply) => {
+  fastify.get(STORES.HEALTH, async (request, reply) => {
     return {
       success: true,
       service: 'qilin-store-api',

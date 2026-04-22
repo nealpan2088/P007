@@ -6,5 +6,5 @@ export default function AboutPage() {
       <p>创建时间: 2026-04-21</p>
       <p>技术栈: React + Fastify + PostgreSQL</p>
     </div>
-  )
+  );
 }

@@ -10,7 +10,7 @@ interface CartDrawerProps {
   onClose: () => void;
   onUpdateQuantity: (menuItemId: string, quantity: number) => void;
   onRemoveItem: (menuItemId: string) => void;
-  onSubmitOrder: (specialRequest?: string) => Promise<void>;
+  onSubmitOrder: (data: { specialRequest?: string; phone?: string }) => Promise<void>;
   formatPrice: (price: number) => string;
 }
 
@@ -26,6 +26,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
   formatPrice,
 }) => {
   const [specialRequest, setSpecialRequest] = useState('');
+  const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,8 +39,12 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
     try {
       setIsSubmitting(true);
       setError(null);
-      await onSubmitOrder(specialRequest.trim() || undefined);
+      await onSubmitOrder({
+        specialRequest: specialRequest.trim() || undefined,
+        phone: phone.trim() || undefined,
+      });
       setSpecialRequest('');
+      setPhone('');
     } catch (err) {
       setError(err instanceof Error ? err.message : '提交订单失败');
     } finally {
@@ -53,7 +58,9 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <>
@@ -143,7 +150,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
         {items.length > 0 && (
           <div className="border-t border-gray-200 p-4">
             {/* 特殊要求输入 */}
-            <div className="mb-4">
+            <div className="mb-3">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 特殊要求（可选）
               </label>
@@ -158,6 +165,21 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
               <div className="text-right text-xs text-gray-500 mt-1">
                 {specialRequest.length}/200
               </div>
+            </div>
+
+            {/* 手机号输入 */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                手机号 <span className="text-gray-400 font-normal">（方便取餐联系，选填）</span>
+              </label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="请输入手机号"
+                maxLength={11}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
             </div>
 
             {/* 错误提示 */}
@@ -184,9 +206,9 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
               className={`
                 w-full py-3 rounded-lg font-semibold text-lg transition-colors
                 ${isSubmitting
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-orange-500 hover:bg-orange-600 text-white'
-                }
+            ? 'bg-gray-400 cursor-not-allowed'
+            : 'bg-orange-500 hover:bg-orange-600 text-white'
+          }
               `}
             >
               {isSubmitting ? (

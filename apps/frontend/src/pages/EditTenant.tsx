@@ -44,7 +44,7 @@ interface ValidationErrors {
 const EditTenant: React.FC = () => {
   const { tenantId } = useParams<{ tenantId: string }>();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -67,7 +67,7 @@ const EditTenant: React.FC = () => {
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
   useEffect(() => {
-    if (isAuthenticated && tenantId) {
+    if (isAuthenticated() && tenantId) {
       fetchTenantData();
     }
   }, [isAuthenticated, tenantId]);
@@ -148,6 +148,9 @@ const EditTenant: React.FC = () => {
       setSuccess(null);
       
       // 这里应该调用更新租户的API
+      if (!tenantId) {
+        throw new Error('租户ID不能为空');
+      }
       const fetchResponse = await fetch(apiRoutes.buildUrl(apiRoutes.tenant.TENANT.UPDATE, { tenantId }), {
         method: 'PUT',
         headers: {

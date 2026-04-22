@@ -16,15 +16,6 @@ export async function registerTenantRoutes(fastify) {
     try {
       const { tenant, owner } = request.body;
       
-      // 检查系统模式
-      if (systemMode.isSingleStore()) {
-        return reply.status(400).send({
-          success: false,
-          message: '当前系统为单店版，不支持租户注册功能',
-          systemMode: 'single',
-        });
-      }
-      
       // 验证必要字段
       if (!tenant || !tenant.name || !tenant.subdomain) {
         return reply.status(400).send({

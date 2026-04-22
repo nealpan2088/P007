@@ -30,18 +30,8 @@ export class TenantService {
     const { name, subdomain, plan = 'free' } = tenantData;
     const { email, username, password, fullName, phone } = ownerData;
 
-    // 检查系统模式 - 如果是单店版，不允许创建租户
-    console.log('创建租户 - 检查系统模式');
-    console.log('systemMode 对象:', systemMode);
-    console.log('systemMode.isSingleStore 类型:', typeof systemMode?.isSingleStore);
-    
-    if (!systemMode || typeof systemMode.isSingleStore !== 'function') {
-      throw new Error('系统配置错误：systemMode 对象未正确定义');
-    }
-    
-    if (systemMode.isSingleStore()) {
-      throw new Error('当前系统为单店版，不支持租户注册功能');
-    }
+    // 系统始终为多租户模式，无需检查单店模式
+    console.log('创建租户 - 系统为多租户模式');
 
     // 验证子域名
     await this.validateSubdomain(subdomain);

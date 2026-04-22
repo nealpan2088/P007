@@ -380,6 +380,116 @@ class ScanService {
       // 不抛出错误，避免影响主流程
     }
   }
+
+  /**
+   * 获取店铺信息（公开API）
+   * @param {string} storeId - 店铺ID或slug
+   * @returns {Promise<Object>} 店铺信息
+   */
+  async getStoreInfo(storeId) {
+    try {
+      // 支持ID或slug查找
+      const store = await prisma.store.findFirst({
+        where: {
+          OR: [
+            { id: storeId, status: 'ACTIVE' },
+            { slug: storeId, status: 'ACTIVE' }
+          ]
+        },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+          type: true,
+          status: true,
+          logoUrl: true,
+          address: true,
+          contactPhone: true,
+          contactEmail: true,
+          businessHours: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      });
+
+      if (!store) {
+        throw createError('NOT_FOUND', '店铺不存在或已停用');
+      }
+
+      return {
+        success: true,
+        data: store
+      };
+    } catch (error) {
+      if (error.code === 'NOT_FOUND') {
+        throw error;
+      }
+      throw createError('INTERNAL_ERROR', '获取店铺信息失败', error.message);
+    }
+  }
+
+  /**
+   * 获取餐桌信息（公开API）
+   * @param {string} storeId - 店铺ID或slug
+   * @param {string} tableId - 餐桌ID或tableNumber
+   * @returns {Promise<Object>} 餐桌信息
+   */
+  async getTableInfo(storeId, tableId) {
+    try {
+      // 1. 先查找店铺
+      const store = await prisma.store.findFirst({
+        where: {
+          OR: [
+            { id: storeId, status: 'ACTIVE' },
+            { slug: storeId, status: 'ACTIVE' }
+          ]
+        }
+      });
+
+      if (!store) {
+        throw createError('NOT_FOUND', '店铺不存在或已停用');
+      }
+
+      // 2. 查找餐桌 - 支持ID或tableNumber查找
+      const table = await prisma.table.findFirst({
+        where: {
+          storeId: store.id,
+          OR: [
+            { id: tableId },
+            { tableNumber: tableId }
+          ]
+        },
+        select: {
+          id: true,
+          name: true,
+          tableNumber: true,
+          capacity: true,
+          status: true,
+          description: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      });
+
+      if (!table) {
+        throw createError('NOT_FOUND', '餐桌不存在');
+      }
+
+      return {
+        success: true,
+        data: {
+          ...table,
+          code: table.tableNumber // 兼容前端使用的code字段
+        }
+      };
+    } catch (error) {
+      if (error.code === 'NOT_FOUND') {
+        throw error;
+      }
+      throw createError('INTERNAL_ERROR', '获取餐桌信息失败', error.message);
+    }
+  }
 }
 
 export default new ScanService();

@@ -20,19 +20,16 @@ const EditStorePage: React.FC = () => {
   }, [storeId]);
 
   const fetchStore = async () => {
-    if (!storeId) return;
+    if (!storeId) {
+      return;
+    }
     
     setLoading(true);
     try {
-      const response = await apiUtils.getStore(storeId);
-      if (response.success && response.data) {
-        setStore(response.data);
-      } else {
-        message.error(response.message || '获取店铺信息失败');
-        navigate(TENANT_ROUTES.TENANTS.LIST);
-      }
-    } catch (error) {
-      message.error('获取店铺信息失败');
+      const store = await apiUtils.fetchStore(storeId);
+      setStore(store);
+    } catch (error: any) {
+      message.error(error.message || '获取店铺信息失败');
       console.error('获取店铺失败:', error);
       navigate(TENANT_ROUTES.TENANTS.LIST);
     } finally {
@@ -41,19 +38,17 @@ const EditStorePage: React.FC = () => {
   };
 
   const handleSubmit = async (values: StoreRequest) => {
-    if (!storeId) return;
+    if (!storeId) {
+      return;
+    }
     
     setSubmitting(true);
     try {
-      const response = await apiUtils.updateStore(storeId, values);
-      if (response.success) {
-        message.success('店铺更新成功');
-        navigate(TENANT_ROUTES.TENANTS.LIST);
-      } else {
-        message.error(response.message || '更新失败');
-      }
-    } catch (error) {
-      message.error('更新失败，请稍后重试');
+      await apiUtils.updateStore(storeId, values);
+      message.success('店铺更新成功');
+      navigate(TENANT_ROUTES.TENANTS.LIST);
+    } catch (error: any) {
+      message.error(error.message || '更新失败，请稍后重试');
       console.error('更新店铺失败:', error);
     } finally {
       setSubmitting(false);

@@ -77,7 +77,7 @@ export interface TableInfo {
 
 // 页面状态
 export interface ScanOrderState {
-  storeId: string;
+  storeSlug: string;
   tableId: string;
   storeInfo: StoreInfo | null;
   tableInfo: TableInfo | null;
@@ -103,11 +103,12 @@ export interface ApiResponse<T = any> {
 
 // 提交订单请求
 export interface SubmitOrderRequest {
-  storeId: string;
-  tableId: string;
+  store_id: string;
+  table_code: string;
   items: Array<{
-    menuItemId: string;
+    menu_item_id: string;
     quantity: number;
   }>;
-  specialRequest?: string;
+  notes?: string;
+  customer_phone?: string;
 }

@@ -5,11 +5,11 @@
 echo "🔧 设置麒麟项目后端环境变量..."
 echo "================================="
 
-# 开发环境配置
+# 开发环境配置（与实际.env文件保持一致）
 export NODE_ENV=development
-export PORT=33037
-export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/p007_development"
-export JWT_SECRET="qilin-development-jwt-secret-minimum-32-characters-here"
+export PORT=33038
+export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/p007_simple"
+export JWT_SECRET="$(cat .env | grep JWT_SECRET | cut -d= -f2)"
 export API_PREFIX="/api"
 export SYSTEM_MODE="multi"
 export CORS_ORIGIN="http://localhost:5177"

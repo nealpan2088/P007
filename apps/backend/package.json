@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --watch src/index.js",
-    "start": "node src/index.js",
+    "dev": "node --watch server-optimized.mjs",
+    "start": "node server-optimized.mjs",
+    "dev:simple": "node server-simple.cjs",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "lint": "eslint . --ext js,mjs --report-unused-disable-directives --max-warnings 0",

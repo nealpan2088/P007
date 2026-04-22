@@ -120,8 +120,6 @@ const StoreDetailPage: React.FC = () => {
     <div style={{ padding: 24 }}>
       <Card
         title={store.name}
-        subTitle={store.description}
-        onBack={handleBack}
         extra={[
           <Button key="back" onClick={handleBack} icon={<ArrowLeftOutlined />}>
             返回
@@ -143,14 +141,6 @@ const StoreDetailPage: React.FC = () => {
         {/* 左侧：店铺基本信息 */}
         <Col span={16}>
           <Card title="店铺信息" style={{ marginBottom: 24 }}>
-      <div>
-        <Typography variant="h5" component="h1">
-          {title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {subTitle}
-        </Typography>
-      </div>
             <Descriptions column={2} bordered>
               <Descriptions.Item label="店铺名称">{store.name}</Descriptions.Item>
               <Descriptions.Item label="店铺类型">
@@ -192,14 +182,8 @@ const StoreDetailPage: React.FC = () => {
 
           {/* 联系信息 */}
           <Card title="联系信息" style={{ marginBottom: 24 }}>
-      <div>
-        <Typography variant="h5" component="h1">
-          {title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {subTitle}
-        </Typography>
-      </div>
+            <div>
+            </div>
             <Row gutter={16}>
               {store.phone && (
                 <Col span={12}>
@@ -239,14 +223,8 @@ const StoreDetailPage: React.FC = () => {
 
           {/* 营业时间 */}
           <Card title="营业时间">
-      <div>
-        <Typography variant="h5" component="h1">
-          {title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {subTitle}
-        </Typography>
-      </div>
+            <div>
+            </div>
             <Timeline>
               {store.businessHours.map((hour, index) => (
                 <Timeline.Item
@@ -278,14 +256,8 @@ const StoreDetailPage: React.FC = () => {
         <Col span={8}>
           {/* 店铺Logo */}
           <Card title="店铺Logo" style={{ marginBottom: 24 }}>
-      <div>
-        <Typography variant="h5" component="h1">
-          {title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {subTitle}
-        </Typography>
-      </div>
+            <div>
+            </div>
             <div style={{ textAlign: 'center' }}>
               {store.logoUrl ? (
                 <Image
@@ -323,14 +295,8 @@ const StoreDetailPage: React.FC = () => {
           {/* 店铺封面图 */}
           {store.coverImageUrl && (
             <Card title="店铺封面" style={{ marginBottom: 24 }}>
-      <div>
-        <Typography variant="h5" component="h1">
-          {title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {subTitle}
-        </Typography>
-      </div>
+              <div>
+              </div>
               <Image
                 src={store.coverImageUrl}
                 alt="店铺封面"
@@ -346,14 +312,8 @@ const StoreDetailPage: React.FC = () => {
 
           {/* 统计信息 */}
           <Card title="统计信息">
-      <div>
-        <Typography variant="h5" component="h1">
-          {title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {subTitle}
-        </Typography>
-      </div>
+            <div>
+            </div>
             <Row gutter={16}>
               <Col span={12}>
                 <Statistic
@@ -368,7 +328,6 @@ const StoreDetailPage: React.FC = () => {
                 <Statistic
                   title="人均消费"
                   value={store.averagePrice || 0}
-                  prefix="¥"
                   prefix={<DollarOutlined />}
                   valueStyle={{ color: '#52c41a' }}
                 />
@@ -395,14 +354,8 @@ const StoreDetailPage: React.FC = () => {
 
           {/* 快速操作 */}
           <Card title="快速操作" style={{ marginTop: 24 }}>
-      <div>
-        <Typography variant="h5" component="h1">
-          {title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {subTitle}
-        </Typography>
-      </div>
+            <div>
+            </div>
             <Space direction="vertical" style={{ width: '100%' }}>
               <Button
                 type="primary"

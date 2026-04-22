@@ -21,7 +21,7 @@ import {
   PlusOutlined,
   MinusCircleOutlined,
 } from '@ant-design/icons';
-import { Store, StoreRequest, StoreStatus, StoreType, BusinessHours } from '../types';
+import { Store, StoreRequest, BusinessHours } from '../types';
 import * as storeUtils from '../utils/store.utils';
 import * as apiUtils from '../utils/api.utils';
 
@@ -44,7 +44,7 @@ const StoreForm: React.FC<StoreFormProps> = ({
   const [form] = Form.useForm();
   const [logoUrl, setLogoUrl] = useState<string | undefined>(initialValues?.logoUrl);
   const [coverImageUrl, setCoverImageUrl] = useState<string | undefined>(
-    initialValues?.coverImageUrl
+    initialValues?.coverImageUrl,
   );
   const [uploading, setUploading] = useState(false);
 
@@ -154,7 +154,9 @@ const StoreForm: React.FC<StoreFormProps> = ({
 
   // 验证手机号码
   const validatePhone = (_: any, value: string) => {
-    if (!value) return Promise.resolve();
+    if (!value) {
+      return Promise.resolve();
+    }
     if (storeUtils.validatePhone(value)) {
       return Promise.resolve();
     }
@@ -163,7 +165,9 @@ const StoreForm: React.FC<StoreFormProps> = ({
 
   // 验证邮箱
   const validateEmail = (_: any, value: string) => {
-    if (!value) return Promise.resolve();
+    if (!value) {
+      return Promise.resolve();
+    }
     if (storeUtils.validateEmail(value)) {
       return Promise.resolve();
     }
@@ -172,7 +176,9 @@ const StoreForm: React.FC<StoreFormProps> = ({
 
   // 验证URL
   const validateUrl = (_: any, value: string) => {
-    if (!value) return Promise.resolve();
+    if (!value) {
+      return Promise.resolve();
+    }
     if (storeUtils.validateUrl(value)) {
       return Promise.resolve();
     }
@@ -181,7 +187,9 @@ const StoreForm: React.FC<StoreFormProps> = ({
 
   // 验证数字
   const validateNumber = (_: any, value: string) => {
-    if (!value) return Promise.resolve();
+    if (!value) {
+      return Promise.resolve();
+    }
     if (!isNaN(Number(value)) && Number(value) > 0) {
       return Promise.resolve();
     }

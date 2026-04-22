@@ -19,6 +19,22 @@ async function publicRoutes(fastify) {
     };
   });
 
+  // 获取店铺信息（公开）
+  fastify.get('/stores/:storeId', async (request, reply) => {
+    try {
+      const { storeId } = request.params;
+      
+      const result = await scanService.getStoreInfo(storeId);
+      return reply.code(200).send(result);
+    } catch (error) {
+      return reply.code(error.statusCode || 500).send({
+        success: false,
+        error: error.message,
+        code: error.code
+      });
+    }
+  });
+
   // 获取店铺菜单（公开）
   fastify.get('/stores/:storeId/menu', async (request, reply) => {
     try {
@@ -112,6 +128,22 @@ async function publicRoutes(fastify) {
         success: true,
         order: result
       });
+    } catch (error) {
+      return reply.code(error.statusCode || 500).send({
+        success: false,
+        error: error.message,
+        code: error.code
+      });
+    }
+  });
+
+  // 获取餐桌信息（公开）
+  fastify.get('/stores/:storeId/tables/:tableId', async (request, reply) => {
+    try {
+      const { storeId, tableId } = request.params;
+      
+      const result = await scanService.getTableInfo(storeId, tableId);
+      return reply.code(200).send(result);
     } catch (error) {
       return reply.code(error.statusCode || 500).send({
         success: false,

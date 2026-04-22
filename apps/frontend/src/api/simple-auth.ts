@@ -18,7 +18,7 @@ const API_BASE_URL = `${getApiBaseUrl()}/api/${API_VERSION}`;
 // 统一的请求函数
 const request = async <T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<T> => {
   const url = `${API_BASE_URL}${endpoint}`;
   const controller = new AbortController();
@@ -42,13 +42,13 @@ const request = async <T>(
     clearTimeout(timeoutId);
     
     if (!fetchResponse.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorData = await fetchResponse.json().catch(() => ({}));
       throw new Error(
-        errorData.message || `HTTP ${response.status}: ${response.statusText}`
+        errorData.message || `HTTP ${fetchResponse.status}: ${fetchResponse.statusText}`,
       );
     }
     
-    return await response.json();
+    return await fetchResponse.json();
   } catch (error: any) {
     clearTimeout(timeoutId);
     
@@ -64,7 +64,7 @@ const request = async <T>(
 const authRequest = async <T>(
   endpoint: string,
   accessToken: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<T> => {
   return request<T>(endpoint, {
     ...options,
@@ -75,17 +75,13 @@ const authRequest = async <T>(
   });
 };
 
-// 用户数据类型
-export interface User {
-  id: string;
-  email: string;
-  username: string;
-  fullName: string | null;
-  phone: string | null;
-  avatar: string | null;
-  emailVerified: boolean;
-  status: string;
-  tenants: any[];
+// 用户数据类型 - 使用统一的类型定义
+import { User as ApiUser } from '../types';
+
+export interface User extends ApiUser {
+  // 保持向后兼容性
+  emailVerified?: boolean;
+  tenants?: any[];
 }
 
 // 登录凭据
@@ -143,7 +139,7 @@ export const authApi = {
       {
         method: 'POST',
         body: JSON.stringify({ sessionId }),
-      }
+      },
     );
   },
   
@@ -162,7 +158,7 @@ export const authApi = {
       accessToken,
       {
         method: 'GET',
-      }
+      },
     );
   },
   

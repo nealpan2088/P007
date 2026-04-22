@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { authApi, User, LoginCredentials, RegisterData } from '../api/simple-auth';
+import { authApi, LoginCredentials, RegisterData } from '../api/simple-auth';
+import { User } from '../types';
 
 // 本地存储键名
 const STORAGE_KEYS = {
@@ -17,7 +18,7 @@ export const useAuth = () => {
   });
   
   const [accessToken, setAccessToken] = useState<string | null>(
-    () => localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)
+    () => localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN),
   );
   
   const [isLoading, setIsLoading] = useState(false);
@@ -61,7 +62,7 @@ export const useAuth = () => {
       const credentials: LoginCredentials = { email, password };
       const response = await authApi.login(credentials);
       
-      if (response.data.success && response.user && response.tokens && response.sessionId) {
+      if (response.success && response.user && response.tokens && response.sessionId) {
         saveAuthData({
           user: response.user,
           accessToken: response.tokens.accessToken,
@@ -71,7 +72,7 @@ export const useAuth = () => {
         
         return true;
       } else {
-        setError(response.data.message || '登录失败，请检查邮箱和密码');
+        setError(response.message || '登录失败，请检查邮箱和密码');
         return false;
       }
     } catch (err: any) {
@@ -102,11 +103,11 @@ export const useAuth = () => {
     try {
       const response = await authApi.register(userData);
       
-      if (response.data.success) {
+      if (response.success) {
         // 注册成功，但不自动登录（需要邮箱验证）
         return true;
       } else {
-        setError(response.data.message || '注册失败，请检查输入信息');
+        setError(response.message || '注册失败，请检查输入信息');
         return false;
       }
     } catch (err: any) {
@@ -161,7 +162,7 @@ export const useAuth = () => {
     try {
       const response = await authApi.refreshToken(refreshToken);
       
-      if (response.data.success && response.tokens) {
+      if (response.success && response.tokens) {
         localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.tokens.accessToken);
         setAccessToken(response.tokens.accessToken);
         return true;
@@ -183,7 +184,7 @@ export const useAuth = () => {
     try {
       const response = await authApi.getCurrentUser(accessToken);
       
-      if (response.data.success && response.user) {
+      if (response.success && response.user) {
         const updatedUser = response.user;
         localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedUser));
         setUser(updatedUser);
@@ -253,7 +254,7 @@ export const useAuth = () => {
     try {
       const response = await authApi.verifyEmail(token);
       
-      if (response.data.success) {
+      if (response.success) {
         // 如果用户已登录，更新用户状态
         if (user) {
           const updatedUser = { ...user, emailVerified: true };
@@ -263,7 +264,7 @@ export const useAuth = () => {
         
         return true;
       } else {
-        setError(response.data.message || '邮箱验证失败');
+        setError(response.message || '邮箱验证失败');
         return false;
       }
     } catch (err: any) {
@@ -283,10 +284,10 @@ export const useAuth = () => {
     try {
       const response = await authApi.resetPassword(token, newPassword);
       
-      if (response.data.success) {
+      if (response.success) {
         return true;
       } else {
-        setError(response.data.message || '密码重置失败');
+        setError(response.message || '密码重置失败');
         return false;
       }
     } catch (err: any) {

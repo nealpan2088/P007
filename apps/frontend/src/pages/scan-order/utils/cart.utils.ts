@@ -7,10 +7,10 @@ import { CartItem, MenuItem } from '../types';
 export function addItemToCart(
   cartItems: CartItem[],
   menuItem: MenuItem,
-  quantity: number = 1
+  quantity: number = 1,
 ): CartItem[] {
   const existingItemIndex = cartItems.findIndex(
-    item => item.menuItemId === menuItem.id
+    item => item.menuItemId === menuItem.id,
   );
 
   if (existingItemIndex >= 0) {
@@ -42,7 +42,7 @@ export function addItemToCart(
 export function updateCartItemQuantity(
   cartItems: CartItem[],
   menuItemId: string,
-  quantity: number
+  quantity: number,
 ): CartItem[] {
   if (quantity <= 0) {
     // 如果数量为0或负数，移除该项
@@ -52,7 +52,7 @@ export function updateCartItemQuantity(
   return cartItems.map(item =>
     item.menuItemId === menuItemId
       ? { ...item, quantity }
-      : item
+      : item,
   );
 }
 
@@ -61,7 +61,7 @@ export function updateCartItemQuantity(
  */
 export function removeItemFromCart(
   cartItems: CartItem[],
-  menuItemId: string
+  menuItemId: string,
 ): CartItem[] {
   return cartItems.filter(item => item.menuItemId !== menuItemId);
 }
@@ -93,12 +93,12 @@ export function formatPrice(price: number): string {
  * 保存购物车到本地存储
  */
 export function saveCartToLocalStorage(
-  storeId: string,
+  storeSlug: string,
   tableId: string,
-  cartItems: CartItem[]
+  cartItems: CartItem[],
 ): void {
   try {
-    const key = `qilin_cart_${storeId}_${tableId}`;
+    const key = `qilin_cart_${storeSlug}_${tableId}`;
     localStorage.setItem(key, JSON.stringify(cartItems));
   } catch (error) {
     console.error('保存购物车到本地存储失败:', error);
@@ -109,11 +109,11 @@ export function saveCartToLocalStorage(
  * 从本地存储加载购物车
  */
 export function loadCartFromLocalStorage(
-  storeId: string,
-  tableId: string
+  storeSlug: string,
+  tableId: string,
 ): CartItem[] {
   try {
-    const key = `qilin_cart_${storeId}_${tableId}`;
+    const key = `qilin_cart_${storeSlug}_${tableId}`;
     const saved = localStorage.getItem(key);
     return saved ? JSON.parse(saved) : [];
   } catch (error) {
@@ -126,11 +126,11 @@ export function loadCartFromLocalStorage(
  * 清空本地存储的购物车
  */
 export function clearCartFromLocalStorage(
-  storeId: string,
-  tableId: string
+  storeSlug: string,
+  tableId: string,
 ): void {
   try {
-    const key = `qilin_cart_${storeId}_${tableId}`;
+    const key = `qilin_cart_${storeSlug}_${tableId}`;
     localStorage.removeItem(key);
   } catch (error) {
     console.error('清空本地存储购物车失败:', error);

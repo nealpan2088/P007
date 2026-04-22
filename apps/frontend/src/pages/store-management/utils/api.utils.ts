@@ -22,7 +22,7 @@ apiClient.interceptors.request.use(
   },
   error => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // 响应拦截器
@@ -50,7 +50,7 @@ apiClient.interceptors.response.use(
       code: error.response?.status || 'NETWORK_ERROR',
       details: error.response?.data,
     });
-  }
+  },
 );
 
 /**
@@ -220,7 +220,7 @@ export async function uploadStoreImage(file: File): Promise<{ url: string }> {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-      }
+      },
     );
     
     if (response.data.success) {

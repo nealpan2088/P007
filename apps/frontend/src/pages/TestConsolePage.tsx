@@ -19,7 +19,7 @@ export default function TestConsolePage() {
       const mockWarnings = [
         '检查React Router警告...',
         '如果看到此页面，说明路由配置正常',
-        '控制台应该没有React Router Future Flag警告'
+        '控制台应该没有React Router Future Flag警告',
       ];
       
       setConsoleLogs(mockWarnings);
@@ -29,7 +29,7 @@ export default function TestConsolePage() {
       const hasWarnings = mockWarnings.some(log => 
         log.includes('React Router') || 
         log.includes('Future Flag') ||
-        log.includes('v7_')
+        log.includes('v7_'),
       );
       
       setHasReactRouterWarnings(hasWarnings);
@@ -62,15 +62,15 @@ export default function TestConsolePage() {
       </Typography>
       
       <Alert 
-        severity={hasReactRouterWarnings ? "warning" : "success"} 
+        severity={hasReactRouterWarnings ? 'warning' : 'success'} 
         sx={{ mb: 3 }}
       >
         <AlertTitle>
-          {hasReactRouterWarnings ? "检测到React Router警告" : "React Router配置正常"}
+          {hasReactRouterWarnings ? '检测到React Router警告' : 'React Router配置正常'}
         </AlertTitle>
         {hasReactRouterWarnings 
-          ? "请检查浏览器控制台中的React Router Future Flag警告"
-          : "✅ 自定义Router组件已启用v7未来标志，控制台应该没有警告"
+          ? '请检查浏览器控制台中的React Router Future Flag警告'
+          : '✅ 自定义Router组件已启用v7未来标志，控制台应该没有警告'
         }
       </Alert>
 
@@ -147,7 +147,7 @@ export default function TestConsolePage() {
             fontSize: '0.875rem',
             minHeight: 200,
             maxHeight: 300,
-            overflow: 'auto'
+            overflow: 'auto',
           }}
         >
           {consoleLogs.map((log, index) => (

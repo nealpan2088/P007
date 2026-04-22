@@ -87,7 +87,7 @@ export function isStoreOpenNow(businessHours: BusinessHours[]): boolean {
   const currentTime = now.getHours() * 60 + now.getMinutes(); // 转换为分钟数
 
   const todayHours = businessHours.find(
-    hour => hour.dayOfWeek === currentDay && hour.isOpen
+    hour => hour.dayOfWeek === currentDay && hour.isOpen,
   );
 
   if (!todayHours) {

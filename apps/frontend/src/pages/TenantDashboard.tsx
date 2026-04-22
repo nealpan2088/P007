@@ -97,12 +97,12 @@ const TenantDashboard: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   
   const [loading, setLoading] = useState(true);
-  const [tenant, setTenant] = useState(mockTenant);
-  const [stores, setStores] = useState(mockStores);
-  const [recentOrders, setRecentOrders] = useState(mockOrders);
+  const [tenant, _setTenant] = useState(mockTenant);
+  const [stores, _setStores] = useState(mockStores);
+  const [recentOrders, _setRecentOrders] = useState(mockOrders);
 
   useEffect(() => {
-    if (isAuthenticated && tenantId) {
+    if (isAuthenticated() && tenantId) {
       setTimeout(() => {
         setLoading(false);
       }, 500);
@@ -110,19 +110,19 @@ const TenantDashboard: React.FC = () => {
   }, [isAuthenticated, tenantId]);
 
   const handleCreateStore = () => {
-    navigate(`${TENANT_ROUTES.TENANTS.DASHBOARD}/${tenantId}/stores/create`);
+    navigate(`${TENANT_ROUTES.DASHBOARD}/${tenantId}/stores/create`);
   };
 
   const handleViewStore = (storeId: string) => {
-    navigate(`${TENANT_ROUTES.TENANTS.DASHBOARD}/${tenantId}/stores/${storeId}`);
+    navigate(`${TENANT_ROUTES.DASHBOARD}/${tenantId}/stores/${storeId}`);
   };
 
   const handleViewOrder = (orderId: string) => {
-    navigate(`${TENANT_ROUTES.TENANTS.DASHBOARD}/${tenantId}/orders/${orderId}`);
+    navigate(`${TENANT_ROUTES.DASHBOARD}/${tenantId}/orders/${orderId}`);
   };
 
   const handleEditTenant = () => {
-    navigate(`${TENANT_ROUTES.TENANTS.DASHBOARD}/${tenantId}/edit`);
+    navigate(`${TENANT_ROUTES.DASHBOARD}/${tenantId}/edit`);
   };
 
   if (!isAuthenticated) {
@@ -338,7 +338,7 @@ const TenantDashboard: React.FC = () => {
                         <Typography variant="body1">{order.id}</Typography>
                         <Chip
                           label={order.status === 'completed' ? '已完成' : 
-                                 order.status === 'preparing' ? '制作中' : '待处理'}
+                            order.status === 'preparing' ? '制作中' : '待处理'}
                           size="small"
                           color={getStatusColor(order.status) as any}
                           sx={{ ml: 2 }}
@@ -448,7 +448,7 @@ const TenantDashboard: React.FC = () => {
                   fullWidth
                   variant="outlined"
                   startIcon={<BarChartIcon />}
-                  onClick={() => navigate(`${TENANT_ROUTES.TENANTS.DASHBOARD}/${tenantId}/analytics`)}
+                  onClick={() => navigate(`${TENANT_ROUTES.DASHBOARD}/${tenantId}/analytics`)}
                   sx={{ height: 80, flexDirection: 'column' }}
                 >
                   <Typography variant="body1">销售报表</Typography>
@@ -459,7 +459,7 @@ const TenantDashboard: React.FC = () => {
                   fullWidth
                   variant="outlined"
                   startIcon={<PeopleIcon />}
-                  onClick={() => navigate(`${TENANT_ROUTES.TENANTS.DASHBOARD}/${tenantId}/users`)}
+                  onClick={() => navigate(`${TENANT_ROUTES.DASHBOARD}/${tenantId}/users`)}
                   sx={{ height: 80, flexDirection: 'column' }}
                 >
                   <Typography variant="body1">员工管理</Typography>
@@ -470,7 +470,7 @@ const TenantDashboard: React.FC = () => {
                   fullWidth
                   variant="outlined"
                   startIcon={<RestaurantIcon />}
-                  onClick={() => navigate(`${TENANT_ROUTES.TENANTS.DASHBOARD}/${tenantId}/menu`)}
+                  onClick={() => navigate(`${TENANT_ROUTES.DASHBOARD}/${tenantId}/menu`)}
                   sx={{ height: 80, flexDirection: 'column' }}
                 >
                   <Typography variant="body1">菜单管理</Typography>
@@ -481,7 +481,7 @@ const TenantDashboard: React.FC = () => {
                   fullWidth
                   variant="outlined"
                   startIcon={<SettingsIcon />}
-                  onClick={() => navigate(`${TENANT_ROUTES.TENANTS.DASHBOARD}/${tenantId}/settings`)}
+                  onClick={() => navigate(`${TENANT_ROUTES.DASHBOARD}/${tenantId}/settings`)}
                   sx={{ height: 80, flexDirection: 'column' }}
                 >
                   <Typography variant="body1">系统设置</Typography>

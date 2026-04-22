@@ -1,19 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ScanHeader from './components/ScanHeader';
 import MenuSection from './components/MenuSection';
 import CartDrawer from './components/CartDrawer';
+import ItemDetailModal from './components/ItemDetailModal';
 import { useScanOrder } from './hooks/useScanOrder';
+import { MenuItem } from './types';
 
 const ScanOrderPage: React.FC = () => {
   // 从URL参数获取店铺ID和餐桌ID
-  const { storeId = 'test-store', tableId = 'A01' } = useParams<{
-    storeId?: string;
+  const { storeSlug, tableId } = useParams<{
+    storeSlug?: string;
     tableId?: string;
   }>();
-  
+
   const navigate = useNavigate();
-  
+
+  // 如果URL缺少必要参数，显示错误
+  if (!storeSlug || !tableId) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center p-8">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">参数错误</h2>
+          <p className="text-gray-600">扫码点餐链接缺少店铺或餐桌信息</p>
+        </div>
+      </div>
+    );
+  }
+
   // 使用自定义Hook管理状态
   const {
     // 状态
@@ -28,24 +43,24 @@ const ScanOrderPage: React.FC = () => {
     error,
     cartTotal,
     cartItemCount,
-    currentCategory,
-    
     // 操作方法
     selectCategory,
     addToCart,
     updateCartItemQuantity,
     removeFromCart,
-    clearCart,
     toggleCart,
     openCart,
     closeCart,
     submitOrder,
     refreshOrderStatus,
     reloadMenu,
-    
+
     // 工具函数
     formatPrice,
-  } = useScanOrder(storeId, tableId);
+  } = useScanOrder(storeSlug, tableId);
+
+  // 菜品详情弹窗
+  const [detailItem, setDetailItem] = useState<MenuItem | null>(null);
 
   // 处理返回
   const handleBack = () => {
@@ -53,9 +68,8 @@ const ScanOrderPage: React.FC = () => {
   };
 
   // 处理查看菜品详情
-  const handleViewDetails = (item: any) => {
-    // TODO: 实现菜品详情弹窗
-    console.log('查看菜品详情:', item);
+  const handleViewDetails = (item: MenuItem) => {
+    setDetailItem(item);
   };
 
   // 显示错误信息
@@ -103,7 +117,7 @@ const ScanOrderPage: React.FC = () => {
           onCartClick={openCart}
           onBack={handleBack}
         />
-        
+
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
             <div className="text-center mb-8">
@@ -149,13 +163,13 @@ const ScanOrderPage: React.FC = () => {
                 </div>
               </div>
               <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-orange-500 transition-all duration-500"
-                  style={{ 
+                  style={{
                     width: orderStatus.status === 'PENDING' ? '25%' :
-                           orderStatus.status === 'CONFIRMED' ? '50%' :
-                           orderStatus.status === 'PREPARING' ? '75%' :
-                           orderStatus.status === 'READY' ? '100%' : '0%'
+                      orderStatus.status === 'CONFIRMED' ? '50%' :
+                        orderStatus.status === 'PREPARING' ? '75%' :
+                          orderStatus.status === 'READY' ? '100%' : '0%',
                   }}
                 />
               </div>
@@ -183,7 +197,7 @@ const ScanOrderPage: React.FC = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-semibold text-gray-800">总计</span>
                   <span className="text-2xl font-bold text-orange-600">
-                    ¥{orderStatus.totalAmount.toFixed(2)}
+                    ¥{Number(orderStatus.totalAmount).toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -260,29 +274,42 @@ const ScanOrderPage: React.FC = () => {
         formatPrice={formatPrice}
       />
 
-      {/* 底部浮动购物车按钮（移动端） */}
+      {/* 底部浮动购物车栏 */}
       {cartItemCount > 0 && !isCartOpen && (
-        <button
-          onClick={openCart}
-          className="fixed bottom-6 right-6 md:hidden z-30 px-6 py-3 bg-orange-500 text-white rounded-full shadow-lg flex items-center space-x-2 hover:bg-orange-600 transition-colors"
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-            />
-          </svg>
-          <span>购物车 ({cartItemCount})</span>
-          <span className="font-bold">{formatPrice(cartTotal)}</span>
-        </button>
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-100 shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center shadow-md">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full px-1 shadow">
+                  {cartItemCount > 99 ? '99+' : cartItemCount}
+                </span>
+              </div>
+              <div>
+                <div className="text-base font-bold text-gray-800">{formatPrice(cartTotal)}</div>
+                <div className="text-[10px] text-gray-400">另需配送费 ¥0</div>
+              </div>
+            </div>
+            <button
+              onClick={openCart}
+              className="px-6 py-2.5 bg-orange-500 text-white rounded-full font-semibold text-sm hover:bg-orange-600 active:scale-95 transition-all shadow-lg shadow-orange-200"
+            >
+              去结算
+            </button>
+          </div>
+        </div>
       )}
+
+      {/* 菜品详情弹窗 */}
+      <ItemDetailModal
+        item={detailItem}
+        onClose={() => setDetailItem(null)}
+        onAddToCart={addToCart}
+      />
     </div>
   );
 };

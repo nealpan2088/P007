@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { MenuCategory, MenuItem } from '../types';
 import MenuItemCard from './MenuItemCard';
 
@@ -19,34 +19,35 @@ const MenuSection: React.FC<MenuSectionProps> = ({
   onViewDetails,
   isLoading = false,
 }) => {
-  // 获取当前选中的分类
+  const sidebarRef = useRef<HTMLDivElement>(null);
   const currentCategory = categories.find(cat => cat.id === selectedCategory);
+
+  // 选中分类时自动滚动到可见区域
+  useEffect(() => {
+    if (sidebarRef.current && selectedCategory) {
+      const btn = sidebarRef.current.querySelector(`[data-cat-id="${selectedCategory}"]`);
+      if (btn) {
+        btn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  }, [selectedCategory]);
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-6">
-        {/* 分类标签骨架屏 */}
-        <div className="flex space-x-2 overflow-x-auto pb-4 mb-6">
+      <div className="flex h-[calc(100vh-48px)]">
+        <div className="w-20 shrink-0 bg-gray-50 p-2">
           {[1, 2, 3, 4].map(i => (
-            <div
-              key={i}
-              className="h-10 w-24 bg-gray-200 rounded-full animate-pulse"
-            />
+            <div key={i} className="h-10 bg-gray-200 rounded-lg mb-2 animate-pulse" />
           ))}
         </div>
-
-        {/* 菜品网格骨架屏 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map(i => (
-            <div
-              key={i}
-              className="bg-white rounded-lg shadow-md overflow-hidden"
-            >
-              <div className="h-48 bg-gray-200 animate-pulse" />
-              <div className="p-4">
-                <div className="h-6 bg-gray-200 rounded mb-2 animate-pulse" />
-                <div className="h-4 bg-gray-200 rounded mb-3 animate-pulse" />
-                <div className="h-10 bg-gray-200 rounded animate-pulse" />
+        <div className="flex-1 p-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="flex mb-2.5 bg-white rounded-xl overflow-hidden">
+              <div className="w-[88px] h-[88px] bg-gray-200 animate-pulse shrink-0" />
+              <div className="flex-1 p-2.5">
+                <div className="h-3.5 bg-gray-200 rounded w-2/3 mb-2 animate-pulse" />
+                <div className="h-3 bg-gray-200 rounded w-full mb-1 animate-pulse" />
+                <div className="h-3 bg-gray-200 rounded w-1/3 animate-pulse" />
               </div>
             </div>
           ))}
@@ -57,111 +58,68 @@ const MenuSection: React.FC<MenuSectionProps> = ({
 
   if (categories.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-12 text-center">
-        <div className="w-24 h-24 mx-auto mb-6 text-gray-300">
-          <svg
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1}
-              d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"
-            />
-          </svg>
+      <div className="flex items-center justify-center h-[calc(100vh-48px)]">
+        <div className="text-center">
+          <div className="w-14 h-14 mx-auto mb-3 text-gray-300">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+            </svg>
+          </div>
+          <p className="text-gray-400 text-sm">暂无菜品</p>
         </div>
-        <h3 className="text-xl font-medium text-gray-700 mb-2">
-          暂无菜品
-        </h3>
-        <p className="text-gray-500">
-          该店铺暂时没有可点的菜品
-        </p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      {/* 分类标签 */}
-      <div className="sticky top-16 z-20 bg-white pb-4 mb-6">
-        <div className="flex space-x-2 overflow-x-auto">
-          {categories.map(category => (
-            <button
-              key={category.id}
-              onClick={() => onSelectCategory(category.id)}
-              className={`
-                px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
-                transition-colors duration-200
-                ${selectedCategory === category.id
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }
-              `}
-            >
-              {category.name}
-              {category.items.length > 0 && (
-                <span className="ml-2 text-xs opacity-80">
-                  ({category.items.length})
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 当前分类信息 */}
-      {currentCategory && (
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            {currentCategory.name}
-          </h2>
-          {currentCategory.description && (
-            <p className="text-gray-600">
-              {currentCategory.description}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* 菜品网格 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {currentCategory?.items.map(item => (
-          <MenuItemCard
-            key={item.id}
-            item={item}
-            onAddToCart={onAddToCart}
-            onViewDetails={onViewDetails}
-          />
+    <div className="flex h-[calc(100vh-48px)]">
+      {/* 左侧分类导航 */}
+      <div ref={sidebarRef} className="w-20 shrink-0 bg-gray-50 overflow-y-auto scrollbar-hide pt-1">
+        {categories.map(category => (
+          <button
+            key={category.id}
+            data-cat-id={category.id}
+            onClick={() => onSelectCategory(category.id)}
+            className={`
+              w-full py-3 px-1 text-center border-l-[3px] transition-all duration-200
+              ${selectedCategory === category.id
+                ? 'bg-white text-orange-600 border-orange-500 font-medium shadow-sm'
+                : 'text-gray-500 border-transparent hover:bg-gray-100'
+              }
+            `}
+          >
+            <div className="text-base leading-tight mb-0.5">{category.name.replace(/^[^\s]+\s*/, '')}</div>
+          </button>
         ))}
       </div>
 
-      {/* 空状态提示 */}
-      {currentCategory && currentCategory.items.length === 0 && (
-        <div className="text-center py-12">
-          <div className="w-20 h-20 mx-auto mb-4 text-gray-300">
-            <svg
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1}
-                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+      {/* 右侧菜品列表 */}
+      <div className="flex-1 overflow-y-auto bg-gray-50" id="menu-items-scroll">
+        <div className="px-3 py-3">
+          {/* 分类标题 */}
+          <div className="flex items-center justify-between mb-2.5 px-1">
+            <h2 className="text-sm font-bold text-gray-700">{currentCategory?.name}</h2>
+            <span className="text-[11px] text-gray-400">{currentCategory?.items.length || 0}道菜</span>
           </div>
-          <h3 className="text-lg font-medium text-gray-700 mb-2">
-            该分类暂无菜品
-          </h3>
-          <p className="text-gray-500">
-            请选择其他分类或稍后再来
-          </p>
+
+          {/* 菜品列表 */}
+          {currentCategory?.items.map(item => (
+            <MenuItemCard
+              key={item.id}
+              item={item}
+              onAddToCart={onAddToCart}
+              onViewDetails={onViewDetails}
+            />
+          ))}
+
+          {/* 空状态 */}
+          {currentCategory && currentCategory.items.length === 0 && (
+            <div className="py-16 text-center">
+              <p className="text-gray-400 text-sm">该分类暂无菜品</p>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

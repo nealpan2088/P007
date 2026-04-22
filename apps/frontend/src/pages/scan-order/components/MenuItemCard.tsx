@@ -17,84 +17,55 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
     onAddToCart(item.id);
   };
 
-  const handleCardClick = () => {
-    if (onViewDetails) {
-      onViewDetails(item);
-    }
-  };
-
   return (
     <div
-      className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
-      onClick={handleCardClick}
+      className="flex bg-white mb-2.5 rounded-xl overflow-hidden cursor-pointer active:bg-gray-50 shadow-sm border border-gray-50"
+      onClick={() => onViewDetails?.(item)}
     >
-      {/* 菜品图片 */}
-      <div className="relative h-48 overflow-hidden">
+      {/* 左侧图片 */}
+      <div className="w-[88px] h-[88px] shrink-0 relative">
         {item.imageUrl ? (
-          <img
-            src={item.imageUrl}
-            alt={item.name}
-            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-            loading="lazy"
-          />
+          <>
+            <img
+              src={item.imageUrl}
+              alt={item.name}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+            {item.isAvailable === false && (
+              <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                <span className="text-white text-xs font-medium bg-gray-800 bg-opacity-70 px-2 py-0.5 rounded">已售罄</span>
+              </div>
+            )}
+          </>
         ) : (
-          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-            <span className="text-gray-400 text-sm">暂无图片</span>
-          </div>
-        )}
-        
-        {/* 可用性标签 */}
-        {!item.isAvailable && (
-          <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
-            已售罄
+          <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+            <svg className="w-7 h-7 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
           </div>
         )}
       </div>
 
-      {/* 菜品信息 */}
-      <div className="p-4">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="text-lg font-semibold text-gray-800 line-clamp-1">
-            {item.name}
-          </h3>
-          <span className="text-lg font-bold text-orange-600">
-            ¥{item.price.toFixed(2)}
-          </span>
+      {/* 右侧信息 */}
+      <div className="flex-1 min-w-0 p-2.5 flex flex-col justify-between">
+        <div>
+          <div className="flex items-start justify-between gap-1">
+            <h3 className="text-sm font-medium text-gray-800 line-clamp-1">{item.name}</h3>
+            <span className="text-sm font-bold text-orange-600 shrink-0 whitespace-nowrap">¥{item.price.toFixed(2)}</span>
+          </div>
+          {item.description && (
+            <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-2 leading-relaxed">{item.description}</p>
+          )}
         </div>
-
-        {item.description && (
-          <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-            {item.description}
-          </p>
-        )}
-
-        {/* 操作按钮 */}
-        <div className="flex justify-between items-center">
+        <div className="flex items-center justify-end mt-1">
           <button
             onClick={handleAddToCart}
-            disabled={!item.isAvailable}
-            className={`
-              px-4 py-2 rounded-lg font-medium transition-colors duration-200
-              ${item.isAvailable
-                ? 'bg-orange-500 hover:bg-orange-600 text-white'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }
-            `}
+            disabled={item.isAvailable === false}
+            className="w-7 h-7 flex items-center justify-center rounded-full bg-orange-500 text-white text-base leading-none hover:bg-orange-600 active:scale-90 transition-all disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed shadow-sm"
           >
-            {item.isAvailable ? '加入购物车' : '已售罄'}
+            +
           </button>
-
-          {onViewDetails && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onViewDetails(item);
-              }}
-              className="text-sm text-gray-500 hover:text-gray-700"
-            >
-              查看详情
-            </button>
-          )}
         </div>
       </div>
     </div>

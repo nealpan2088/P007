@@ -116,10 +116,18 @@ export const validateConfig = (): boolean => {
 
 // 导出默认配置对象
 const config = {
-  get app() { return getAppConfig(); },
-  get api() { return getApiConfig(); },
-  get features() { return getFeatureConfig(); },
-  get dev() { return getDevConfig(); },
+  get app() {
+    return getAppConfig(); 
+  },
+  get api() {
+    return getApiConfig(); 
+  },
+  get features() {
+    return getFeatureConfig(); 
+  },
+  get dev() {
+    return getDevConfig(); 
+  },
   validate: validateConfig,
 };
 

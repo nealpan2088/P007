@@ -1,10 +1,11 @@
 // API工具函数
 import axios from 'axios';
 import { MenuCategory, OrderStatus, SubmitOrderRequest, ApiResponse } from '../types';
+import SCAN_ROUTES from '../../../config/scan-routes';
 
-// 创建axios实例
+// 创建axios实例（baseURL为空，URL用完整路径）
 const apiClient = axios.create({
-  baseURL: '/api/public',
+  baseURL: '',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -19,13 +20,13 @@ apiClient.interceptors.request.use(
   },
   error => {
     return Promise.reject(error);
-  }
+  },
 );
 
-// 响应拦截器
+// 响应拦截器 - 不剥data层，保留完整响应结构
 apiClient.interceptors.response.use(
   response => {
-    return response.data.data;
+    return response;
   },
   error => {
     console.error('API请求错误:', error);
@@ -40,39 +41,41 @@ apiClient.interceptors.response.use(
       code: error.response?.status || 'NETWORK_ERROR',
       details: error.response?.data,
     });
-  }
+  },
 );
 
 /**
  * 获取店铺菜单
  */
-export async function fetchStoreMenu(storeId: string): Promise<MenuCategory[]> {
-  try {
-    const response = await apiClient.get<ApiResponse<MenuCategory[]>>(
-      `/stores/${storeId}/menu`
-    );
-    
-    if (response.data.success) {
-      return response.data.data;
-    } else {
-      throw new Error(response.data.message || '获取菜单失败');
+export async function fetchStoreMenu(storeSlug: string): Promise<MenuCategory[]> {
+  const response = await apiClient.get<ApiResponse<MenuCategory[]>>(
+    SCAN_ROUTES.api.utils.buildStoreMenuUrl(storeSlug),
+  );
+  
+  if (response.data.success) {
+    const data = response.data.data;
+    // 后端返回格式: {store, categories: [...]}，提取 categories 数组
+    if (data && Array.isArray(data.categories)) {
+      return data.categories;
     }
-  } catch (error) {
-    console.error('获取店铺菜单失败:', error);
-    throw error;
+    if (Array.isArray(data)) {
+      return data;
+    }
+    return [];
   }
+  throw new Error(response.data.message || '获取菜单失败');
 }
 
 /**
  * 提交订单
  */
 export async function submitOrder(
-  orderData: SubmitOrderRequest
-): Promise<{ orderId: string }> {
+  orderData: SubmitOrderRequest,
+): Promise<{ order_number: string; total_amount: string }> {
   try {
-    const response = await apiClient.post<ApiResponse<{ orderId: string }>>(
-      '/orders',
-      orderData
+    const response = await apiClient.post<ApiResponse<{ id: number; order_number: string; total_amount: string }>>(
+      SCAN_ROUTES.api.CREATE_ORDER,
+      orderData,
     );
     
     if (response.data.success) {
@@ -91,12 +94,26 @@ export async function submitOrder(
  */
 export async function fetchOrderStatus(orderId: string): Promise<OrderStatus> {
   try {
-    const response = await apiClient.get<ApiResponse<OrderStatus>>(
-      `/orders/${orderId}/status`
+    const response = await apiClient.get<ApiResponse<any>>(
+      SCAN_ROUTES.api.utils.buildOrderStatusUrl(orderId),
     );
     
     if (response.data.success) {
-      return response.data.data;
+      const raw = response.data.data;
+      // 后端 snake_case → 前端 camelCase 映射
+      return {
+        orderId: raw.order_number || raw.id?.toString(),
+        status: raw.status,
+        createdAt: raw.created_at || raw.createdAt,
+        updatedAt: raw.updated_at || raw.updatedAt,
+        totalAmount: Number(raw.total_amount || raw.totalAmount || 0),
+        items: (raw.items || []).map((item: any) => ({
+          menuItemId: item.menu_item_id || item.menuItemId,
+          name: item.name,
+          quantity: item.quantity,
+          price: Number(item.price || 0),
+        })),
+      };
     } else {
       throw new Error(response.data.message || '获取订单状态失败');
     }
@@ -109,86 +126,30 @@ export async function fetchOrderStatus(orderId: string): Promise<OrderStatus> {
 /**
  * 获取店铺信息
  */
-export async function fetchStoreInfo(storeId: string): Promise<any> {
-  try {
-    // 注意：这个API端点可能需要后端实现
-    const response = await apiClient.get<ApiResponse<any>>(
-      `/stores/${storeId}`
-    );
-    
-    if (response.data.success) {
-      return response.data.data;
-    } else {
-      // 如果API不存在，返回模拟数据
-      return {
-        id: storeId,
-        name: '麒麟测试餐厅',
-        description: '欢迎光临麒麟测试餐厅',
-        logoUrl: 'https://via.placeholder.com/100',
-        address: '测试地址',
-        phone: '13800138000',
-        businessHours: {
-          openTime: '09:00',
-          closeTime: '22:00',
-          isOpen: true,
-        },
-      };
-    }
-  } catch (error) {
-    console.warn('获取店铺信息失败，使用模拟数据:', error);
-    // 返回模拟数据
-    return {
-      id: storeId,
-      name: '麒麟测试餐厅',
-      description: '欢迎光临麒麟测试餐厅',
-      logoUrl: 'https://via.placeholder.com/100',
-      address: '测试地址',
-      phone: '13800138000',
-      businessHours: {
-        openTime: '09:00',
-        closeTime: '22:00',
-        isOpen: true,
-      },
-    };
+export async function fetchStoreInfo(storeSlug: string): Promise<any> {
+  const response = await apiClient.get<ApiResponse<any>>(
+    SCAN_ROUTES.api.utils.buildStoreInfoUrl(storeSlug),
+  );
+  if (response.data.success) {
+    return response.data.data;
   }
+  throw new Error(response.data.message || '获取店铺信息失败');
 }
 
 /**
  * 获取餐桌信息
  */
 export async function fetchTableInfo(
-  storeId: string,
-  tableId: string
+  storeSlug: string,
+  tableId: string,
 ): Promise<any> {
-  try {
-    // 注意：这个API端点可能需要后端实现
-    const response = await apiClient.get<ApiResponse<any>>(
-      `/stores/${storeId}/tables/${tableId}`
-    );
-    
-    if (response.data.success) {
-      return response.data.data;
-    } else {
-      // 如果API不存在，返回模拟数据
-      return {
-        id: tableId,
-        name: `餐桌 ${tableId}`,
-        code: tableId,
-        capacity: 4,
-        status: 'AVAILABLE',
-      };
-    }
-  } catch (error) {
-    console.warn('获取餐桌信息失败，使用模拟数据:', error);
-    // 返回模拟数据
-    return {
-      id: tableId,
-      name: `餐桌 ${tableId}`,
-      code: tableId,
-      capacity: 4,
-      status: 'AVAILABLE',
-    };
+  const response = await apiClient.get<ApiResponse<any>>(
+    SCAN_ROUTES.api.utils.buildTableInfoUrl(storeSlug, tableId),
+  );
+  if (response.data.success) {
+    return response.data.data;
   }
+  throw new Error(response.data.message || '获取餐桌信息失败');
 }
 
 /**
@@ -196,7 +157,7 @@ export async function fetchTableInfo(
  */
 export async function checkHealth(): Promise<boolean> {
   try {
-    const response = await apiClient.get<ApiResponse>('/health');
+    const response = await apiClient.get<ApiResponse>(SCAN_ROUTES.api.HEALTH);
     return response.data.success;
   } catch (error) {
     console.error('健康检查失败:', error);

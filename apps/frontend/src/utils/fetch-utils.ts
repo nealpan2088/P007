@@ -1,12 +1,12 @@
 // 统一的fetch工具函数
-import { ApiResponse } from "../types";
+import { ApiResponse } from '../types';
 
 /**
  * 统一的fetch请求函数
  */
 export async function apiFetch<T = any>(
   url: string, 
-  options?: RequestInit
+  options?: RequestInit,
 ): Promise<T> {
   try {
     const response = await fetch(url, {
@@ -27,7 +27,7 @@ export async function apiFetch<T = any>(
       throw new Error(apiResponse.message || 'API请求失败');
     }
 
-    return apiResponse.data;
+    return apiResponse.data!;
   } catch (error) {
     console.error('API请求失败:', error);
     throw error;
@@ -40,7 +40,7 @@ export async function apiFetch<T = any>(
 export async function checkSubdomainAvailability(subdomain: string): Promise<boolean> {
   try {
     const response = await apiFetch<{ available: boolean }>(
-      `/api/v1/tenant/check-subdomain?subdomain=${subdomain}`
+      `/api/v1/tenant/check-subdomain?subdomain=${subdomain}`,
     );
     return response.available;
   } catch (error) {

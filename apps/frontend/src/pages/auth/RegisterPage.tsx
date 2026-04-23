@@ -379,18 +379,18 @@ const RegisterPage: React.FC = () => {
         </form>
 
         <div className="auth-footer">
-          <p className="auth-footer-text">
+          <div className="auth-footer-text">
             已有账户？{' '}
             <Link to={PUBLIC_ROUTES.AUTH.LOGIN} className="auth-link">
               立即登录
             </Link>
-          </p>
-          <p className="auth-footer-text">
+          </div>
+          <div className="auth-footer-text">
             或{' '}
             <Link to={PUBLIC_ROUTES.HOME} className="auth-link">
               返回首页
             </Link>
-          </p>
+          </div>
         </div>
 
         <div className="registration-benefits">

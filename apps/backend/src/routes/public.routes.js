@@ -3,6 +3,7 @@
 
 import scanService from '../services/public/scan.service.js';
 import { validate } from '../services/validation.service.js';
+import { PUBLIC_ROUTES } from '../config/routes.js';
 
 /**
  * 公开API路由注册
@@ -10,7 +11,7 @@ import { validate } from '../services/validation.service.js';
  */
 async function publicRoutes(fastify) {
   // 健康检查（公开）
-  fastify.get('/health', async (request, reply) => {
+  fastify.get(PUBLIC_ROUTES.SCAN.HEALTH, async (request, reply) => {
     return {
       status: 'ok',
       service: 'qilin-public-api',
@@ -20,7 +21,7 @@ async function publicRoutes(fastify) {
   });
 
   // 获取店铺信息（公开）
-  fastify.get('/stores/:storeId', async (request, reply) => {
+  fastify.get(PUBLIC_ROUTES.SCAN.STORE.INFO, async (request, reply) => {
     try {
       const { storeId } = request.params;
       
@@ -36,7 +37,7 @@ async function publicRoutes(fastify) {
   });
 
   // 获取店铺菜单（公开）
-  fastify.get('/stores/:storeId/menu', async (request, reply) => {
+  fastify.get(PUBLIC_ROUTES.SCAN.STORE.MENU, async (request, reply) => {
     try {
       const { storeId } = request.params;
       const { tableId } = request.query;
@@ -53,7 +54,7 @@ async function publicRoutes(fastify) {
   });
 
   // 创建扫码点餐订单（公开）
-  fastify.post('/orders', {
+  fastify.post(PUBLIC_ROUTES.SCAN.ORDER.CREATE, {
     schema: {
       body: {
         type: 'object',
@@ -119,7 +120,7 @@ async function publicRoutes(fastify) {
   });
 
   // 获取订单状态（公开）
-  fastify.get('/orders/:orderId/status', async (request, reply) => {
+  fastify.get(PUBLIC_ROUTES.SCAN.ORDER.STATUS, async (request, reply) => {
     try {
       const { orderId } = request.params;
       
@@ -138,7 +139,7 @@ async function publicRoutes(fastify) {
   });
 
   // 获取餐桌信息（公开）
-  fastify.get('/stores/:storeId/tables/:tableId', async (request, reply) => {
+  fastify.get(PUBLIC_ROUTES.SCAN.STORE.TABLE_INFO, async (request, reply) => {
     try {
       const { storeId, tableId } = request.params;
       
@@ -153,9 +154,54 @@ async function publicRoutes(fastify) {
     }
   });
 
+  // API版本信息（公开）
+  fastify.get(PUBLIC_ROUTES.PUBLIC.VERSION, async (request, reply) => {
+    console.log('✅ VERSION端点被调用');
+    return {
+      success: true,
+      data: {
+        version: '1.0.0',
+        service: 'qilin-saas-api',
+        environment: process.env.NODE_ENV || 'development',
+        timestamp: new Date().toISOString()
+      },
+      message: '麒麟SaaS平台API版本信息'
+    };
+  });
+
+  // API功能列表（公开）
+  fastify.get(PUBLIC_ROUTES.PUBLIC.FEATURES, async (request, reply) => {
+    console.log('✅ FEATURES端点被调用');
+    return {
+      success: true,
+      data: {
+        features: [
+          '扫码点餐',
+          '租户管理', 
+          '店铺管理',
+          '菜单管理',
+          '订单管理',
+          '云打印集成',
+          '多租户SaaS架构',
+          'API访问'
+        ],
+        enabled: [
+          '扫码点餐',
+          '租户管理',
+          'API访问'
+        ],
+        comingSoon: [
+          '云打印集成',
+          '高级分析'
+        ]
+      },
+      message: '麒麟SaaS平台功能列表'
+    };
+  });
+
   // 测试订单创建（开发用）
   if (process.env.NODE_ENV === 'development') {
-    fastify.post('/test/order', async (request, reply) => {
+    fastify.post(PUBLIC_ROUTES.SCAN.TEST.ORDER, async (request, reply) => {
       try {
         // 创建一个测试订单
         const testOrder = {

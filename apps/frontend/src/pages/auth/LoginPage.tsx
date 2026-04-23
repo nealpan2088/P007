@@ -197,18 +197,18 @@ const LoginPage: React.FC = () => {
         </form>
 
         <div className="auth-footer">
-          <p className="auth-footer-text">
+          <div className="auth-footer-text">
             还没有账户？{' '}
             <Link to={PUBLIC_ROUTES.AUTH.REGISTER} className="auth-link">
               立即注册
             </Link>
-          </p>
-          <p className="auth-footer-text">
+          </div>
+          <div className="auth-footer-text">
             或{' '}
             <Link to={PUBLIC_ROUTES.HOME} className="auth-link">
               返回首页
             </Link>
-          </p>
+          </div>
         </div>
 
         <div className="auth-features">

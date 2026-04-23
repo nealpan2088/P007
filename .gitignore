@@ -161,6 +161,32 @@ fix-*.sh
 *.backup
 *-old.js
 *-new.js
+*.bak
+*.with-hotswitch
+*.broken
+*.complex
+*.current
+*.simple-backup
+
+# Monitoring and check reports
+*-report-*.txt
+port-check-reports/
+port-check-cron.log
+log-rotate-cron.log
+port-check.log
+crontab-backup-*.txt
+qilin-port-check.cron
+
+# Temporary scripts
+check-*.sh
+daily-*.sh
+log-rotate-*.sh
+start-*.sh
+pm2-*.config.js
+env-config-report-*.txt
+documentation-report-*.txt
+port-config-report-*.txt
+website-validation-report.json
 
 # Prisma generated client
 apps/backend/node_modules/.prisma/

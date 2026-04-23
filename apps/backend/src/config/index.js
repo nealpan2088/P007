@@ -52,7 +52,7 @@ export const getServerConfig = () => ({
   isTest: process.env.NODE_ENV === 'test',
   
   // 服务器
-  port: parseInt(process.env.PORT || '33037', 10),
+  port: parseInt(process.env.PORT || '33038', 10),
   host: process.env.HOST || '0.0.0.0',
   
   // API

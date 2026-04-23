@@ -29,8 +29,8 @@ npm run dev
 
 ### 访问地址
 - **前端**: http://localhost:5177
-- **后端API**: http://localhost:33037
-- **API文档**: http://localhost:33037/api/health
+- **后端API**: http://localhost:33038
+- **API文档**: http://localhost:33038/api/health
 - **数据库管理**: http://localhost:5555 (Prisma Studio)
 
 ---
@@ -125,7 +125,7 @@ P007/
 // ❌ 错误！不要这样写！
 fastify.get('/api/v1/stores', ...)
 if (role === 'ADMIN') ...
-const port = 33037
+const port = 33038
 
 // ✅ 正确！使用常量系统
 import { STORE_ROUTES } from '../config/routes.js'

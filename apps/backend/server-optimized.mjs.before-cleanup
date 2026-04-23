@@ -1,0 +1,85 @@
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import multipart from '@fastify/multipart';
+import { PrismaClient } from '@prisma/client';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = Fastify({ logger: true });
+const prisma = new PrismaClient();
+
+// 注册插件
+await app.register(cors, {
+  origin: true,
+  credentials: true,
+});
+
+await app.register(multipart);
+
+// 健康检查
+app.get('/api/health', async (request, reply) => {
+  try {
+    // 测试数据库连接
+    await prisma.$queryRaw`SELECT 1`;
+    return {
+      status: 'ok',
+      service: 'qilin-optimized',
+      version: '0.2.5',
+      connected: true,
+      timestamp: new Date().toISOString(),
+    };
+  } catch (error) {
+    return {
+      status: 'error',
+      service: 'qilin-optimized',
+      version: '0.2.5',
+      connected: false,
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    };
+  }
+});
+
+// 菜品图片API - 最简单版本
+app.get('/api/food-image/:foodId', async (request, reply) => {
+  try {
+    const { foodId } = request.params;
+    const foodNum = foodId || Math.floor(Math.random() * 100);
+    
+    return {
+      success: true,
+      data: {
+        image_url: `http://localhost:33038/api/placeholder/food/${foodNum}`,
+        source: 'placeholder',
+        source_name: '本地占位图',
+        note: '使用100%可用的本地占位图'
+      }
+    };
+  } catch (error) {
+    return {
+      success: true,
+      data: {
+        image_url: `http://localhost:33038/api/placeholder/food/1`,
+        source: 'placeholder',
+        source_name: '本地占位图（错误保障）',
+        error: error.message
+      }
+    };
+  }
+});
+
+// 启动服务器
+const start = async () => {
+  try {
+    await app.listen({ port: 33038, host: '0.0.0.0' });
+    console.log(`🚀 服务器运行在 http://localhost:33038`);
+  } catch (err) {
+    console.error(err);
+    process.exit(1);
+  }
+};
+
+start();

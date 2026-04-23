@@ -32,10 +32,34 @@ export const PUBLIC_ROUTES = {
   
   // 公共信息
   PUBLIC: {
-    VERSION: `${BASE_PATH}/public/version`,
-    FEATURES: `${BASE_PATH}/public/features`,
-    PRICING: `${BASE_PATH}/public/pricing`,
-    HELLO: `${API_PREFIX}/hello`,  // API示例端点
+    VERSION: `/version`,
+    FEATURES: `/features`,
+    PRICING: `/pricing`,
+    HELLO: `/hello`,  // API示例端点
+  },
+  
+  // 扫码点餐公共API（无需认证）
+  SCAN: {
+    // 健康检查（直接根路径）
+    HEALTH: '/health',
+    
+    // 店铺信息
+    STORE: {
+      INFO: '/stores/:storeId',
+      MENU: '/stores/:storeId/menu',
+      TABLE_INFO: '/stores/:storeId/tables/:tableId',
+    },
+    
+    // 订单
+    ORDER: {
+      CREATE: '/orders',
+      STATUS: '/orders/:orderId/status',
+    },
+    
+    // 测试
+    TEST: {
+      ORDER: '/test/order',
+    },
   },
 };
 

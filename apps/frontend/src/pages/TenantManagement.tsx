@@ -316,7 +316,7 @@ const TenantManagement: React.FC = () => {
                   </Box>
 
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography component="div" variant="body2" color="text.secondary">
                       您的角色: <Chip label={tenant.role} size="small" variant="outlined" />
                     </Typography>
                     <Typography variant="caption" color="text.secondary">

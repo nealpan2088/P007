@@ -12,6 +12,16 @@ export function registerPublicRoutes(fastify) {
   fastify.register(publicRoutes, { prefix: '/api/public' });
   
   console.log('✅ 公开API路由已注册');
+  
+  // 调试：打印注册的路由
+  fastify.ready(() => {
+    console.log('📋 注册的公开API路由:');
+    fastify.printRoutes().split('\n').forEach(line => {
+      if (line.includes('/api/public')) {
+        console.log('  ' + line.trim());
+      }
+    });
+  });
 }
 
 export default registerPublicRoutes;

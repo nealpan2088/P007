@@ -33,7 +33,7 @@ const fastify = Fastify();
 fastify.get('/test', async () => ({ ok: true }));
 
 try {
-  await fastify.listen({ port: 33037, host: '0.0.0.0' });
+  await fastify.listen({ port: 33038, host: '0.0.0.0' });
   console.log('✅ 监听成功');
 } catch (error) {
   console.log('❌ 监听失败:', error.code);

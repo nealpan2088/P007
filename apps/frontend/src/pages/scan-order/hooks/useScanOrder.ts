@@ -160,16 +160,16 @@ export function useScanOrder(storeSlug: string, tableId: string) {
     try {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      // 准备订单数据
-      const orderData = {
-        store_id: storeSlug,
-        table_code: tableId,
+      // 准备订单数据 - 使用后端驼峰命名
+      const orderData: any = {
+        storeId: state.storeInfo?.id || storeSlug,
+        tableId: state.tableInfo?.id || tableId,
         items: state.cartItems.map(item => ({
-          menu_item_id: item.menuItemId,
+          menuItemId: item.menuItemId,
           quantity: item.quantity,
         })),
-        notes: params?.specialRequest,
-        customer_phone: params?.phone,
+        customerNotes: params?.specialRequest,
+        customerPhone: params?.phone,
       };
 
       // 提交订单

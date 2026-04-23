@@ -1,3 +1,8 @@
+/**
+ * @deprecated 旧规范店铺管理页面
+ * 后端路由已变更，不再使用 /api/v1/ 前缀
+ * 新规范请使用 store-management/StoreListPage.tsx
+ */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {

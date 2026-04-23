@@ -8,8 +8,8 @@ import publicRoutes from './public.routes.js';
  * @param {FastifyInstance} fastify - Fastify实例
  */
 export function registerPublicRoutes(fastify) {
-  // 注册公开API路由
-  fastify.register(publicRoutes, { prefix: '/api/public' });
+  // 注册公开API路由 - 注意：index.js已经加了前缀，这里不要重复加
+  fastify.register(publicRoutes);
   
   console.log('✅ 公开API路由已注册');
   

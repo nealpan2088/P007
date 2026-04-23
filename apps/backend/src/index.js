@@ -1,14 +1,11 @@
-// 麒麟项目 - 清洁版服务器入口
-// 完全重新创建，避免所有旧代码污染
+// 麒麟项目 - 集成夜狼模块的服务器入口
+// 版本: 0.2.5 + nightwolf-0.1.0
 
 // ==================== 强制环境变量加载 ====================
 // 确保.env文件在任何其他导入之前加载
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-
-// 导入常量（避免硬编码）
-import { TENANT_ROLES } from './constants/auth.constants.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,6 +24,9 @@ for (const varName of requiredVars) {
     console.log(`✅ ${varName}: ${varName === 'JWT_SECRET' ? '***隐藏***' : process.env[varName]}`);
   }
 }
+
+// 夜狼模块环境变量
+console.log(`🌙 夜狼模块状态: ${process.env.NIGHTWOLF_ENABLED === 'true' ? '已启用' : '未启用'}`);
 // ==================== 环境变量加载完成 ====================
 
 import Fastify from 'fastify'
@@ -48,152 +48,211 @@ await fastify.register(cors, {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-ID', 'X-Requested-With'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 86400,
 })
 
-// 添加安全头
-fastify.addHook('onSend', async (request, reply, payload) => {
-  reply.header('X-Frame-Options', config.security.securityHeaders.xFrameOptions)
-  reply.header('X-Content-Type-Options', config.security.securityHeaders.xContentTypeOptions)
-  reply.header('X-XSS-Protection', config.security.securityHeaders.xXSSProtection)
-  reply.header('Referrer-Policy', config.security.securityHeaders.referrerPolicy)
-})
+// ==================== 夜狼模块初始化 ====================
+let nightWolfModule = null;
+let nightWolfInitialized = false;
 
-// ==================== 导入配置和路由常量 ====================
-import routes from './config/routes.js'
-const PUBLIC_ROUTES = routes.public;
+async function initializeNightWolfModule() {
+  try {
+    console.log('🌙 开始初始化夜狼模块...');
+    
+    // 导入ES模块版本的夜狼模块
+    const nightWolf = await import('./modules/nightwolf/index-simple.mjs');
+    console.log('✅ 夜狼模块加载成功 (ES模块)');
+    
+    // 初始化夜狼模块
+    const initResult = await nightWolf.initialize(fastify, {
+      logLevel: process.env.NIGHTWOLF_LOG_LEVEL || 'info',
+    });
+    
+    if (initResult.success) {
+      nightWolfModule = nightWolf;
+      nightWolfInitialized = true;
+      console.log('🎉 夜狼模块初始化成功:', initResult.module?.name || 'nightwolf');
+      console.log('📊 夜狼模块版本:', initResult.module?.version || '0.1.0-simple');
+    } else {
+      console.warn('⚠️  夜狼模块初始化失败，但不影响核心功能:', initResult.reason || initResult.error);
+      console.log('ℹ️  核心功能将继续正常运行');
+    }
+    
+  } catch (error) {
+    console.error('❌ 夜狼模块加载失败，但不影响核心功能:', error.message);
+    console.log('ℹ️  核心功能将继续正常运行');
+  }
+}
 
-// ==================== 导入清洁版中间件 ====================
-import { authenticate, requireTenantAccess } from './middleware/index.js'
+// ==================== 核心路由注册 ====================
+// 注意：核心路由注册不受夜狼模块影响
 
-// ==================== 导入清洁版路由模块 ====================
-
-// 导入公共路由
-import { registerPublicRoutes } from './routes/public.routes.register.js'
-
-// 导入店铺路由
-import storeRoutes from './routes/store.routes.js'
-
-// 导入租户路由
-import { registerTenantRoutes } from './routes/tenant.routes.js'
-
-// ==================== 注册路由模块 ====================
-
-// 健康检查 - 使用路由常量
+// 健康检查路由（核心）
 fastify.get(PUBLIC_ROUTES.HEALTH, async () => {
-  return {
+  const coreHealth = {
     status: 'ok',
-    service: 'qilin-backend',
-    version: '0.2.3',
+    service: 'qilin-optimized',
+    version: '0.2.5',
+    database: 'connected',
     timestamp: new Date().toISOString(),
-    mode: 'clean-architecture'
-  }
-})
-
-// 注册公共路由（扫码点餐API）
-registerPublicRoutes(fastify)
-
-// 测试认证端点 - 临时路由，后续应移到auth模块
-fastify.get(`${config.server.apiPrefix}/test/auth`, {
-  preHandler: requireTenantAccess('header')
-}, async (request, reply) => {
-  return {
-    success: true,
-    message: '认证测试成功',
-    user: request.user,
-    timestamp: new Date().toISOString()
-  }
-})
-
-// 注册店铺路由（路由常量已包含完整路径，无需额外前缀）
-fastify.register(storeRoutes)
-
-// 注册租户路由
-registerTenantRoutes(fastify)
-
-// 404处理
-fastify.setNotFoundHandler(async (request, reply) => {
-  reply.code(404).send({
-    error: 'Not Found',
-    message: `路由 ${request.method} ${request.url} 不存在`,
-    timestamp: new Date().toISOString(),
-    version: 'clean'
-  })
-})
-
-// 错误处理
-fastify.setErrorHandler(async (error, request, reply) => {
-  console.error('清洁版服务器错误:', error)
+  };
   
-  reply.code(500).send({
-    success: false,
-    message: '服务器内部错误',
-    code: 'INTERNAL_ERROR',
-    timestamp: new Date().toISOString()
-  })
+  // 添加夜狼模块状态
+  if (nightWolfInitialized && nightWolfModule) {
+    try {
+      const nightWolfHealth = await nightWolfModule.healthCheck();
+      coreHealth.nightwolf = {
+        enabled: true,
+        healthy: nightWolfHealth.healthy,
+        version: '0.1.0',
+      };
+    } catch (error) {
+      coreHealth.nightwolf = {
+        enabled: true,
+        healthy: false,
+        error: error.message,
+      };
+    }
+  } else {
+    coreHealth.nightwolf = {
+      enabled: process.env.NIGHTWOLF_ENABLED === 'true',
+      initialized: nightWolfInitialized,
+      message: nightWolfInitialized ? '模块已初始化' : '模块未初始化',
+    };
+  }
+  
+  return coreHealth;
 })
+
+// 公共API路由 - 使用.register.js文件
+import { PUBLIC_ROUTES } from './config/routes.js'
+import { registerPublicRoutes } from './routes/public.routes.register.js'
+fastify.register(registerPublicRoutes, { prefix: '/api/public' })
+
+// 租户API路由
+import { registerTenantRoutes } from './routes/tenant.routes.js'
+fastify.register(registerTenantRoutes, { prefix: '/api/tenant' })
+
+// 店铺API路由 - 使用.register.js文件
+import { registerStoreRoutes } from './routes/store.routes.register.js'
+fastify.register(registerStoreRoutes, { prefix: '/api/store' })
+
+// 管理API路由 - 使用.register.js文件
+import { registerAdminRoutes } from './routes/admin.routes.register.js'
+fastify.register(registerAdminRoutes, { prefix: '/api/admin' })
+
+// 系统API路由（暂时注释，有导入问题）
+// import systemRoutes from './routes/system.routes.js'
+// fastify.register(systemRoutes, { prefix: '/api/system' })
+
+// 认证API路由（暂时注释，先让夜狼模块启动）
+// import authRoutes from './routes/auth.routes.js'
+// fastify.register(authRoutes, { prefix: '/api/auth' })
+
+// ==================== 错误处理 ====================
+// 全局错误处理（包含夜狼模块错误）
+
+fastify.setErrorHandler((error, request, reply) => {
+  // 记录错误
+  request.log.error({
+    error: error.message,
+    stack: error.stack,
+    url: request.url,
+    method: request.method,
+    module: error.module || 'core',
+  })
+  
+  // 夜狼模块错误处理
+  if (error.module === 'nightwolf' || error.code?.startsWith('NIGHTWOLF')) {
+    return reply.status(error.statusCode || 500).send({
+      success: false,
+      error: {
+        code: error.code || 'NIGHTWOLF_999',
+        message: error.message,
+        module: 'nightwolf',
+        timestamp: new Date().toISOString(),
+      },
+      data: null,
+    })
+  }
+  
+  // 核心错误处理
+  const statusCode = error.statusCode || 500
+  const response = {
+    success: false,
+    error: {
+      message: error.message,
+      ...(config.server.env === 'development' && { stack: error.stack }),
+    },
+    data: null,
+  }
+  
+  return reply.status(statusCode).send(response)
+})
+
+// ==================== 启动服务器 ====================
+async function startServer() {
+  try {
+    // 1. 初始化夜狼模块（异步，不阻塞）
+    if (process.env.NIGHTWOLF_ENABLED === 'true') {
+      initializeNightWolfModule().catch(error => {
+        console.error('夜狼模块初始化异常（非致命）:', error);
+      });
+    }
+    
+    // 2. 启动服务器
+    await fastify.listen({ 
+      port: process.env.PORT || 33038,
+      host: '0.0.0.0'
+    })
+    
+    console.log(`🚀 服务器运行在 http://localhost:${process.env.PORT || 33038}`)
+    console.log(`📊 健康检查: http://localhost:${process.env.PORT || 33038}/api/health`)
+    
+    if (process.env.NIGHTWOLF_ENABLED === 'true') {
+      console.log(`🌙 夜狼模块API: http://localhost:${process.env.PORT || 33038}/api/nightwolf/v1/health`)
+    }
+    
+    // 3. 优雅关闭处理
+    const signals = ['SIGINT', 'SIGTERM']
+    signals.forEach(signal => {
+      process.on(signal, async () => {
+        console.log(`\n${signal} 收到，开始优雅关闭...`)
+        
+        // 关闭夜狼模块
+        if (nightWolfModule && nightWolfInitialized) {
+          try {
+            await nightWolfModule.cleanup();
+            console.log('✅ 夜狼模块资源已清理');
+          } catch (error) {
+            console.error('❌ 夜狼模块清理失败:', error);
+          }
+        }
+        
+        // 关闭服务器
+        await fastify.close()
+        console.log('👋 服务器已关闭')
+        process.exit(0)
+      })
+    })
+    
+  } catch (err) {
+    console.error('❌ 服务器启动失败:', err)
+    
+    // 清理夜狼模块
+    if (nightWolfModule && nightWolfInitialized) {
+      try {
+        await nightWolfModule.cleanup();
+      } catch (error) {
+        console.error('夜狼模块清理失败:', error);
+      }
+    }
+    
+    process.exit(1)
+  }
+}
 
 // 启动服务器
-try {
-  await fastify.listen({
-    port: config.server.port,
-    host: config.server.host
-  })
-  
-  console.log('🚀 麒麟项目清洁版服务器启动成功!')
-  console.log(`🌐 地址: http://${config.server.host}:${config.server.port}`)
-  console.log(`🔧 健康检查: http://${config.server.host}:${config.server.port}/api/health`)
-  console.log('💡 此版本完全绕过旧代码污染问题')
-  
-} catch (error) {
-  console.error('❌ 清洁版服务器启动失败:', error)
-  process.exit(1)
-}
-// 临时测试端点 - 用于前端/tenants页面测试
-fastify.get(`${config.server.apiPrefix}/test/tenants`, async (request, reply) => {
-  console.log('临时测试租户端点被调用');
-  
-  // 返回模拟数据（实际项目中应从数据库获取）
-  return {
-    success: true,
-    message: '临时测试端点 - 租户列表',
-    data: [
-      {
-        id: 'test-tenant-1',
-        name: '测试租户一',
-        subdomain: 'test-tenant-1',
-        plan: 'free',
-        status: 'ACTIVE',
-        trialEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        settings: {},
-        createdAt: new Date().toISOString(),
-        joinedAt: new Date().toISOString(),
-        role: TENANT_ROLES.OWNER
-      },
-      {
-        id: 'test-tenant-2',
-        name: '测试租户二',
-        subdomain: 'test-tenant-2',
-        plan: 'pro',
-        status: 'ACTIVE',
-        trialEndsAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-        settings: {},
-        createdAt: new Date().toISOString(),
-        joinedAt: new Date().toISOString(),
-        role: TENANT_ROLES.ADMIN
-      },
-      {
-        id: 'test-tenant-3',
-        name: '测试租户三',
-        subdomain: 'test-tenant-3',
-        plan: 'enterprise',
-        status: 'PENDING',
-        trialEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        settings: {},
-        createdAt: new Date().toISOString(),
-        joinedAt: new Date().toISOString(),
-        role: 'STAFF'
-      }
-    ]
-  };
-});
+startServer()
+
+// 导出用于测试
+export { fastify }

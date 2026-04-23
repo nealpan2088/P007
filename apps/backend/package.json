@@ -4,8 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --watch server-optimized.mjs",
-    "start": "node server-optimized.mjs",
+    "dev": "node --watch server-nightwolf.mjs",
+    "start": "node server-nightwolf.mjs",
+    "dev:legacy": "node --watch server-optimized.mjs",
+    "start:legacy": "node server-optimized.mjs",
     "dev:simple": "node server-simple.cjs",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",

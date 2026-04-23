@@ -2,6 +2,8 @@
 // 所有扫码点餐相关路由必须使用此文件中的常量
 // 规范: /t/{tenantSlug}/s/{storeSlug}/scan/{tableId}
 
+import { PUBLIC_API_ROUTES } from './api-routes';
+
 /**
  * 扫码点餐路由配置 - 统一规范
  * 规范: /t/{tenantSlug}/s/{storeSlug}/scan/{tableId}
@@ -23,7 +25,7 @@ export const SCAN_ROUTES = {
   
   // ==================== 旧规范兼容路径 ====================
   
-  // 旧规范路径 (兼容性)
+  // 旧规范路径 (兼容性 - 已弃用，保留仅用于重定向)
   LEGACY: {
     BASE: '/scan',
     SCAN_ORDER: '/scan/:storeId/:tableId',
@@ -39,8 +41,8 @@ export const SCAN_ROUTES = {
       NAME: '麒麟测试租户',
     },
     STORE: {
-      SLUG: 'test-store',
-      NAME: '测试店铺',
+      SLUG: 'qilin-test-restaurant',
+      NAME: '麒麟测试餐厅',
     },
     TABLE: {
       CODE: 'A01',
@@ -141,8 +143,16 @@ export const SCAN_ROUTES = {
      * @returns 测试用的扫码点餐URL
      */
     getTestUrl(): string {
-      return this.buildScanUrl(
-        SCAN_ROUTES.TEST.TENANT.SLUG,
+      const tenantSlug = SCAN_ROUTES.TEST.TENANT?.SLUG;
+      if (tenantSlug) {
+        return this.buildScanUrl(
+          tenantSlug,
+          SCAN_ROUTES.TEST.STORE.SLUG,
+          SCAN_ROUTES.TEST.TABLE.CODE,
+        );
+      }
+      // 无租户时使用旧规范URL格式
+      return this.buildLegacyScanUrl(
         SCAN_ROUTES.TEST.STORE.SLUG,
         SCAN_ROUTES.TEST.TABLE.CODE,
       );
@@ -153,8 +163,15 @@ export const SCAN_ROUTES = {
      * @returns 演示用的扫码点餐URL
      */
     getDemoUrl(): string {
-      return this.buildScanUrl(
-        SCAN_ROUTES.DEMO.TENANT.SLUG,
+      const tenantSlug = SCAN_ROUTES.DEMO.TENANT?.SLUG;
+      if (tenantSlug) {
+        return this.buildScanUrl(
+          tenantSlug,
+          SCAN_ROUTES.DEMO.STORE.SLUG,
+          SCAN_ROUTES.DEMO.TABLE.CODE,
+        );
+      }
+      return this.buildLegacyScanUrl(
         SCAN_ROUTES.DEMO.STORE.SLUG,
         SCAN_ROUTES.DEMO.TABLE.CODE,
       );
@@ -201,7 +218,7 @@ export const SCAN_ROUTES = {
 /**
  * 扫码点餐API端点配置 - 统一规范版本
  * 所有API调用必须使用此配置
- * 支持租户参数的API格式
+ * 所有路径引用自 api-routes.ts 的路由常量
  */
 export const SCAN_API_ENDPOINTS = {
   // ==================== 基础API路径 ====================
@@ -210,43 +227,43 @@ export const SCAN_API_ENDPOINTS = {
   BASE: '/api/public',
   
   // 租户API路径 (需要租户上下文)
-  TENANT_BASE: '/api/v1/tenant',
+  TENANT_BASE: '/api/tenant',
   
   // ==================== 新规范API端点 ====================
   
   // 租户信息 (新规范)
-  TENANT_INFO: '/api/public/tenants/:tenantSlug',
+  TENANT_INFO: PUBLIC_API_ROUTES.SCAN.TENANT_STORE.INFO,
   
   // 租户下的店铺信息 (新规范)
-  TENANT_STORE_INFO: '/api/public/tenants/:tenantSlug/stores/:storeSlug',
+  TENANT_STORE_INFO: PUBLIC_API_ROUTES.SCAN.TENANT_STORE.INFO,
   
   // 租户下的店铺菜单 (新规范)
-  TENANT_STORE_MENU: '/api/public/tenants/:tenantSlug/stores/:storeSlug/menu',
+  TENANT_STORE_MENU: PUBLIC_API_ROUTES.SCAN.TENANT_STORE.MENU,
   
   // 租户下的餐桌信息 (新规范)
-  TENANT_TABLE_INFO: '/api/public/tenants/:tenantSlug/stores/:storeSlug/tables/:tableId',
+  TENANT_TABLE_INFO: PUBLIC_API_ROUTES.SCAN.TENANT_STORE.TABLE,
   
   // ==================== 旧规范API端点 (兼容性) ====================
   
   // 店铺信息 (旧规范 - 兼容性)
-  STORE_INFO: '/api/public/stores/:storeId',
+  STORE_INFO: PUBLIC_API_ROUTES.SCAN.STORE.INFO,
   
   // 店铺菜单 (旧规范 - 兼容性)
-  STORE_MENU: '/api/public/stores/:storeId/menu',
+  STORE_MENU: PUBLIC_API_ROUTES.SCAN.STORE.MENU,
   
   // 餐桌信息 (旧规范 - 兼容性)
-  TABLE_INFO: '/api/public/stores/:storeId/tables/:tableId',
+  TABLE_INFO: PUBLIC_API_ROUTES.SCAN.STORE.TABLE,
   
   // ==================== 通用API端点 ====================
   
   // 创建订单
-  CREATE_ORDER: '/api/public/orders',
+  CREATE_ORDER: PUBLIC_API_ROUTES.SCAN.ORDER.CREATE,
   
   // 订单状态
-  ORDER_STATUS: '/api/public/orders/:orderId/status',
+  ORDER_STATUS: PUBLIC_API_ROUTES.SCAN.ORDER.STATUS,
   
   // 健康检查
-  HEALTH: '/api/health',
+  HEALTH: PUBLIC_API_ROUTES.HEALTH,
   
   // ==================== 工具函数 ====================
   

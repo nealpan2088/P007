@@ -48,14 +48,14 @@ apiClient.interceptors.response.use(
  * 获取店铺菜单
  */
 export async function fetchStoreMenu(storeSlug: string): Promise<MenuCategory[]> {
-  const response = await apiClient.get<ApiResponse<MenuCategory[]>>(
+  const response = await apiClient.get<ApiResponse<any>>(
     SCAN_ROUTES.api.utils.buildStoreMenuUrl(storeSlug),
   );
   
   if (response.data.success) {
     const data = response.data.data;
     // 后端返回格式: {store, categories: [...]}，提取 categories 数组
-    if (data && Array.isArray(data.categories)) {
+    if (data && typeof data === 'object' && Array.isArray(data.categories)) {
       return data.categories;
     }
     if (Array.isArray(data)) {
@@ -73,13 +73,19 @@ export async function submitOrder(
   orderData: SubmitOrderRequest,
 ): Promise<{ order_number: string; total_amount: string }> {
   try {
-    const response = await apiClient.post<ApiResponse<{ id: number; order_number: string; total_amount: string }>>(
+    const response = await apiClient.post<ApiResponse<any>>(
       SCAN_ROUTES.api.CREATE_ORDER,
       orderData,
     );
     
     if (response.data.success) {
-      return response.data.data;
+      // 后端返回格式: {success, order: {orderNumber, totalAmount, ...}}
+      // 映射成前端期望的格式
+      const order = response.data.order || response.data.data;
+      return {
+        order_number: order.orderNumber || order.order_number,
+        total_amount: String(order.totalAmount ?? order.total_amount ?? '0'),
+      };
     } else {
       throw new Error(response.data.message || '提交订单失败');
     }
@@ -99,19 +105,20 @@ export async function fetchOrderStatus(orderId: string): Promise<OrderStatus> {
     );
     
     if (response.data.success) {
-      const raw = response.data.data;
-      // 后端 snake_case → 前端 camelCase 映射
+      // 后端返回格式: {success, order: {orderNumber, status, ...}}
+      const raw = response.data.order || response.data.data;
+      // 后端 camelCase → 前端 camelCase 统一映射
       return {
-        orderId: raw.order_number || raw.id?.toString(),
+        orderId: raw.orderNumber || raw.order_number || raw.id?.toString(),
         status: raw.status,
-        createdAt: raw.created_at || raw.createdAt,
-        updatedAt: raw.updated_at || raw.updatedAt,
-        totalAmount: Number(raw.total_amount || raw.totalAmount || 0),
+        createdAt: raw.createdAt || raw.created_at,
+        updatedAt: raw.updatedAt || raw.updated_at,
+        totalAmount: Number(raw.totalAmount || raw.total_amount || 0),
         items: (raw.items || []).map((item: any) => ({
-          menuItemId: item.menu_item_id || item.menuItemId,
-          name: item.name,
+          menuItemId: item.menuItemId || item.menu_item_id,
+          name: item.name || item.menuItem?.name,
           quantity: item.quantity,
-          price: Number(item.price || 0),
+          price: Number(item.price || item.unitPrice || item.unit_price || 0),
         })),
       };
     } else {

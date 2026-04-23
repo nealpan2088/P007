@@ -1,7 +1,7 @@
 // 麒麟项目前端 - 路由配置系统
 // 所有前端路由通过常量管理，禁止硬编码
 
-import config from './dynamic-config';
+import { TENANT_API_ROUTES, buildApiUrl as buildApiUrlFromRoutes } from './api-routes';
 
 // 基础路由路径
 const BASE_PATH = '/';
@@ -89,8 +89,8 @@ export const TENANT_ROUTES = {
     EDIT: '/dashboard/stores/:storeId/edit',
     SETTINGS: '/dashboard/stores/:storeId/settings',
     API: {
-      CREATE: '/api/v1/stores',
-      CHECK_SLUG: '/api/v1/stores/check-slug',
+      CREATE: TENANT_API_ROUTES.STORE.CREATE,
+      CHECK_SLUG: TENANT_API_ROUTES.STORE.CHECK_SLUG,
     },
     // 多店特定功能
     DEFAULT_SET: '/dashboard/stores/:storeId/set-default',
@@ -228,9 +228,9 @@ export const ADMIN_ROUTES = {
 // 工具函数
 export const RouteUtils = {
   // 构建完整URL（包含API基础URL）
+  // 注意：API URL构建统一使用 api-routes.ts 中的 buildApiUrl
   buildApiUrl(path: string): string {
-    const apiConfig = config.api;
-    return `${apiConfig.baseUrl}${path}`;
+    return buildApiUrlFromRoutes(path);
   },
 
   // 构建前端路由URL（支持参数替换）

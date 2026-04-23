@@ -1,3 +1,8 @@
+/**
+ * @deprecated 旧规范租户创建页面
+ * 后端路由已变更，不再使用 /api/v1/ 前缀
+ * 新规范请使用 TenantManagement.tsx 或后续重构
+ */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';

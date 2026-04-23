@@ -1,3 +1,9 @@
+/**
+ * @deprecated 旧规范店铺管理API工具函数
+ * baseURL 使用 '/api/v1/admin'，后端实际路由可能已变更
+ * 新规范请使用 src/config/api-routes.ts 中的路由常量
+ */
+
 // 店铺管理API工具函数
 import axios from 'axios';
 import { Store, StoreListResponse, StoreQueryParams, StoreRequest, StoreStats, ApiResponse } from '../types';

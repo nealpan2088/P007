@@ -39,8 +39,7 @@ function App() {
               <li><Link to={TENANT_ROUTES.TENANTS.LIST}>租户管理</Link></li>
               <li><Link to={PUBLIC_ROUTES.PUBLIC.ABOUT}>关于</Link></li>
               <li><Link to={PUBLIC_ROUTES.PUBLIC.TEST_CONSOLE}>控制台测试</Link></li>
-              <li><Link to={SCAN_ROUTES.getTestScanUrl()}>扫码点餐(新规范)</Link></li>
-              <li><Link to={SCAN_ROUTES.getLegacyTestScanUrl()}>扫码点餐(旧规范)</Link></li>
+              <li><Link to={SCAN_ROUTES.getTestScanUrl()}>扫码点餐</Link></li>
               <li><Link to={TENANT_ROUTES.STORES.LIST}>店铺管理</Link></li>
               <li><Link to={TENANT_ROUTES.MENU.ITEMS}>菜品管理</Link></li>
             </ul>
@@ -71,7 +70,7 @@ function App() {
               <Route path={SCAN_ROUTES.routes.TENANT_STORE} element={<ScanOrderPage />} />
               <Route path={SCAN_ROUTES.routes.TENANT_ONLY} element={<ScanOrderPage />} />
               
-              {/* 扫码点餐页面 - 旧规范路由 (兼容性) */}
+              {/* 扫码点餐页面 - 旧规范路由 (弃用，仍保留渲染) */}
               <Route path={SCAN_ROUTES.routes.LEGACY.SCAN_ORDER} element={<ScanOrderPage />} />
               <Route path={SCAN_ROUTES.routes.LEGACY.STORE_ONLY} element={<ScanOrderPage />} />
               <Route path={SCAN_ROUTES.routes.LEGACY.BASE} element={<ScanOrderPage />} />

@@ -8,16 +8,21 @@ import { useScanOrder } from './hooks/useScanOrder';
 import { MenuItem } from './types';
 
 const ScanOrderPage: React.FC = () => {
-  // 从URL参数获取店铺ID和餐桌ID
-  const { storeSlug, tableId } = useParams<{
+  // 同时支持新旧规范两种参数名
+  const params = useParams<{
     storeSlug?: string;
+    storeId?: string;
     tableId?: string;
   }>();
 
   const navigate = useNavigate();
 
+  // 统一获取店铺标识符（支持新旧规范参数名）
+  const storeIdentifier = params.storeSlug || params.storeId || '';
+  const tableId = params.tableId || '';
+
   // 如果URL缺少必要参数，显示错误
-  if (!storeSlug || !tableId) {
+  if (!storeIdentifier || !tableId) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center p-8">
@@ -52,12 +57,11 @@ const ScanOrderPage: React.FC = () => {
     openCart,
     closeCart,
     submitOrder,
-    refreshOrderStatus,
     reloadMenu,
 
     // 工具函数
     formatPrice,
-  } = useScanOrder(storeSlug, tableId);
+  } = useScanOrder(storeIdentifier, tableId);
 
   // 菜品详情弹窗
   const [detailItem, setDetailItem] = useState<MenuItem | null>(null);

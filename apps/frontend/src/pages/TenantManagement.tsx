@@ -98,7 +98,11 @@ const TenantManagement: React.FC = () => {
       const token = 'dev-test-token';
       console.log('开发测试模式：使用测试Token调用API');
       
-      const fetchResponse = await fetch('/api/test/tenants', {
+      // 使用正确的API路径
+      const apiPath = '/api/tenant/list';
+      console.log(`使用API路径: ${apiPath}`);
+      
+      const fetchResponse = await fetch(apiPath, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',

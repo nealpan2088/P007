@@ -1,6 +1,3 @@
-// 麒麟项目 - 数据库Schema (简化版)
-// 只包含公共Schema表，租户表在运行时动态创建
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,227 +7,191 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ==================== 公共Schema (p007_public) ====================
-// 公共表，存储平台级数据，所有租户共享
+// ============================================
+// 核心用户和租户模型
+// ============================================
 
-// 用户表 - 平台用户
 model User {
-  // 基础信息
-  id                String    @id @default(cuid())
-  email             String    @unique @db.VarChar(255)
-  username          String?   @db.VarChar(100)
-  fullName          String?   @db.VarChar(200)
-  phone             String?   @db.VarChar(20)
-  avatar            String?   @db.VarChar(500)
-  
-  // 认证信息
-  passwordHash      String    @db.VarChar(255)
-  passwordSalt      String    @db.VarChar(255)
-  emailVerified     Boolean   @default(false)
-  verificationToken String?   @db.VarChar(255)
-  verificationTokenExpiresAt DateTime?
-  resetPasswordToken String?  @db.VarChar(255)
-  resetPasswordTokenExpiresAt DateTime?
-  
-  // 状态
-  status            UserStatus @default(ACTIVE)
-  lastLoginAt       DateTime?
-  failedLoginAttempts Int      @default(0)
-  lockedUntil       DateTime?
-  
-  // 时间戳
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  deletedAt         DateTime?
-  
-  // 关系
-  tenants           UserTenant[]
-  sessions          Session[]
-  
-  // 索引
+  id            Int       @id @default(autoincrement()) @map("id")
+  email         String    @unique @map("email")
+  username      String?   @map("username")
+  fullName      String?   @map("full_name")
+  passwordHash  String    @map("password_hash")
+  role          String    @default("USER") @map("role")
+  status        String    @default("ACTIVE") @map("status")
+  lastLoginAt   DateTime? @map("last_login_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  tenants       UserTenant[]
+
+  @@map("users")
   @@index([email])
   @@index([status])
   @@index([createdAt])
 }
 
-// 用户状态枚举
-enum UserStatus {
-  ACTIVE      // 活跃
-  INACTIVE    // 未激活
-  SUSPENDED   // 已暂停
-  DELETED     // 已删除
-}
-
-// 租户表 - SaaS租户（餐厅/店铺）
 model Tenant {
-  // 基础信息
-  id              String    @id @default(cuid())
-  name            String    @db.VarChar(200)
-  subdomain       String    @unique @db.VarChar(100)
-  displayName     String    @db.VarChar(200)
-  description     String?   @db.Text
-  logo            String?   @db.VarChar(500)
-  website         String?   @db.VarChar(500)
-  
-  // 联系信息
-  contactEmail    String    @db.VarChar(255)
-  contactPhone    String?   @db.VarChar(20)
-  contactPerson   String?   @db.VarChar(100)
-  address         String?   @db.Text
-  
-  // 业务信息
-  businessType    String?   @db.VarChar(100)
-  industry        String?   @db.VarChar(100)
-  employeeCount   Int?
-  establishedYear Int?
-  
-  // 套餐和计费
-  plan            TenantPlan @default(FREE)
-  planStartedAt   DateTime  @default(now())
-  planExpiresAt   DateTime?
-  billingCycle    BillingCycle @default(MONTHLY)
-  stripeCustomerId String?  @db.VarChar(255)
-  stripeSubscriptionId String? @db.VarChar(255)
-  
-  // 试用期
-  trialStartedAt  DateTime?
-  trialEndsAt     DateTime?
-  trialConverted  Boolean   @default(false)
-  
-  // 状态
-  status          TenantStatus @default(ACTIVE)
-  verified        Boolean   @default(false)
-  verificationNotes String? @db.Text
-  
-  // 配置
-  settings        Json      @default("{}")
-  features        Json      @default("{}")
-  
-  // 时间戳
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  deletedAt       DateTime?
-  
-  // 关系
-  users           UserTenant[]
-  
-  // 索引
+  id          Int       @id @default(autoincrement()) @map("id")
+  name        String    @map("name")
+  subdomain   String?   @unique @map("subdomain")
+  description String?   @map("description")
+  status      String    @default("ACTIVE") @map("status")
+  settings    Json?     @default("{}") @map("settings")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  users       UserTenant[]
+  stores      Store[]
+
+  @@map("tenants")
   @@index([subdomain])
-  @@index([plan])
   @@index([status])
   @@index([createdAt])
 }
 
-// 租户套餐枚举
-enum TenantPlan {
-  FREE     // 免费版
-  BASIC    // 基础版
-  PREMIUM  // 高级版
-  ENTERPRISE // 企业版
-}
-
-// 租户状态枚举
-enum TenantStatus {
-  ACTIVE      // 活跃
-  TRIAL       // 试用中
-  SUSPENDED   // 已暂停
-  CANCELLED   // 已取消
-  DELETED     // 已删除
-}
-
-// 计费周期枚举
-enum BillingCycle {
-  MONTHLY   // 月付
-  YEARLY    // 年付
-}
-
-// 用户-租户关联表 (多对多)
 model UserTenant {
-  id        String   @id @default(cuid())
-  userId    String
-  tenantId  String
-  role      UserRole @default(USER)
-  
-  // 权限
-  permissions Json   @default("[]")
-  
-  // 状态
-  status    UserTenantStatus @default(ACTIVE)
-  invitedAt DateTime?
-  joinedAt  DateTime @default(now())
-  removedAt DateTime?
-  
-  // 时间戳
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // 关系
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  // 唯一约束
+  id          Int       @id @default(autoincrement()) @map("id")
+  userId      Int       @map("user_id")
+  tenantId    Int       @map("tenant_id")
+  role        String    @default("USER") @map("role")
+  status      String    @default("ACTIVE") @map("status")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_tenants")
   @@unique([userId, tenantId])
-  
-  // 索引
   @@index([userId])
   @@index([tenantId])
   @@index([role])
   @@index([status])
 }
 
-// 用户角色枚举
-enum UserRole {
-  SUPER_ADMIN  // 超级管理员 (平台级)
-  ADMIN        // 管理员 (租户级)
-  MANAGER      // 经理
-  STAFF        // 员工
-  USER         // 普通用户
-  VIEWER       // 查看者
-}
+// ============================================
+// 扫码点餐核心模型
+// ============================================
 
-// 用户-租户状态枚举
-enum UserTenantStatus {
-  PENDING   // 邀请待接受
-  ACTIVE    // 活跃
-  INACTIVE  // 未激活
-  SUSPENDED // 已暂停
-  REMOVED   // 已移除
-}
+model Store {
+  id          Int       @id @default(autoincrement()) @map("id")
+  tenantId    Int       @map("tenant_id")
+  name        String    @map("name")
+  slug        String    @unique @map("slug")
+  description String?   @map("description")
+  address     String?   @map("address")
+  phone       String?   @map("phone")
+  status      String    @default("ACTIVE") @map("status")
+  settings    Json?     @default("{}") @map("settings")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tables      Table[]
+  orders      Order[]
 
-// 会话表 - 用户登录会话
-model Session {
-  id           String   @id @default(cuid())
-  userId       String
-  tenantId     String?
-  
-  // 会话信息
-  token        String   @unique @db.VarChar(500)
-  refreshToken String?  @db.VarChar(500)
-  userAgent    String?  @db.Text
-  ipAddress    String?  @db.VarChar(45)
-  deviceType   String?  @db.VarChar(50)
-  deviceId     String?  @db.VarChar(255)
-  
-  // 有效期
-  expiresAt    DateTime
-  refreshTokenExpiresAt DateTime?
-  
-  // 状态
-  revoked      Boolean  @default(false)
-  revokedAt    DateTime?
-  revokedReason String? @db.VarChar(255)
-  
-  // 时间戳
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
-  // 关系
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tenant       Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
-  
-  // 索引
-  @@index([userId])
-  @@index([token])
-  @@index([expiresAt])
+  @@map("stores")
+  @@index([tenantId])
+  @@index([slug])
+  @@index([status])
   @@index([createdAt])
+}
+
+model Table {
+  id          Int       @id @default(autoincrement()) @map("id")
+  storeId     Int       @map("store_id")
+  tableNumber String    @map("table_number")
+  name        String?   @map("name")
+  capacity    Int       @default(4) @map("capacity")
+  status      String    @default("AVAILABLE") @map("status")
+  qrCodeUrl   String?   @map("qr_code_url")
+  notes       String?   @map("notes")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  orders      Order[]
+
+  @@map("tables")
+  @@unique([storeId, tableNumber])
+  @@index([storeId])
+  @@index([tableNumber])
+  @@index([status])
+}
+
+model Order {
+  id                 Int       @id @default(autoincrement()) @map("id")
+  storeId            Int       @map("store_id")
+  tableId            Int?      @map("table_id")
+  orderNumber        String    @unique @map("order_number")
+  customerName       String?   @map("customer_name")
+  customerPhone      String?   @map("customer_phone")
+  customerNotes      String?   @map("customer_notes")
+  orderType          String    @default("DINE_IN") @map("order_type")
+  status             String    @default("PENDING") @map("status")
+  paymentStatus      String    @default("PENDING") @map("payment_status")
+  subtotal           Float     @map("subtotal")
+  totalAmount        Float     @map("total_amount")
+  paymentMethod      String?   @map("payment_method")
+  estimatedReadyAt   DateTime? @map("estimated_ready_at")
+  readyAt            DateTime? @map("ready_at")
+  servedAt           DateTime? @map("served_at")
+  completedAt        DateTime? @map("completed_at")
+  cancelledAt        DateTime? @map("cancelled_at")
+  cancellationReason String?   @map("cancellation_reason")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  store              Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  table              Table?    @relation(fields: [tableId], references: [id])
+
+  @@map("orders")
+  @@index([storeId])
+  @@index([orderNumber])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+}
+
+// ============================================
+// 菜单相关模型（简化版）
+// ============================================
+
+model MenuCategory {
+  id          Int       @id @default(autoincrement()) @map("id")
+  storeId     Int       @map("store_id")
+  name        String    @map("name")
+  description String?   @map("description")
+  sortOrder   Int       @default(0) @map("sort_order")
+  isActive    Boolean   @default(true) @map("is_active")
+  imageUrl    String?   @map("image_url")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  items       MenuItem[]
+
+  @@map("menu_categories")
+  @@unique([storeId, name])
+  @@index([storeId])
+  @@index([sortOrder])
+}
+
+model MenuItem {
+  id              Int       @id @default(autoincrement()) @map("id")
+  categoryId      Int       @map("category_id")
+  name            String    @map("name")
+  description     String?   @map("description")
+  price           Float     @map("price")
+  imageUrl        String?   @map("image_url")
+  isAvailable     Boolean   @default(true) @map("is_available")
+  isRecommended   Boolean   @default(false) @map("is_recommended")
+  preparationTime Int?      @default(15) @map("preparation_time")
+  sortOrder       Int       @default(0) @map("sort_order")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  category        MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@map("menu_items")
+  @@unique([categoryId, name])
+  @@index([categoryId])
+  @@index([isAvailable])
+  @@index([isRecommended])
+  @@index([sortOrder])
 }

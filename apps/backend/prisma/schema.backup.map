@@ -1,0 +1,205 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// 核心用户和租户模型
+// ============================================
+
+model User {
+  id            Int       @id @default(autoincrement()) @map("id")
+  email         String    @unique @map("email")
+  username      String?   @map("username")
+  fullName      String?   @map("full_name")
+  passwordHash  String    @map("password_hash")
+  role          String    @default("USER") @map("role")
+  status        String    @default("ACTIVE") @map("status")
+  lastLoginAt   DateTime? @map("last_login_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  tenants       UserTenant[]
+
+  @@map("users")
+  @@index([email])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Tenant {
+  id            Int       @id @default(autoincrement()) @map("id")
+  name          String    @map("name")
+  subdomain     String    @unique @map("subdomain")
+  plan          String    @default("FREE") @map("plan")
+  status        String    @default("ACTIVE") @map("status")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  contactEmail  String?   @map("contact_email")
+  contactPhone  String?   @map("contact_phone")
+  contactPerson String?   @map("contact_person")
+  address       String?   @map("address")
+  businessType  String?   @map("business_type")
+  industry      String?   @map("industry")
+  slug          String?   @unique @map("slug")
+  displayName   String?   @map("display_name")
+  users         UserTenant[]
+  stores        Store[]
+
+  @@map("tenants")
+  @@index([subdomain])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model UserTenant {
+  id          Int       @id @default(autoincrement()) @map("id")
+  userId      Int       @map("user_id")
+  tenantId    Int       @map("tenant_id")
+  role        String    @default("USER") @map("role")
+  status      String    @default("ACTIVE") @map("status")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_tenants")
+  @@unique([userId, tenantId])
+  @@index([userId])
+  @@index([tenantId])
+  @@index([role])
+  @@index([status])
+}
+
+// ============================================
+// 扫码点餐核心模型
+// ============================================
+
+model Store {
+  id          Int       @id @default(autoincrement()) @map("id")
+  tenantId    Int       @map("tenant_id")
+  name        String    @map("name")
+  slug        String    @unique @map("slug")
+  description String?   @map("description")
+  address     String?   @map("address")
+  phone       String?   @map("phone")
+  status      String    @default("ACTIVE") @map("status")
+  settings    Json?     @default("{}") @map("settings")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tables      Table[]
+  orders      Order[]
+  menuCategories MenuCategory[]
+
+  @@map("stores")
+  @@index([tenantId])
+  @@index([slug])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Table {
+  id          Int       @id @default(autoincrement()) @map("id")
+  storeId     Int       @map("store_id")
+  code        String    @map("code")
+  tableNumber String    @map("table_number")
+  capacity    Int       @default(4) @map("capacity")
+  status      String    @default("AVAILABLE") @map("status")
+  description String?   @map("description")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  orders      Order[]
+
+  @@map("tables")
+  @@unique([storeId, code])
+  @@index([storeId])
+  @@index([tableNumber])
+  @@index([status])
+}
+
+model Order {
+  id                 Int       @id @default(autoincrement()) @map("id")
+  storeId            Int       @map("store_id")
+  tableId            Int?      @map("table_id")
+  orderNumber        String    @unique @map("order_number")
+  customerName       String?   @map("customer_name")
+  customerPhone      String?   @map("customer_phone")
+  customerNotes      String?   @map("customer_notes")
+  orderType          String    @default("DINE_IN") @map("order_type")
+  status             String    @default("PENDING") @map("status")
+  paymentStatus      String    @default("PENDING") @map("payment_status")
+  subtotal           Float     @map("subtotal")
+  totalAmount        Float     @map("total_amount")
+  paymentMethod      String?   @map("payment_method")
+  estimatedReadyAt   DateTime? @map("estimated_ready_at")
+  readyAt            DateTime? @map("ready_at")
+  servedAt           DateTime? @map("served_at")
+  completedAt        DateTime? @map("completed_at")
+  cancelledAt        DateTime? @map("cancelled_at")
+  cancellationReason String?   @map("cancellation_reason")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  store              Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  table              Table?    @relation(fields: [tableId], references: [id])
+
+  @@map("orders")
+  @@index([storeId])
+  @@index([orderNumber])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+}
+
+// ============================================
+// 菜单相关模型（简化版）
+// ============================================
+
+model MenuCategory {
+  id          Int       @id @default(autoincrement()) @map("id")
+  storeId     Int       @map("store_id")
+  name        String    @map("name")
+  description String?   @map("description")
+  sortOrder   Int       @default(0) @map("sort_order")
+  status      String    @default("ACTIVE") @map("status")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  items       MenuItem[]
+
+  @@map("menu_categories")
+  @@unique([storeId, name])
+  @@index([storeId])
+  @@index([sortOrder])
+}
+
+model MenuItem {
+  id              Int       @id @default(autoincrement()) @map("id")
+  categoryId      Int       @map("category_id")
+  name            String    @map("name")
+  description     String?   @map("description")
+  price           Float     @map("price")
+  imageUrl        String?   @map("image_url")
+  isAvailable     Boolean   @default(true) @map("is_available")
+  isRecommended   Boolean   @default(false) @map("is_recommended")
+  preparationTime Int?      @default(15) @map("preparation_time")
+  sortOrder       Int       @default(0) @map("sort_order")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  category        MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@map("menu_items")
+  @@unique([categoryId, name])
+  @@index([categoryId])
+  @@index([isAvailable])
+  @@index([isRecommended])
+  @@index([sortOrder])
+}

@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5177,
+    port: 5171,
     host: true, // 允许外部访问
     allowedHosts: ['saas.openyun.xin', 'localhost'],
     proxy: {

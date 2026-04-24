@@ -148,6 +148,22 @@ fastify.register(registerAdminRoutes, { prefix: '/api/admin' })
 import { registerAuthRoutes } from './routes/auth.routes.js'
 fastify.register(registerAuthRoutes, { prefix: '/api/v1/auth' })
 
+// ==================== 配置端点 ====================
+// 提供路由配置供前端消费，确保前后端路由一致
+import routes from './config/routes.js'
+
+fastify.get('/api/config/routes', async (request, reply) => {
+  return {
+    success: true,
+    data: {
+      public: routes.public,
+      tenant: routes.tenant,
+      customer: routes.customer,
+      admin: routes.admin,
+    }
+  };
+});
+
 // ==================== 错误处理 ====================
 // 全局错误处理（包含夜狼模块错误）
 

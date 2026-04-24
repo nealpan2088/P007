@@ -17,34 +17,28 @@ const API_BASE_URL = config.api.baseUrl;
 // ============================================
 export const PUBLIC_API_ROUTES = {
   // 健康检查
-  HEALTH: `${API_BASE_URL}/api/health`,
+  HEALTH: '/api/public/health',
 
   // 扫码点餐 - 店铺信息（新规范：基于租户+店铺slug）
   SCAN: {
-    // 租户下的店铺
-    TENANT_STORE: {
-      INFO: `${API_BASE_URL}/api/public/tenants/:tenantSlug/stores/:storeSlug`,
-      MENU: `${API_BASE_URL}/api/public/tenants/:tenantSlug/stores/:storeSlug/menu`,
-      TABLE: `${API_BASE_URL}/api/public/tenants/:tenantSlug/stores/:storeSlug/tables/:tableId`,
-    },
     // 店铺直接访问（简化版）
     STORE: {
-      INFO: `${API_BASE_URL}/api/public/stores/:storeId`,
-      MENU: `${API_BASE_URL}/api/public/stores/:storeId/menu`,
-      TABLE: `${API_BASE_URL}/api/public/stores/:storeId/tables/:tableId`,
+      INFO: '/api/public/stores/:storeId',
+      MENU: '/api/public/stores/:storeId/menu',
+      TABLE: '/api/public/stores/:storeId/tables/:tableId',
     },
     // 订单
     ORDER: {
-      CREATE: `${API_BASE_URL}/api/public/orders`,
-      STATUS: `${API_BASE_URL}/api/public/orders/:orderId/status`,
+      CREATE: '/api/public/orders',
+      STATUS: '/api/public/orders/:orderId/status',
     },
   },
 
   // 公共信息
   PUBLIC: {
-    VERSION: `${API_BASE_URL}/api/public/version`,
-    FEATURES: `${API_BASE_URL}/api/public/features`,
-    PRICING: `${API_BASE_URL}/api/public/pricing`,
+    VERSION: '/api/public/version',
+    FEATURES: '/api/public/features',
+    PRICING: '/api/public/pricing',
   },
 };
 
@@ -54,41 +48,41 @@ export const PUBLIC_API_ROUTES = {
 export const TENANT_API_ROUTES = {
   // 租户管理
   TENANT: {
-    LIST: `${API_BASE_URL}/api/tenant/list`,
-    DETAIL: `${API_BASE_URL}/api/tenant/:tenantId`,
-    UPDATE: `${API_BASE_URL}/api/tenant/:tenantId`,
-    HEALTH: `${API_BASE_URL}/api/tenant/health`,
+    LIST: '/api/tenant/list',
+    DETAIL: '/api/tenant/:tenantId',
+    UPDATE: '/api/tenant/:tenantId',
+    HEALTH: '/api/tenant/health',
     // 租户注册与检查
-    CHECK_SLUG: `${API_BASE_URL}/api/tenant/check-slug`,
-    CHECK_SUBDOMAIN: `${API_BASE_URL}/api/tenant/check-subdomain`,
-    REGISTER: `${API_BASE_URL}/api/tenant/register`,
+    CHECK_SLUG: '/api/tenant/check-slug',
+    CHECK_SUBDOMAIN: '/api/tenant/check-subdomain',
+    REGISTER: '/api/tenant/register',
   },
 
   // 店铺管理
   STORE: {
-    LIST: `${API_BASE_URL}/api/store/stores`,
-    DETAIL: `${API_BASE_URL}/api/store/stores/:storeId`,
-    CREATE: `${API_BASE_URL}/api/store/stores`,
-    UPDATE: `${API_BASE_URL}/api/store/stores/:storeId`,
-    DELETE: `${API_BASE_URL}/api/store/stores/:storeId`,
-    CHECK_SLUG: `${API_BASE_URL}/api/store/check-slug`,
+    LIST: '/api/store/stores',
+    DETAIL: '/api/store/stores/:storeId',
+    CREATE: '/api/store/stores',
+    UPDATE: '/api/store/stores/:storeId',
+    DELETE: '/api/store/stores/:storeId',
+    CHECK_SLUG: '/api/store/check-slug',
   },
 
   // 菜单管理
   MENU: {
     // 分类
-    CATEGORIES: `${API_BASE_URL}/api/store/stores/:storeId/menu/categories`,
-    CATEGORY_DETAIL: `${API_BASE_URL}/api/store/stores/:storeId/menu/categories/:categoryId`,
-    CATEGORY_REORDER: `${API_BASE_URL}/api/store/stores/:storeId/menu/categories/reorder`,
+    CATEGORIES: '/api/store/stores/:storeId/menu/categories',
+    CATEGORY_DETAIL: '/api/store/stores/:storeId/menu/categories/:categoryId',
+    CATEGORY_REORDER: '/api/store/stores/:storeId/menu/categories/reorder',
     // 菜品
-    ITEMS: `${API_BASE_URL}/api/store/stores/:storeId/menu/items`,
-    ITEM_DETAIL: `${API_BASE_URL}/api/store/stores/:storeId/menu/items/:itemId`,
-    ITEM_AVAILABILITY: `${API_BASE_URL}/api/store/stores/:storeId/menu/items/:itemId/availability`,
+    ITEMS: '/api/store/stores/:storeId/menu/items',
+    ITEM_DETAIL: '/api/store/stores/:storeId/menu/items/:itemId',
+    ITEM_AVAILABILITY: '/api/store/stores/:storeId/menu/items/:itemId/availability',
   },
 
   // 上传
   UPLOAD: {
-    MENU_IMAGE: `${API_BASE_URL}/api/upload/menu-image`,
+    MENU_IMAGE: '/api/upload/menu-image',
   },
 };
 
@@ -118,13 +112,13 @@ export const getApiUrl = (route: string, params: Record<string, string | number>
 export const apiBuilders = {
   // 店铺信息（新规范：基于租户）
   tenantStoreInfo(tenantSlug: string, storeSlug: string): string {
-    return buildApiUrl(PUBLIC_API_ROUTES.SCAN.TENANT_STORE.INFO, { tenantSlug, storeSlug });
+    return buildApiUrl(PUBLIC_API_ROUTES.SCAN.STORE.INFO, { tenantSlug, storeSlug });
   },
   tenantStoreMenu(tenantSlug: string, storeSlug: string): string {
-    return buildApiUrl(PUBLIC_API_ROUTES.SCAN.TENANT_STORE.MENU, { tenantSlug, storeSlug });
+    return buildApiUrl(PUBLIC_API_ROUTES.SCAN.STORE.MENU, { tenantSlug, storeSlug });
   },
   tenantTableInfo(tenantSlug: string, storeSlug: string, tableId: string): string {
-    return buildApiUrl(PUBLIC_API_ROUTES.SCAN.TENANT_STORE.TABLE, { tenantSlug, storeSlug, tableId });
+    return buildApiUrl(PUBLIC_API_ROUTES.SCAN.STORE.TABLE, { tenantSlug, storeSlug, tableId });
   },
 
   // 店铺信息（简化版）
@@ -147,11 +141,11 @@ export const apiBuilders = {
 // 兼容旧版API_ENDPOINTS导出（供 scan-routes.ts 等旧文件使用）
 export const API_ENDPOINTS = {
   PUBLIC: {
-    HEALTH: getApiUrl('/api/health'),
-    TENANT_INFO: getApiUrl(PUBLIC_API_ROUTES.SCAN.TENANT_STORE.INFO.replace(':tenantSlug', ':tenantSlug').replace(':storeSlug', ':storeSlug')),
-    TENANT_STORE_INFO: getApiUrl(PUBLIC_API_ROUTES.SCAN.TENANT_STORE.INFO),
-    TENANT_STORE_MENU: getApiUrl(PUBLIC_API_ROUTES.SCAN.TENANT_STORE.MENU),
-    TENANT_TABLE_INFO: getApiUrl(PUBLIC_API_ROUTES.SCAN.TENANT_STORE.TABLE),
+    HEALTH: getApiUrl('/api/public/health'),
+    // TENANT_INFO: 已删除（后端不存在）
+    TENANT_STORE_INFO: getApiUrl(PUBLIC_API_ROUTES.SCAN.STORE.INFO),
+    TENANT_STORE_MENU: getApiUrl(PUBLIC_API_ROUTES.SCAN.STORE.MENU),
+    TENANT_TABLE_INFO: getApiUrl(PUBLIC_API_ROUTES.SCAN.STORE.TABLE),
     STORE_INFO: getApiUrl(PUBLIC_API_ROUTES.SCAN.STORE.INFO),
     STORE_MENU: getApiUrl(PUBLIC_API_ROUTES.SCAN.STORE.MENU),
     TABLE_INFO: getApiUrl(PUBLIC_API_ROUTES.SCAN.STORE.TABLE),
@@ -183,16 +177,16 @@ export const API_ENDPOINTS = {
   },
   // 打印机管理（管理后台）
   PRINTER: {
-    BRANDS: getApiUrl('/admin/printers/brands'),
-    LIST: getApiUrl('/admin/printers'),
-    CREATE: getApiUrl('/admin/printers'),
-    UPDATE: getApiUrl('/admin/printers/:id'),
-    DELETE: getApiUrl('/admin/printers/:id'),
-    TEST: getApiUrl('/admin/printers/:id/test'),
+    BRANDS: getApiUrl('/api/admin/printers/brands'),
+    LIST: getApiUrl('/api/admin/printers'),
+    CREATE: getApiUrl('/api/admin/printers'),
+    UPDATE: getApiUrl('/api/admin/printers/:id'),
+    DELETE: getApiUrl('/api/admin/printers/:id'),
+    TEST: getApiUrl('/api/admin/printers/:id/test'),
   },
   // 店铺选择（管理后台）
-  STORES_SELECT: getApiUrl('/admin/stores/select'),
-  STORES_LIST: getApiUrl('/admin/stores/list'),
+  STORES_SELECT: getApiUrl('/api/admin/stores/select'),
+  STORES_LIST: getApiUrl('/api/admin/stores/list'),
   UPLOAD: {
     MENU_IMAGE: getApiUrl(TENANT_API_ROUTES.UPLOAD.MENU_IMAGE),
   },

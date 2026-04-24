@@ -691,6 +691,90 @@ export function requireStoreAccess(storeIdSource = 'param', paramName = 'storeId
   };
 }
 
+// ==================== 请求频率限制中间件 ====================
+
+/**
+ * 内存请求计数器（IP → 请求记录）
+ * 使用 Map 实现，重启进程即重置
+ * @type {Map<string, {count: number, resetTime: number}>}
+ */
+const rateLimitStore = new Map()
+
+/**
+ * 定期清理过期记录（每5分钟）
+ * 防止内存无限增长
+ */
+setInterval(() => {
+  const now = Date.now()
+  for (const [key, record] of rateLimitStore) {
+    if (now > record.resetTime) {
+      rateLimitStore.delete(key)
+    }
+  }
+  // 如果 store 太大（超过10000条），强制清空最旧的一半
+  if (rateLimitStore.size > 10000) {
+    const entries = [...rateLimitStore.entries()]
+      .sort((a, b) => a[1].resetTime - b[1].resetTime)
+    const toDelete = entries.slice(0, entries.length / 2)
+    for (const [key] of toDelete) {
+      rateLimitStore.delete(key)
+    }
+  }
+}, 300000).unref()
+
+/**
+ * 请求频率限制中间件
+ * 对指定路由组进行 IP 级别的访问频率限制
+ * 
+ * @param {Object} options 配置选项
+ * @param {number} options.windowMs 时间窗口（毫秒），默认 60000（1分钟）
+ * @param {number} options.max 窗口内最大请求数，默认 100
+ * @param {string} options.message 超限提示信息
+ * @returns {Function} Fastify preHandler 中间件
+ */
+export function rateLimit({
+  windowMs = 60000,
+  max = 100,
+  message = '请求过于频繁，请稍后再试',
+  scope = 'global'  // 作用域名称，不同限流器使用不同 scope 可独立计数
+} = {}) {
+  return async function (request, reply) {
+    const ip = request.ip
+    const key = `${scope}:${ip}`  // 带作用域的 key，每个限流器独立计数
+    const now = Date.now()
+    const record = rateLimitStore.get(key)
+    
+    // 无记录或已过期 → 新窗口
+    if (!record || now > record.resetTime) {
+      rateLimitStore.set(ip, { count: 1, resetTime: now + windowMs })
+      return
+    }
+    
+    // 超过限制 → 429
+    if (record.count >= max) {
+      request.log.warn({
+        msg: '请求频率超限',
+        ip,
+        count: record.count,
+        max,
+        windowMs,
+        url: request.url
+      })
+      
+      reply.code(429).send({
+        code: 429,
+        error: message,
+        traceId: `rate-${Date.now().toString(36)}`,
+        timestamp: new Date().toISOString()
+      })
+      return
+    }
+    
+    // 未超限 → 递增
+    record.count++
+  }
+}
+
 // ==================== 导出所有中间件 ====================
 
 export default {
@@ -705,6 +789,9 @@ export default {
   
   // 店铺相关
   requireStoreAccess,
+  
+  // 限流
+  rateLimit,
   
   // 验证相关
   validateRequest,

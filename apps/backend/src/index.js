@@ -140,6 +140,65 @@ fastify.register(registerStoreRoutes, { prefix: '/api/store' })
 import { registerAdminRoutes } from './routes/admin.routes.register.js'
 fastify.register(registerAdminRoutes, { prefix: '/api/admin' })
 
+// 无独立 import，rateLimitStore 直接在此定义
+const rateLimitStore = new Map()
+
+// 定期清理过期记录（每5分钟）
+setInterval(() => {
+  const now = Date.now()
+  for (const [key, record] of rateLimitStore) {
+    if (now > record.resetTime) rateLimitStore.delete(key)
+  }
+  if (rateLimitStore.size > 10000) {
+    const entries = [...rateLimitStore.entries()]
+      .sort((a, b) => a[1].resetTime - b[1].resetTime)
+    for (const [key] of entries.slice(0, entries.length / 2)) {
+      rateLimitStore.delete(key)
+    }
+  }
+}, 300000).unref()
+
+// ==================== 管理端 API 限流 ====================
+
+/**
+ * 通用的限流检查函数
+ * @param {string} key 限流 key (scope:ip)
+ * @param {number} max 窗口内最大请求数
+ * @param {Object} reply Fastify reply
+ * @returns {boolean} true=超限被拒绝, false=通过
+ */
+function rateLimitCheck(key, max, reply) {
+  const now = Date.now()
+  const record = rateLimitStore.get(key)
+
+  if (!record || now > record.resetTime) {
+    rateLimitStore.set(key, { count: 1, resetTime: now + 60000 })
+    return false // 通过
+  }
+  if (record.count >= max) {
+    reply.code(429).send({
+      code: 429,
+      error: '请求过于频繁，请稍后再试',
+      timestamp: new Date().toISOString()
+    })
+    return true // 拒绝
+  }
+  record.count++
+  return false
+}
+
+fastify.addHook('onRequest', async (request, reply) => {
+  const url = request.url
+  const ip = request.ip
+
+  if (url.startsWith('/api/store/')) {
+    if (rateLimitCheck(`store:${ip}`, 100, reply)) return
+  }
+  if (url.startsWith('/api/admin/')) {
+    if (rateLimitCheck(`super-admin:${ip}`, 50, reply)) return
+  }
+})
+
 // 系统API路由（暂时注释，有导入问题）
 // import systemRoutes from './routes/system.routes.js'
 // fastify.register(systemRoutes, { prefix: '/api/system' })

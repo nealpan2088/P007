@@ -208,7 +208,7 @@ const CreateStore: React.FC = () => {
 
   const checkSlugAvailability = async (slug: string): Promise<boolean> => {
     try {
-      const res = await apiPost<any>(API_ENDPOINTS.TENANT.STORES.CHECK_SLUG, { slug });
+      const res = await apiPost<any>(API_ENDPOINTS.STORE.CHECK_SLUG, { slug });
       return res.success && res.data?.available === true;
     } catch (error) {
       console.error('检查标识符可用性错误:', error);
@@ -233,7 +233,7 @@ const CreateStore: React.FC = () => {
       }
 
       // 创建店铺
-      const res = await apiPost<any>(API_ENDPOINTS.TENANT.STORES.CREATE, {
+      const res = await apiPost<any>(API_ENDPOINTS.STORE.CREATE, {
         name: formData.name,
         slug: formData.slug,
         description: formData.description,

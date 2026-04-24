@@ -206,3 +206,52 @@ export default {
   getUrl: getApiUrl,
   builders: apiBuilders,
 };
+
+// ==================== 开发环境路径规范校验 ====================
+/**
+ * 检查 API 路径是否与 api-client.ts 的 API_BASE 重复前缀
+ * 
+ * 规范要求：
+ * - api-client.ts 有 API_BASE = '/api'，会自动给路径加 /api 前缀
+ * - 所以 API 路由常量不应该以 /api 开头，否则前端请求路径会变成 /api/api/xxx
+ * - 例外：已确认 getApiUrl() 处理的路径可以保留 /api 前缀（函数内会去重）
+ * 
+ * 未来所有 API 常量应：CHECK_SLUG: '/store/stores/check-slug'
+ * 而不是：            CHECK_SLUG: '/api/store/stores/check-slug'
+ */
+const API_PATH_CHECK_ENABLED = typeof window !== 'undefined' &&
+  window.location.hostname === 'localhost' &&
+  process.env.NODE_ENV !== 'production';
+
+if (API_PATH_CHECK_ENABLED) {
+  setTimeout(() => {
+    const checked = new Set<string>();
+    
+    function scan(obj: Record<string, any>, path: string = '') {
+      for (const [key, value] of Object.entries(obj)) {
+        const fullPath = path ? `${path}.${key}` : key;
+        
+        if (typeof value === 'string' && value.startsWith('/api/') && !checked.has(value)) {
+          checked.add(value);
+          // 检查是不是从 getApiUrl 来的（已去重）
+          // 简单判断：如果是纯字符串定义（非函数返回值），可能有重复 /api 风险
+          // 在控制台打印警告
+          console.warn(
+            `⚠️ [API路径规范] ${fullPath} = "${value}"\n` +
+            `   api-client.ts 的 API_BASE 是 '/api'，此路径以 /api 开头\n` +
+            `   建议改为 "${value.replace('/api', '')}"（去掉 /api 前缀）\n` +
+            `   后续统一由 apiRequest() 自动补上`
+          );
+        } else if (typeof value === 'object' && value !== null) {
+          scan(value, fullPath);
+        }
+      }
+    }
+    
+    console.group('🔎 API路径规范检查');
+    scan(PUBLIC_API_ROUTES, 'PUBLIC_API_ROUTES');
+    scan(TENANT_API_ROUTES, 'TENANT_API_ROUTES');
+    scan(API_ENDPOINTS, 'API_ENDPOINTS');
+    console.groupEnd();
+  }, 2000);
+}

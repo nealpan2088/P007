@@ -234,7 +234,6 @@ const CreateStore: React.FC = () => {
 
       // 创建店铺
       const res = await apiPost<any>(API_ENDPOINTS.STORE.CREATE, {
-        tenant_id: 8,
         name: formData.name,
         slug: formData.slug,
         description: formData.description,

@@ -29,18 +29,24 @@ apiClient.interceptors.response.use(
     return response;
   },
   error => {
-    console.error('API请求错误:', error);
+    const status = error.response?.status;
+    // 429限频不打印错误日志（前端已做友好提示）
+    if (status !== 429) {
+      console.error('API请求错误:', error);
+    }
     
-    // 统一错误处理
-    const errorMessage = error.response?.data?.message || 
-                        error.message || 
-                        '网络请求失败，请稍后重试';
-    
-    return Promise.reject({
-      message: errorMessage,
-      code: error.response?.status || 'NETWORK_ERROR',
+    // 构造标准错误对象，保留原始 axios error 引用
+    const enhancedError: any = {
+      message: error.response?.data?.message || 
+               error.message || 
+               '网络请求失败，请稍后重试',
+      code: status || 'NETWORK_ERROR',
       details: error.response?.data,
-    });
+    };
+    // 保留原始 axios error 以便上层检查 statusCode
+    enhancedError.originalError = error;
+    
+    return Promise.reject(enhancedError);
   },
 );
 

@@ -14,8 +14,16 @@ import BaseAdapter from './BaseAdapter.js';
 import ShangpengSignatureService from './ShangpengSignatureService.js';
 
 const BASE_URL = process.env.SHANGPENG_BASE_URL || 'https://open.spyun.net/v1';
-const PLATFORM_APPID = process.env.SHANGPENG_APP_ID || 'sp69c62e5025d1e';
-const PLATFORM_APPSECRET = process.env.SHANGPENG_APP_SECRET || '3e9bd77a8e2f8d571a06ca777269dfbb';
+
+// 打印机凭证必须通过环境变量配置，禁止硬编码
+const PLATFORM_APPID = process.env.SHANGPENG_APP_ID;
+const PLATFORM_APPSECRET = process.env.SHANGPENG_APP_SECRET;
+
+if (!PLATFORM_APPID || !PLATFORM_APPSECRET) {
+  throw new Error(
+    '[打印机] 缺少凭证配置: 请在 .env 中设置 SHANGPENG_APP_ID 和 SHANGPENG_APP_SECRET'
+  );
+}
 
 export default class ShangpengAdapter extends BaseAdapter {
   getBrandCode() {

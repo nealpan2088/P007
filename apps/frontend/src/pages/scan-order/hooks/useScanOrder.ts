@@ -191,7 +191,11 @@ export function useScanOrder(storeSlug: string, tableId: string) {
       // 返回订单ID（如果需要）
       // return result.orderId;
     } catch (error) {
-      console.error('提交订单失败:', error);
+      // 429限频不打印错误日志（前端已做友好提示）
+      const err = error as any;
+      if (err.code !== 429) {
+        console.error('提交订单失败:', error);
+      }
       setState(prev => ({
         ...prev,
         isLoading: false,

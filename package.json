@@ -1,6 +1,6 @@
 {
   "name": "p007-qilin",
-  "version": "0.2.5",
+  "version": "0.3.1",
   "private": true,
   "description": "麒麟项目 - 多店扫码点餐云打印SaaS平台",
   "workspaces": [

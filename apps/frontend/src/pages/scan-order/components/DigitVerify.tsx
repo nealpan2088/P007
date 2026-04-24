@@ -4,6 +4,7 @@ interface DigitVerifyProps {
   isOpen: boolean;
   onVerify: () => void;
   onCancel: () => void;
+  errorMessage?: string | null;
 }
 
 /**
@@ -11,7 +12,7 @@ interface DigitVerifyProps {
  * 生成4位随机数字，用户需按正确顺序点击
  * 点错后重置并刷新数字，防止暴力尝试
  */
-const DigitVerify: React.FC<DigitVerifyProps> = ({ isOpen, onVerify, onCancel }) => {
+const DigitVerify: React.FC<DigitVerifyProps> = ({ isOpen, onVerify, onCancel, errorMessage }) => {
   const [codeDigits, setCodeDigits] = useState<number[]>([]);
   const [shuffledDigits, setShuffledDigits] = useState<number[]>([]);
   const [clickedIndexes, setClickedIndexes] = useState<number[]>([]);
@@ -99,9 +100,17 @@ const DigitVerify: React.FC<DigitVerifyProps> = ({ isOpen, onVerify, onCancel })
       <div className="bg-white rounded-2xl shadow-2xl w-[320px] p-6 mx-4">
         {/* 标题 */}
         <h3 className="text-lg font-bold text-gray-800 text-center mb-2">安全验证</h3>
-        <p className="text-xs text-gray-500 text-center mb-5">
+        <p className="text-xs text-gray-500 text-center mb-2">
           请按顺序点击数字，防止恶意下单
         </p>
+
+        {/* 后端限频错误提示 */}
+        {errorMessage && (
+          <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg text-center">
+            <p className="text-orange-600 text-sm font-medium">{errorMessage}</p>
+            <p className="text-gray-400 text-xs mt-1">请稍后再试</p>
+          </div>
+        )}
 
         {phase === 'show' && (
           <>

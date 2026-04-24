@@ -31,6 +31,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showVerify, setShowVerify] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
 
   const handleSubmitOrder = () => {
     if (items.length === 0) {
@@ -38,30 +39,39 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
       return;
     }
     // 先弹验证码
+    setVerifyError(null);
     setShowVerify(true);
   };
 
   const handleVerifiedSubmit = async () => {
-    setShowVerify(false);
     try {
-      setIsSubmitting(true);
-      setError(null);
+      setVerifyError(null);
       await onSubmitOrder({
         specialRequest: specialRequest.trim() || undefined,
         phone: phone.trim() || undefined,
       });
+      // 订单提交成功后关闭验证码弹窗
+      setShowVerify(false);
       setSpecialRequest('');
       setPhone('');
     } catch (err) {
+      const enhancedErr = err as any;
+      const statusCode = enhancedErr.code || enhancedErr.originalError?.response?.status || 0;
+      if (statusCode === 429) {
+        const msg = enhancedErr.details?.error || enhancedErr.message || '操作过于频繁，请稍后再试';
+        setVerifyError(msg);
+        return; // 保留验证码弹窗，显示错误
+      }
+      // 其他错误直接关闭验证码，回购物车显示
+      setShowVerify(false);
       setError(err instanceof Error ? err.message : '提交订单失败');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   const handleVerifyCancel = () => {
     setShowVerify(false);
     setError(null);
+    setVerifyError(null);
   };
 
   const handleOverlayClick = (e: React.MouseEvent) => {
@@ -264,6 +274,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
           isOpen={showVerify}
           onVerify={handleVerifiedSubmit}
           onCancel={handleVerifyCancel}
+          errorMessage={verifyError}
         />
       </div>
     </>

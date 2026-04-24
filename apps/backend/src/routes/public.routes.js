@@ -9,6 +9,33 @@ import { PUBLIC_ROUTES } from '../config/routes.js';
  * 公开API路由注册
  * @param {FastifyInstance} fastify - Fastify实例
  */
+
+// 简单内存限频：同一IP或手机号的下单频率
+const rateLimits = new Map();
+const RATE_WINDOW_MS = 60 * 1000; // 1分钟窗口
+
+function checkRateLimit(key, maxCount) {
+  const now = Date.now();
+  const record = rateLimits.get(key);
+  if (!record || now - record.windowStart > RATE_WINDOW_MS) {
+    rateLimits.set(key, { windowStart: now, count: 1 });
+    return { allowed: true };
+  }
+  if (record.count >= maxCount) {
+    return { allowed: false, remainingMs: RATE_WINDOW_MS - (now - record.windowStart) };
+  }
+  record.count++;
+  return { allowed: true };
+}
+
+// 定期清理过期记录（每5分钟）
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of rateLimits.entries()) {
+    if (now - record.windowStart > RATE_WINDOW_MS) rateLimits.delete(key);
+  }
+}, 5 * 60 * 1000);
+
 async function publicRoutes(fastify) {
   // 健康检查（公开）
   fastify.get(PUBLIC_ROUTES.SCAN.HEALTH, async (request, reply) => {
@@ -106,6 +133,27 @@ async function publicRoutes(fastify) {
           error: '数据验证失败',
           details: validation.errors
         });
+      }
+
+      // 限频检查
+      const ip = request.ip;
+      const ipCheck = checkRateLimit('ip:' + ip, 3);
+      if (!ipCheck.allowed) {
+        return reply.code(429).send({
+          success: false,
+          error: '操作过于频繁，请稍后再试',
+          details: { remainingMs: ipCheck.remainingMs }
+        });
+      }
+      if (request.body.customerPhone) {
+        const phoneCheck = checkRateLimit('phone:' + request.body.customerPhone, 2);
+        if (!phoneCheck.allowed) {
+          return reply.code(429).send({
+            success: false,
+            error: '该手机号下单过于频繁，请稍后再试',
+            details: { remainingMs: phoneCheck.remainingMs }
+          });
+        }
       }
 
       const result = await scanService.createScanOrder(request.body);

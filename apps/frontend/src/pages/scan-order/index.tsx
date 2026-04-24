@@ -21,18 +21,21 @@ const ScanOrderPage: React.FC = () => {
   const storeIdentifier = params.storeSlug || params.storeId || '';
   const tableId = params.tableId || '';
 
-  // 如果URL缺少必要参数，显示错误
-  if (!storeIdentifier || !tableId) {
+  // 如果URL缺少店铺信息，显示错误
+  if (!storeIdentifier) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center p-8">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
           <h2 className="text-xl font-bold text-gray-800 mb-2">参数错误</h2>
-          <p className="text-gray-600">扫码点餐链接缺少店铺或餐桌信息</p>
+          <p className="text-gray-600">扫码点餐链接缺少店铺信息</p>
         </div>
       </div>
     );
   }
+
+  // 没有桌号时默认为"A01"
+  const effectiveTableId = tableId || 'A01';
 
   // 使用自定义Hook管理状态
   const {
@@ -61,7 +64,7 @@ const ScanOrderPage: React.FC = () => {
 
     // 工具函数
     formatPrice,
-  } = useScanOrder(storeIdentifier, tableId);
+  } = useScanOrder(storeIdentifier, effectiveTableId);
 
   // 菜品详情弹窗
   const [detailItem, setDetailItem] = useState<MenuItem | null>(null);
@@ -116,7 +119,9 @@ const ScanOrderPage: React.FC = () => {
       <div className="min-h-screen bg-gray-50">
         <ScanHeader
           storeName={storeInfo?.name || '加载中...'}
-          tableCode={tableInfo?.code || tableId}
+          storeDescription={storeInfo?.description}
+          storeAddress={storeInfo?.address}
+          tableCode={tableInfo?.code || effectiveTableId}
           cartItemCount={cartItemCount}
           onCartClick={openCart}
           onBack={handleBack}
@@ -246,10 +251,13 @@ const ScanOrderPage: React.FC = () => {
   // 主点餐页面
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* 顶部导航 */}
+
+      {/* 店铺页头 */}
       <ScanHeader
         storeName={storeInfo?.name || '加载中...'}
-        tableCode={tableInfo?.code || tableId}
+        storeDescription={storeInfo?.description}
+          storeAddress={storeInfo?.address}
+        tableCode={tableInfo?.code || effectiveTableId}
         cartItemCount={cartItemCount}
         onCartClick={toggleCart}
         onBack={handleBack}

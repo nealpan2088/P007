@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ApiResponse } from '../types';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import apiRoutes from '../config/api-routes';
+import { apiPut } from '../utils/api-client';
+import { API_ENDPOINTS } from '../config/api-routes';
+import { ADMIN_ROUTES, PUBLIC_ROUTES } from '../config/routes';
 import {
   Container,
   Box,
@@ -151,13 +152,7 @@ const EditTenant: React.FC = () => {
       if (!tenantId) {
         throw new Error('租户ID不能为空');
       }
-      const fetchResponse = await fetch(apiRoutes.buildUrl(apiRoutes.tenant.TENANT.UPDATE, { tenantId }), {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('qilin_access_token')}`,
-        },
-        body: JSON.stringify({
+      const res = await apiPut(API_ENDPOINTS.TENANT.UPDATE.replace(':tenantId', tenantId), {
           name: formData.name,
           description: formData.description,
           contactEmail: formData.contactEmail,
@@ -168,24 +163,17 @@ const EditTenant: React.FC = () => {
           province: formData.province,
           postalCode: formData.postalCode,
           country: formData.country,
-        }),
       });
       
-      if (!fetchResponse.ok) {
-        throw new Error(`更新失败: ${fetchResponse.status}`);
+      if (!res.success) {
+        throw new Error(res.message || '更新失败');
       }
       
-      const response: ApiResponse<any> = await fetchResponse.json();
-      
-      if (response.success) {
-        setSuccess('租户信息更新成功！');
+      setSuccess('租户信息更新成功！');
         // 3秒后返回租户管理页面
         setTimeout(() => {
-          navigate('/tenants');
+          navigate(ADMIN_ROUTES.TENANTS.LIST);
         }, 3000);
-      } else {
-        throw new Error(response.message || '更新失败');
-      }
     } catch (err) {
       console.error('更新租户错误:', err);
       setError(err instanceof Error ? err.message : '更新租户失败');
@@ -195,7 +183,7 @@ const EditTenant: React.FC = () => {
   };
 
   const handleBack = () => {
-    navigate('/tenants');
+    navigate(ADMIN_ROUTES.TENANTS.LIST);
   };
 
   if (!isAuthenticated) {
@@ -207,7 +195,7 @@ const EditTenant: React.FC = () => {
         <Button 
           variant="contained" 
           color="primary" 
-          onClick={() => navigate('/auth/login')}
+          onClick={() => navigate(PUBLIC_ROUTES.AUTH.LOGIN)}
           sx={{ mt: 2 }}
         >
           前往登录

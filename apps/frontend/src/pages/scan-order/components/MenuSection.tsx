@@ -74,23 +74,44 @@ const MenuSection: React.FC<MenuSectionProps> = ({
   return (
     <div className="flex h-[calc(100vh-48px)]">
       {/* 左侧分类导航 */}
-      <div ref={sidebarRef} className="w-20 shrink-0 bg-gray-50 overflow-y-auto scrollbar-hide pt-1">
-        {categories.map(category => (
+      <div ref={sidebarRef} className="w-20 shrink-0 bg-white overflow-y-auto scrollbar-hide pt-1 border-r border-gray-100">
+        {categories.map((category, idx) => {
+          // 分类图标映射
+          const iconMap: Record<string, string> = {
+            '招牌菜': '⭐',
+            '热菜': '🔥',
+            '凉菜': '🥗',
+            '主食': '🍚',
+            '饮品': '🥤',
+            '汤品': '🍲',
+            '甜品': '🍰',
+            '小吃': '🍟',
+            '早餐': '🌅',
+            '午餐': '☀️',
+            '晚餐': '🌙',
+          };
+          const name = category.name;
+          const icon = iconMap[name] || '🍽️';
+          return (
           <button
             key={category.id}
             data-cat-id={category.id}
             onClick={() => onSelectCategory(category.id)}
             className={`
-              w-full py-3 px-1 text-center border-l-[3px] transition-all duration-200
+              w-full py-2.5 px-1 text-center border-l-[3px] transition-all duration-200
               ${selectedCategory === category.id
-                ? 'bg-white text-orange-600 border-orange-500 font-medium shadow-sm'
-                : 'text-gray-500 border-transparent hover:bg-gray-100'
+                ? 'bg-orange-50 text-orange-600 border-orange-500 font-bold'
+                : 'text-gray-700 border-transparent hover:bg-orange-50'
               }
             `}
           >
-            <div className="text-base leading-tight mb-0.5">{category.name.replace(/^[^\s]+\s*/, '')}</div>
+            <div className="text-lg mb-0.5">{icon}</div>
+            <div className="text-[11px] leading-tight font-medium">
+              {name.slice(0, 4)}
+            </div>
           </button>
-        ))}
+          );
+        })}
       </div>
 
       {/* 右侧菜品列表 */}

@@ -6,6 +6,30 @@ import { createError } from '../error.service.js';
 
 const prisma = new PrismaClient();
 
+// 简单菜单缓存 (TTL: 5秒)
+const menuCache = new Map();
+const CACHE_TTL = 5000;
+
+function getCachedMenu(key) {
+  const entry = menuCache.get(key);
+  if (entry && Date.now() - entry.timestamp < CACHE_TTL) {
+    return entry.data;
+  }
+  menuCache.delete(key);
+  return null;
+}
+
+function setCachedMenu(key, data) {
+  menuCache.set(key, { data, timestamp: Date.now() });
+  // 定期清理过期缓存，防止内存泄漏
+  if (menuCache.size > 100) {
+    const now = Date.now();
+    for (const [k, v] of menuCache.entries()) {
+      if (now - v.timestamp > CACHE_TTL) menuCache.delete(k);
+    }
+  }
+}
+
 class ScanService {
   /**
    * 获取店铺信息（公开API）
@@ -67,6 +91,14 @@ class ScanService {
    */
   async getStoreMenu(storeId, tableId = null) {
     try {
+      // 缓存键：含tableId时按不同餐桌区分缓存
+      const cacheKey = `menu:${storeId}:${tableId || 'all'}`;
+      const cached = getCachedMenu(cacheKey);
+      if (cached) {
+        console.log('菜单缓存命中:', storeId);
+        return cached;
+      }
+      
       console.log('获取店铺菜单，店铺:', storeId, '餐桌:', tableId || '无');
       
       // 1. 获取店铺信息
@@ -123,7 +155,7 @@ class ScanService {
       });
 
       // 4. 构建API响应
-      return {
+      const result = {
         success: true,
         data: {
           store: {
@@ -166,6 +198,10 @@ class ScanService {
           }))
         }
       };
+      
+      // 写入缓存
+      setCachedMenu(cacheKey, result);
+      return result;
     } catch (error) {
       if (error.code === 'NOT_FOUND') {
         throw error;

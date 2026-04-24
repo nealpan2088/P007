@@ -142,14 +142,6 @@ async function adminRoutes(fastify) {
     }
   });
   
-  // 健康检查
-  fastify.get(ADMIN_ROUTES.STORES.HEALTH, async (request, reply) => {
-    return {
-      status: 'ok',
-      service: 'qilin-admin-api',
-      timestamp: new Date().toISOString()
-    };
-  });
 }
 
 export default adminRoutes;

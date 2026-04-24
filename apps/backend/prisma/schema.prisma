@@ -12,20 +12,26 @@ datasource db {
 // ============================================
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  username      String?
-  fullName      String?
-  passwordHash  String
-  role          String   @default("USER")
-  status        String   @default("ACTIVE")
-  lastLoginAt   DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  deletedAt     DateTime?
+  id                        String    @id @default(cuid())
+  email                     String    @unique
+  username                  String?
+  fullName                  String?
+  phone                     String?
+  passwordHash              String
+  passwordSalt              String?
+  role                      String    @default("USER")
+  status                    String    @default("ACTIVE")
+  verificationToken         String?
+  verificationTokenExpiresAt DateTime?
+  failedLoginAttempts       Int       @default(0)
+  lockedUntil               DateTime?
+  lastLoginAt               DateTime?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  deletedAt                 DateTime?
   
-  sessions      Session[]
-  userTenants   UserTenant[]
+  sessions                  Session[]
+  userTenants               UserTenant[]
 }
 
 model Tenant {
@@ -33,6 +39,9 @@ model Tenant {
   name        String
   subdomain   String   @unique
   description String?
+  plan        String   @default("FREE")
+  contactEmail String?
+  trialEndsAt DateTime?
   status      String   @default("ACTIVE")
   settings    Json     @default("{}")
   createdAt   DateTime @default(now())
@@ -69,6 +78,7 @@ model Session {
   token                 String   @unique
   expiresAt             DateTime
   revoked               Boolean  @default(false)
+  revokedReason         String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
   
@@ -138,6 +148,7 @@ model Store {
   tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   tables           Table[]
   menuCategories   MenuCategory[]
+  printers         Printer[]
   orders           Order[]
   
   @@index([tenantId])
@@ -283,5 +294,53 @@ model OrderItem {
   
   @@index([orderId])
   @@index([menuItemId])
+  @@index([status])
+}
+
+// ============================================
+// 云打印机模型
+// ============================================
+
+enum PrinterStatus {
+  ACTIVE
+  INACTIVE
+  FAULT
+}
+
+model PrinterBrand {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  code        String    @unique
+  apiVersion  String    @default("v1")
+  baseUrl     String    @default("https://open.spyun.net/v1")
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  printers    Printer[]
+
+  @@index([code])
+  @@index([isActive])
+}
+
+model Printer {
+  id            String        @id @default(cuid())
+  storeId       String
+  brandId       String
+  name          String?
+  serialNumber  String
+  secretKey     String
+  model         String?
+  status        PrinterStatus @default(ACTIVE)
+  printCopies   Int           @default(1)
+  isDefault     Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  store         Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  brand         PrinterBrand  @relation(fields: [brandId], references: [id])
+
+  @@unique([storeId, serialNumber])
+  @@index([storeId])
+  @@index([brandId])
   @@index([status])
 }

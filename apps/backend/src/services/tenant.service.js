@@ -50,7 +50,7 @@ export class TenantService {
       const tenant = await tx.tenant.create({
         data: {
           name,
-          displayName: name, // 使用name作为displayName
+          // displayName 字段已从 schema 移除
           subdomain,
           plan: planUpper, // 使用大写的计划值
           status: 'ACTIVE',

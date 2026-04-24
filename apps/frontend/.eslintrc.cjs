@@ -52,6 +52,36 @@ module.exports = {
       'asyncArrow': 'always'
     }],
     
+    // 🔒 硬编码检查规则
+    // 禁止直接 navigate('字符串')
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector: 'CallExpression[callee.name="navigate"] > Literal',
+        message: '禁止硬编码导航路径，请使用路由常量（如 ADMIN_ROUTES.TENANTS.LIST）',
+      },
+      {
+        selector: 'CallExpression[callee.name="navigate"] > TemplateLiteral',
+        message: '禁止硬编码导航路径，请使用路由常量',
+      },
+      {
+        selector: 'CallExpression[callee.name="fetch"] > Literal[value=/^\\/api/]',
+        message: '禁止硬编码 API 路径，请使用 api-client.ts 的 apiGet/apiPost 等方法',
+      },
+      {
+        selector: 'CallExpression[callee.name="fetch"] > TemplateLiteral[quasis.0.value.raw=/^\\/api/]',
+        message: '禁止硬编码 API 路径，请使用 api-client.ts 的 apiGet/apiPost 等方法',
+      },
+      {
+        selector: 'MemberExpression > Identifier[name="localStorage"] ~ CallExpression[callee.property.name="getItem"][arguments.0.value=/token|Token/]',
+        message: '禁止手动读取 token，api-client.ts 会自动处理 Authorization header',
+      },
+      {
+        selector: 'TemplateLiteral[quasis.0.value.raw=/Bearer/]',
+        message: '禁止手动拼接 Authorization header，api-client.ts 会自动处理',
+      },
+    ],
+    
     // React规则
     'react-hooks/rules-of-hooks': 'error',
     'react-hooks/exhaustive-deps': 'warn',

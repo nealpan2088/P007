@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiPost } from '../utils/api-client';
 import {
   Container,
   Box,
@@ -185,17 +186,8 @@ const CreateStore: React.FC = () => {
 
   const checkSlugAvailability = async (slug: string): Promise<boolean> => {
     try {
-      const response = await fetch(TENANT_ROUTES.STORES.API.CHECK_SLUG, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('qilin_access_token')}`,
-        },
-        body: JSON.stringify({ slug }),
-      });
-
-      const data = await response.json();
-      return data.success && data.data?.available === true;
+      const res = await apiPost<any>('/tenant/store/check-slug', { slug });
+      return res.success && res.data?.available === true;
     } catch (error) {
       console.error('检查标识符可用性错误:', error);
       return false;
@@ -219,30 +211,20 @@ const CreateStore: React.FC = () => {
       }
 
       // 创建店铺
-      const response = await fetch(TENANT_ROUTES.STORES.API.CREATE, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('qilin_access_token')}`,
-        },
-        body: JSON.stringify({
-          tenant_id: 8,
-          name: formData.name,
-          slug: formData.slug,
-          description: formData.description,
-          address: formData.address,
-          phone: formData.phone,
-          status: formData.status,
-        }),
+      const res = await apiPost<any>('/tenant/store/create', {
+        tenant_id: 8,
+        name: formData.name,
+        slug: formData.slug,
+        description: formData.description,
+        address: formData.address,
+        phone: formData.phone,
+        status: formData.status,
       });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || '创建店铺失败');
+      if (!res.success) {
+        throw new Error(res.message || '创建店铺失败');
       }
 
-      setCreatedStore(data.data);
+      setCreatedStore(res.data);
       setSuccess(true);
       setActiveStep(2);
     } catch (err: any) {

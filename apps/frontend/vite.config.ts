@@ -7,6 +7,7 @@ export default defineConfig({
   server: {
     port: 5177,
     host: true, // 允许外部访问
+    allowedHosts: ['saas.openyun.xin', 'localhost'],
     proxy: {
       // 统一代理所有API请求
       '/api': {

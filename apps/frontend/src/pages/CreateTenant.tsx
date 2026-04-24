@@ -1,12 +1,12 @@
 /**
- * @deprecated 旧规范租户创建页面
- * 后端路由已变更，不再使用 /api/v1/ 前缀
- * 新规范请使用 TenantManagement.tsx 或后续重构
+ * 创建租户页面
  */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { ApiResponse, CreateTenantFormData } from '../types';
+import { apiPost } from '../utils/api-client';
+import { ADMIN_ROUTES, PUBLIC_ROUTES } from '../config/routes';
+import { CreateTenantFormData } from '../types';
 import {
   Container,
   Box,
@@ -187,16 +187,8 @@ const CreateTenant: React.FC = () => {
 
   const checkSlugAvailability = async (slug: string): Promise<boolean> => {
     try {
-      const response = await fetch('/api/v1/tenant/check-slug', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ slug }),
-      });
-
-      const data: ApiResponse<any> = await response.json();
-      return data.success && data.data?.available === true;
+      const res = await apiPost<any>('/tenant/check-subdomain', { subdomain: slug });
+      return res.success && res.data?.available === true;
     } catch (error) {
       console.error('检查标识符可用性错误:', error);
       return false;
@@ -219,15 +211,11 @@ const CreateTenant: React.FC = () => {
       }
 
       // 创建租户（多店模式）
-      const response = await fetch('/api/v1/tenant/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          tenant: {
+      const res = await apiPost<any>('/tenant/register', {
+        tenant: {
             name: formData.tenantName,
             slug: formData.tenantSlug,
+            subdomain: formData.tenantSlug,
             plan: formData.plan,
           },
           owner: {
@@ -240,16 +228,14 @@ const CreateTenant: React.FC = () => {
             name: formData.storeName,
             slug: formData.storeSlug,
           },
-        }),
-      });
+        },
+      );
 
-      const data: ApiResponse<any> = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || '创建租户失败');
+      if (!res.success) {
+        throw new Error(res.message || '创建租户失败');
       }
 
-      setCreatedTenant(data.data);
+      setCreatedTenant(res.data);
       setSuccess(true);
       setActiveStep(3); // 跳转到成功步骤
     } catch (err) {
@@ -261,13 +247,12 @@ const CreateTenant: React.FC = () => {
   };
 
   const handleGoToTenants = () => {
-    navigate(TENANT_ROUTES.TENANTS.LIST);
+    navigate(ADMIN_ROUTES.TENANTS.LIST);
   };
 
   const handleGoToTenant = () => {
     if (createdTenant?.tenant?.subdomain) {
-      // 这里可以跳转到租户管理页面
-      navigate('/dashboard');
+      navigate(ADMIN_ROUTES.TENANTS.LIST);
     }
   };
 
@@ -280,7 +265,7 @@ const CreateTenant: React.FC = () => {
         <Button 
           variant="contained" 
           color="primary" 
-          onClick={() => navigate('/auth/login')}
+          onClick={() => navigate(PUBLIC_ROUTES.AUTH.LOGIN)}
           sx={{ mt: 2 }}
         >
           前往登录
@@ -333,7 +318,7 @@ const CreateTenant: React.FC = () => {
                     <TextField
                       fullWidth
                       label="租户名称"
-                      name="name"
+                      name="tenantName"
                       value={formData.tenantName}
                       onChange={handleInputChange}
                       error={!!validationErrors.tenantName}
@@ -346,7 +331,7 @@ const CreateTenant: React.FC = () => {
                     <TextField
                       fullWidth
                       label="子域名"
-                      name="subdomain"
+                      name="tenantSlug"
                       value={formData.tenantSlug}
                       onChange={handleInputChange}
                       error={!!validationErrors.tenantSlug}

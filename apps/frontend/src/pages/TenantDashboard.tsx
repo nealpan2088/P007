@@ -33,7 +33,7 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
 } from '@mui/icons-material';
-import { TENANT_ROUTES } from '../config/routes';
+import { TENANT_ROUTES, PUBLIC_ROUTES, ADMIN_ROUTES } from '../config/routes';
 
 // 模拟数据
 const mockStores = [
@@ -92,7 +92,7 @@ const getStatusColor = (status: string) => {
 };
 
 const TenantDashboard: React.FC = () => {
-  const { tenantId } = useParams<{ tenantId: string }>();
+  const { tenantSlug } = useParams<{ tenantSlug: string }>();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   
@@ -102,27 +102,95 @@ const TenantDashboard: React.FC = () => {
   const [recentOrders, _setRecentOrders] = useState(mockOrders);
 
   useEffect(() => {
-    if (isAuthenticated() && tenantId) {
+    if (isAuthenticated() && tenantSlug) {
+      // 加载数据
+      loadDashboardData();
+    } else {
+      // 未认证，只显示500ms加载状态再展示
       setTimeout(() => {
         setLoading(false);
       }, 500);
     }
-  }, [isAuthenticated, tenantId]);
+  }, [isAuthenticated, tenantSlug]);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // 尝试从后端获取数据
+      const { apiGet } = await import('../utils/api-client');
+      
+      // 并行获取店铺和订单数据
+      const [storesRes, ordersRes] = await Promise.allSettled([
+        apiGet(`/tenant/${tenantSlug}/stores`).catch(() => null),
+        apiGet(`/tenant/${tenantSlug}/orders`).catch(() => null),
+      ]);
+      
+      if (storesRes.status === 'fulfilled' && storesRes.value?.data) {
+        const stores = Array.isArray(storesRes.value.data) ? storesRes.value.data : [];
+        _setStores(stores);
+        const storeNames = stores.map((s: any) => s.name || s.storeName || '未命名店铺').join('、');
+        console.log('店铺数据加载成功:', storeNames);
+      } else {
+        // 后端接口未实现，使用模拟数据
+        console.log('使用模拟店铺数据');
+        _setStores(mockStores);
+      }
+      
+      if (ordersRes.status === 'fulfilled' && ordersRes.value?.data) {
+        const orders = Array.isArray(ordersRes.value.data) ? ordersRes.value.data : [];
+        _setRecentOrders(orders);
+        console.log(`订单数据加载成功，共${orders.length}条`);
+      } else {
+        // 后端接口未实现，使用模拟数据
+        console.log('使用模拟订单数据');
+        _setRecentOrders(mockOrders);
+      }
+      
+      setLoading(false);
+    } catch (err) {
+      console.error('加载租户仪表板数据失败:', err);
+      // 降级：使用模拟数据
+      _setStores(mockStores);
+      _setRecentOrders(mockOrders);
+      setLoading(false);
+    }
+  };
 
   const handleCreateStore = () => {
-    navigate(`${TENANT_ROUTES.DASHBOARD}/${tenantId}/stores/create`);
+    navigate(TENANT_ROUTES.STORES.CREATE.replace(':tenantSlug', tenantSlug || ''));
   };
 
   const handleViewStore = (storeId: string) => {
-    navigate(`${TENANT_ROUTES.DASHBOARD}/${tenantId}/stores/${storeId}`);
+    navigate(TENANT_ROUTES.STORES.DETAIL.replace(':tenantSlug', tenantSlug || '').replace(':storeId', storeId));
   };
 
   const handleViewOrder = (orderId: string) => {
-    navigate(`${TENANT_ROUTES.DASHBOARD}/${tenantId}/orders/${orderId}`);
+    console.log('查看订单:', orderId);
+    // 订单详情页路由后续补充
   };
 
   const handleEditTenant = () => {
-    navigate(`${TENANT_ROUTES.DASHBOARD}/${tenantId}/edit`);
+    navigate(ADMIN_ROUTES.TENANTS.EDIT.replace(':tenantId', tenantSlug || ''));
+  };
+
+  const handleManageMenu = () => {
+    // 菜单管理需要先选店铺，跳转到店铺列表页
+    navigate(TENANT_ROUTES.STORES.LIST.replace(':tenantSlug', tenantSlug || ''));
+  };
+
+  const handleSettings = () => {
+    navigate(ADMIN_ROUTES.TENANTS.DETAIL.replace(':tenantId', tenantSlug || ''));
+  };
+
+  const handleAnalytics = () => {
+    // 报表功能后续实现
+    navigate(TENANT_ROUTES.STORES.LIST.replace(':tenantSlug', tenantSlug || ''));
+  };
+
+  const handleUsers = () => {
+    // 员工管理后续实现
+    console.log('员工管理功能待实现');
   };
 
   if (!isAuthenticated) {
@@ -134,7 +202,7 @@ const TenantDashboard: React.FC = () => {
         <Button 
           variant="contained" 
           color="primary" 
-          onClick={() => navigate('/auth/login')}
+          onClick={() => navigate(PUBLIC_ROUTES.AUTH.LOGIN)}
           sx={{ mt: 2 }}
         >
           前往登录
@@ -448,7 +516,7 @@ const TenantDashboard: React.FC = () => {
                   fullWidth
                   variant="outlined"
                   startIcon={<BarChartIcon />}
-                  onClick={() => navigate(`${TENANT_ROUTES.DASHBOARD}/${tenantId}/analytics`)}
+                  onClick={() => handleAnalytics()}
                   sx={{ height: 80, flexDirection: 'column' }}
                 >
                   <Typography variant="body1">销售报表</Typography>
@@ -459,7 +527,7 @@ const TenantDashboard: React.FC = () => {
                   fullWidth
                   variant="outlined"
                   startIcon={<PeopleIcon />}
-                  onClick={() => navigate(`${TENANT_ROUTES.DASHBOARD}/${tenantId}/users`)}
+                  onClick={() => handleUsers()}
                   sx={{ height: 80, flexDirection: 'column' }}
                 >
                   <Typography variant="body1">员工管理</Typography>
@@ -470,7 +538,7 @@ const TenantDashboard: React.FC = () => {
                   fullWidth
                   variant="outlined"
                   startIcon={<RestaurantIcon />}
-                  onClick={() => navigate(`${TENANT_ROUTES.DASHBOARD}/${tenantId}/menu`)}
+                  onClick={() => handleManageMenu()}
                   sx={{ height: 80, flexDirection: 'column' }}
                 >
                   <Typography variant="body1">菜单管理</Typography>
@@ -481,7 +549,7 @@ const TenantDashboard: React.FC = () => {
                   fullWidth
                   variant="outlined"
                   startIcon={<SettingsIcon />}
-                  onClick={() => navigate(`${TENANT_ROUTES.DASHBOARD}/${tenantId}/settings`)}
+                  onClick={() => handleSettings()}
                   sx={{ height: 80, flexDirection: 'column' }}
                 >
                   <Typography variant="body1">系统设置</Typography>

@@ -33,7 +33,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Store } from './types';
 import * as apiUtils from './utils/api.utils';
 import * as storeUtils from './utils/store.utils';
-import { TENANT_ROUTES, CUSTOMER_ROUTES } from '../../config/routes';
+import { TENANT_ROUTES } from '../../config/routes';
 
 const StoreDetailPage: React.FC = () => {
   const { storeId } = useParams<{ storeId: string }>();
@@ -376,7 +376,7 @@ const StoreDetailPage: React.FC = () => {
               
               <Button
                 block
-                onClick={() => navigate(CUSTOMER_ROUTES.MENU.replace(':storeId', store.id))}
+                onClick={() => navigate(`/menu/${store.id}`)}
                 icon={<QrcodeOutlined />}
               >
                 扫码点餐测试

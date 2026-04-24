@@ -66,27 +66,24 @@ export const TENANT_API_ROUTES = {
 
   // 店铺管理
   STORE: {
-    LIST: `${API_BASE_URL}/api/store/list`,
-    DETAIL: `${API_BASE_URL}/api/store/:storeId`,
-    CREATE: `${API_BASE_URL}/api/store/create`,
-    UPDATE: `${API_BASE_URL}/api/store/:storeId`,
-    DELETE: `${API_BASE_URL}/api/store/:storeId`,
+    LIST: `${API_BASE_URL}/api/store/stores`,
+    DETAIL: `${API_BASE_URL}/api/store/stores/:storeId`,
+    CREATE: `${API_BASE_URL}/api/store/stores`,
+    UPDATE: `${API_BASE_URL}/api/store/stores/:storeId`,
+    DELETE: `${API_BASE_URL}/api/store/stores/:storeId`,
     CHECK_SLUG: `${API_BASE_URL}/api/store/check-slug`,
   },
 
   // 菜单管理
   MENU: {
-    // 菜单模板
-    TEMPLATES: {
-      LIST: `${API_BASE_URL}/api/tenant/:tenantId/menu-templates`,
-      CREATE_UPDATE: `${API_BASE_URL}/api/tenant/:tenantId/menu-templates`,
-      DELETE: `${API_BASE_URL}/api/tenant/menu-templates/:id`,
-    },
-    // 店铺菜单配置
-    STORE_CONFIG: {
-      GET: `${API_BASE_URL}/api/store/:storeId/menu-config`,
-      UPDATE: `${API_BASE_URL}/api/store/:storeId/menu-config`,
-    },
+    // 分类
+    CATEGORIES: `${API_BASE_URL}/api/store/stores/:storeId/menu/categories`,
+    CATEGORY_DETAIL: `${API_BASE_URL}/api/store/stores/:storeId/menu/categories/:categoryId`,
+    CATEGORY_REORDER: `${API_BASE_URL}/api/store/stores/:storeId/menu/categories/reorder`,
+    // 菜品
+    ITEMS: `${API_BASE_URL}/api/store/stores/:storeId/menu/items`,
+    ITEM_DETAIL: `${API_BASE_URL}/api/store/stores/:storeId/menu/items/:itemId`,
+    ITEM_AVAILABILITY: `${API_BASE_URL}/api/store/stores/:storeId/menu/items/:itemId/availability`,
   },
 
   // 上传
@@ -174,16 +171,28 @@ export const API_ENDPOINTS = {
       DETAIL: getApiUrl(TENANT_API_ROUTES.STORE.DETAIL),
       CHECK_SLUG: getApiUrl(TENANT_API_ROUTES.STORE.CHECK_SLUG),
     },
-    MENU_TEMPLATES: {
-      LIST: getApiUrl(TENANT_API_ROUTES.MENU.TEMPLATES.LIST),
-      CREATE_UPDATE: getApiUrl(TENANT_API_ROUTES.MENU.TEMPLATES.CREATE_UPDATE),
-      DELETE: getApiUrl(TENANT_API_ROUTES.MENU.TEMPLATES.DELETE),
-    },
-    STORE_MENU_CONFIG: {
-      GET: getApiUrl(TENANT_API_ROUTES.MENU.STORE_CONFIG.GET),
-      UPDATE: getApiUrl(TENANT_API_ROUTES.MENU.STORE_CONFIG.UPDATE),
-    },
   },
+  // 菜单管理（新规范）
+  MENU: {
+    CATEGORIES: getApiUrl(TENANT_API_ROUTES.MENU.CATEGORIES),
+    CATEGORY_DETAIL: getApiUrl(TENANT_API_ROUTES.MENU.CATEGORY_DETAIL),
+    CATEGORY_REORDER: getApiUrl(TENANT_API_ROUTES.MENU.CATEGORY_REORDER),
+    ITEMS: getApiUrl(TENANT_API_ROUTES.MENU.ITEMS),
+    ITEM_DETAIL: getApiUrl(TENANT_API_ROUTES.MENU.ITEM_DETAIL),
+    ITEM_AVAILABILITY: getApiUrl(TENANT_API_ROUTES.MENU.ITEM_AVAILABILITY),
+  },
+  // 打印机管理（管理后台）
+  PRINTER: {
+    BRANDS: getApiUrl('/admin/printers/brands'),
+    LIST: getApiUrl('/admin/printers'),
+    CREATE: getApiUrl('/admin/printers'),
+    UPDATE: getApiUrl('/admin/printers/:id'),
+    DELETE: getApiUrl('/admin/printers/:id'),
+    TEST: getApiUrl('/admin/printers/:id/test'),
+  },
+  // 店铺选择（管理后台）
+  STORES_SELECT: getApiUrl('/admin/stores/select'),
+  STORES_LIST: getApiUrl('/admin/stores/list'),
   UPLOAD: {
     MENU_IMAGE: getApiUrl(TENANT_API_ROUTES.UPLOAD.MENU_IMAGE),
   },

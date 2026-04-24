@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ApiResponse } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { TENANT_ROUTES } from '../config/routes';
+import { ADMIN_ROUTES } from '../config/routes';
+import { apiGet } from '../utils/api-client';
+import { API_ENDPOINTS } from '../config/api-routes';
+import { ApiResponse } from '../types';
 
 import {
   Container,
@@ -62,9 +64,6 @@ const TenantManagement: React.FC = () => {
         // 创建AbortController用于取消请求
         abortController = new AbortController();
         
-        // 开发测试模式：直接获取数据，跳过认证检查
-        console.log('开发测试模式：跳过认证检查，直接获取租户列表');
-        
         if (isMounted) {
           await fetchTenants(abortController.signal);
         }
@@ -94,35 +93,8 @@ const TenantManagement: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // 开发测试模式：使用测试Token
-      const token = 'dev-test-token';
-      console.log('开发测试模式：使用测试Token调用API');
-      
-      // 使用正确的API路径
-      const apiPath = '/api/tenant/list';
-      console.log(`使用API路径: ${apiPath}`);
-      
-      const fetchResponse = await fetch(apiPath, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      console.log('API响应状态:', fetchResponse.status);
-      
-      if (!fetchResponse.ok) {
-        if (fetchResponse.status === 401) {
-          // Token无效，清除登录状态
-          localStorage.removeItem('qilin_access_token');
-          localStorage.removeItem('qilin_user');
-          localStorage.removeItem('qilin_session_id');
-          throw new Error('认证已过期，请重新登录');
-        }
-        throw new Error(`获取租户列表失败: ${fetchResponse.status}`);
-      }
-
-      const response: ApiResponse<any> = await fetchResponse.json();
+      console.log('使用API客户端获取租户列表');
+      const response: ApiResponse<any> = await apiGet(API_ENDPOINTS.TENANT.LIST);
       console.log('API响应数据:', response);
       
       if (response.success) {
@@ -139,15 +111,15 @@ const TenantManagement: React.FC = () => {
   };
 
   const handleCreateTenant = () => {
-    navigate(TENANT_ROUTES.TENANTS.CREATE);
+    navigate(ADMIN_ROUTES.TENANTS.CREATE);
   };
 
   const handleEditTenant = (tenantId: string) => {
-    navigate(`/tenants/${tenantId}/edit`);
+    navigate(ADMIN_ROUTES.TENANTS.EDIT.replace(':tenantId', tenantId));
   };
 
   const handleViewDashboard = (tenantId: string) => {
-    navigate(`/tenants/${tenantId}`);
+    navigate(ADMIN_ROUTES.TENANTS.DETAIL.replace(':tenantId', tenantId));
   };
 
   const handleSwitchTenant = (tenantId: string) => {
@@ -372,7 +344,7 @@ const TenantManagement: React.FC = () => {
                   <Button 
                     size="small" 
                     variant="outlined"
-                    onClick={() => window.location.href = `https://${tenant.subdomain}.qilin.com`}
+                    onClick={() => navigate(`/t/${tenant.subdomain}/dashboard`)}
                   >
                     访问租户
                   </Button>

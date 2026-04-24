@@ -144,9 +144,9 @@ fastify.register(registerAdminRoutes, { prefix: '/api/admin' })
 // import systemRoutes from './routes/system.routes.js'
 // fastify.register(systemRoutes, { prefix: '/api/system' })
 
-// 认证API路由（暂时注释，先让夜狼模块启动）
-// import authRoutes from './routes/auth.routes.js'
-// fastify.register(authRoutes, { prefix: '/api/auth' })
+// 认证API路由
+import { registerAuthRoutes } from './routes/auth.routes.js'
+fastify.register(registerAuthRoutes, { prefix: '/api/v1/auth' })
 
 // ==================== 错误处理 ====================
 // 全局错误处理（包含夜狼模块错误）
@@ -198,8 +198,23 @@ async function startServer() {
         console.error('夜狼模块初始化异常（非致命）:', error);
       });
     }
-    
-    // 2. 启动服务器
+
+    // 2. 等待所有路由注册完成
+    await fastify.ready()
+
+    // 3. 路由规范检查（所有路由注册完成后执行）
+    const { checkRouteConsistency } = await import('./utils/route-consistency-check.js')
+    const { passed, violations } = checkRouteConsistency(fastify)
+    if (!passed) {
+      console.warn('\n⚠️ ⚠️ ⚠️  路由规范告警 ⚠️ ⚠️ ⚠️')
+      console.warn('以下路由路径未在 config/routes.js 中定义，请尽快规范化：')
+      for (const v of violations) {
+        console.warn(`  ${v.method} ${v.path}`)
+      }
+      console.warn('⚠️ ⚠️ ⚠️  建议在 config/routes.js 中添加对应常量 ⚠️ ⚠️ ⚠️\n')
+    }
+
+    // 4. 启动服务器
     await fastify.listen({ 
       port: process.env.PORT || 33038,
       host: '0.0.0.0'
@@ -212,7 +227,17 @@ async function startServer() {
       console.log(`🌙 夜狼模块API: http://localhost:${process.env.PORT || 33038}/api/nightwolf/v1/health`)
     }
     
-    // 3. 优雅关闭处理
+    // 3. 初始化打印机默认品牌数据
+    try {
+      const { default: PrinterService } = await import('./services/printer/printer.service.js');
+      const printerService = new PrinterService();
+      await printerService.initDefaultBrands();
+    } catch (error) {
+      // 非致命，打印失败不影响启动
+      console.warn('⚠️ 打印机品牌初始化（非致命）:', error.message);
+    }
+
+    // 4. 优雅关闭处理
     const signals = ['SIGINT', 'SIGTERM']
     signals.forEach(signal => {
       process.on(signal, async () => {

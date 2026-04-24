@@ -109,6 +109,16 @@ async function publicRoutes(fastify) {
       }
 
       const result = await scanService.createScanOrder(request.body);
+      
+      // 异步触发打印（不阻塞下单）
+      if (result?.success && result?.order?.id) {
+        import('../services/printer/print-dispatcher.js').then(({ dispatchPrintJob }) => {
+          dispatchPrintJob(result.order, result.order.storeId || request.body.storeId);
+        }).catch(err => {
+          console.error('[打印] 调度加载失败:', err.message);
+        });
+      }
+      
       return reply.code(201).send(result);
     } catch (error) {
       return reply.code(error.statusCode || 500).send({

@@ -1,9 +1,127 @@
 .app {
-  max-width: 1200px;
+  width: 100%;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 0 16px;
+  box-sizing: border-box;
 }
 
+@media (max-width: 768px) {
+  .app {
+    padding: 0 8px;
+  }
+}
+
+/* 手机导航栏折叠 */
+@media (max-width: 640px) {
+  .admin-nav ul {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .admin-nav .nav-right {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+    padding: 4px 0;
+  }
+
+  .admin-nav a {
+    padding: 10px 8px;
+    font-size: 0.75rem;
+  }
+
+  .admin-nav .nav-brand a {
+    font-size: 0.9rem;
+    padding: 10px 12px;
+  }
+}
+
+.admin-nav {
+  background: #1a1a2e;
+  padding: 0 20px;
+}
+
+.admin-nav ul {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+}
+
+.admin-nav li {
+  margin: 0;
+}
+
+.admin-nav .nav-brand a {
+  color: #fff !important;
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 16px 24px;
+  display: block;
+}
+
+.admin-nav a {
+  display: block;
+  padding: 16px 18px;
+  text-decoration: none;
+  color: #ccc !important;
+  font-size: 0.9rem;
+  transition: background 0.2s, color 0.2s;
+}
+
+.admin-nav a:hover {
+  background: rgba(255,255,255,0.1);
+  color: #fff !important;
+}
+
+.admin-nav .nav-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-nav .nav-user-info {
+  color: #e0e0e0;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-nav .nav-role-badge {
+  background: #e94560;
+  color: #fff;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.admin-nav .nav-logout {
+  color: #ff8a80 !important;
+  font-size: 0.85rem;
+  padding: 6px 12px !important;
+  cursor: pointer;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.admin-nav .nav-logout:hover {
+  background: rgba(255, 138, 128, 0.2) !important;
+  color: #ff5252 !important;
+}
+
+main {
+  padding: 30px 20px;
+}
+main.scan-main {
+  padding: 0;
+}
+
+/* 重置原有导航样式 */
 nav ul {
   display: flex;
   list-style: none;
@@ -22,15 +140,207 @@ nav a:hover {
   color: #007bff;
 }
 
-main {
-  padding: 40px 0;
-}
-
 /* 首页样式 */
 .home-page {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
   line-height: 1.6;
   color: #333;
+}
+
+/* ===== 品牌宣传区 ===== */
+.home-hero {
+  text-align: center;
+  padding: 80px 20px 60px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px;
+  margin: 20px 0 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.home-hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 400px;
+  height: 400px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 50%;
+}
+
+.home-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  left: -10%;
+  width: 300px;
+  height: 300px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 50%;
+}
+
+.home-hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.home-hero-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.home-hero-icon {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.home-hero-content h1 {
+  font-size: 42px;
+  font-weight: 800;
+  margin: 0;
+  color: white;
+}
+
+.home-hero-subtitle {
+  font-size: 18px;
+  color: rgba(255,255,255,0.9);
+  margin: 0 0 12px;
+  font-weight: 500;
+}
+
+.home-hero-desc {
+  font-size: 15px;
+  color: rgba(255,255,255,0.75);
+  margin: 0 0 32px;
+  line-height: 1.8;
+}
+
+.home-hero-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.home-btn-primary {
+  display: inline-block;
+  padding: 14px 32px;
+  background: white;
+  color: #667eea;
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.home-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+
+.home-btn-secondary {
+  display: inline-block;
+  padding: 14px 32px;
+  background: rgba(255,255,255,0.15);
+  color: white;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.home-btn-secondary:hover {
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.7);
+  transform: translateY(-2px);
+}
+
+/* ===== 功能特色 ===== */
+.home-features {
+  padding: 40px 0;
+}
+
+.home-section-title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 40px;
+}
+
+.home-features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .home-features-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-features-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.home-feature-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.home-feature-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 8px 25px rgba(102,126,234,0.1);
+  transform: translateY(-3px);
+}
+
+.home-feature-icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+  line-height: 1;
+}
+
+.home-feature-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: #333;
+}
+
+.home-feature-card p {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ===== 快速入口区 ===== */
+.home-entry-section {
+  padding: 20px 0 40px;
 }
 
 .home-header {
@@ -447,4 +757,260 @@ h2 {
   .step-number {
     margin: 0 auto;
   }
+}
+
+/* ====== 首页入口卡片 ====== */
+.home-entry-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  max-width: 800px;
+  margin: 40px auto;
+}
+
+.entry-card {
+  background: white;
+  border-radius: 16px;
+  padding: 40px 30px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 2px solid transparent;
+}
+
+.entry-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.admin-entry {
+  border-color: #e94560;
+}
+
+.admin-entry:hover {
+  border-color: #d6304a;
+}
+
+.customer-entry {
+  border-color: #48bb78;
+}
+
+.customer-entry:hover {
+  border-color: #38a169;
+}
+
+.entry-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.entry-card h2 {
+  font-size: 1.4rem;
+  color: #2d3748;
+  margin-bottom: 10px;
+  border: none;
+  padding: 0;
+}
+
+.entry-card p {
+  color: #718096;
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+}
+
+.entry-btn {
+  display: inline-block;
+  background: #4a5568;
+  color: white;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.admin-entry .entry-btn {
+  background: #e94560;
+}
+
+.admin-entry .entry-btn:hover {
+  background: #d6304a;
+}
+
+.customer-entry .entry-btn {
+  background: #48bb78;
+}
+
+.customer-entry .entry-btn:hover {
+  background: #38a169;
+}
+
+.home-footer {
+  text-align: center;
+  padding: 30px;
+  color: #a0aec0;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .home-entry-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ====== 管理后台仪表板 ====== */
+.admin-dashboard {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.dash-header {
+  padding: 30px 0;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 30px;
+}
+
+.dash-header h1 {
+  font-size: 1.8rem;
+  color: #2d3748;
+  margin: 0;
+}
+
+.dash-user {
+  color: #718096;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.role-tag {
+  background: #e94560;
+  color: white;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.dash-section {
+  margin-bottom: 30px;
+}
+
+.dash-section h2 {
+  font-size: 1.1rem;
+  color: #4a5568;
+  margin-bottom: 16px;
+  border: none;
+  padding: 0;
+}
+
+.dash-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.dash-card {
+  display: block;
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid #e2e8f0;
+  text-decoration: none;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.dash-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.dash-card h3 {
+  font-size: 1.1rem;
+  color: #2d3748;
+  margin: 0 0 8px 0;
+}
+
+.dash-card p {
+  color: #718096;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.dash-tenant-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dash-tenant-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  border-radius: 10px;
+  padding: 16px 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.tenant-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tenant-name {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.tenant-role {
+  background: #edf2f7;
+  color: #4a5568;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+.tenant-btn {
+  background: #4299e1;
+  color: white;
+  padding: 8px 18px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+
+.tenant-btn:hover {
+  background: #3182ce;
+}
+
+.dash-tip {
+  color: #a0aec0;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 20px;
+}
+.scan-layout {
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+.scan-layout > div:first-child:has(> header) {
+  /* 扫码页容器，不需要额外样式 */
+}
+.scan-layout header {
+  background: linear-gradient(to right, #f97316, #ea580c) !important;
+  color: white !important;
+}
+.scan-mode {
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }

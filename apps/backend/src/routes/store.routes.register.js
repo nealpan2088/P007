@@ -2,6 +2,7 @@
 // 店铺管理相关的API路由
 
 import storeRoutes from './store.routes.js';
+import menuRoutes from './menu.routes.js';
 
 /**
  * 注册店铺路由
@@ -16,6 +17,8 @@ import storeRoutes from './store.routes.js';
 export async function registerStoreRoutes(fastify) {
   // 注册店铺路由，内层不再加前缀（外层 index.js 已加 /api/store）
   fastify.register(storeRoutes);
+  // 注册菜单管理路由
+  fastify.register(menuRoutes);
   
   console.log('✅ 店铺路由已注册');
 }

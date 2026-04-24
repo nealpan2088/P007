@@ -97,6 +97,7 @@ export const TENANT_ROUTES = {
     DELETE: `/stores/:storeId`,
     HEALTH: `/stores/health`,
     STATS: `/stores/:storeId/stats`,
+    CHECK_SLUG: `/stores/check-slug`,
     
     // 店铺配置
     SETTINGS: `/stores/:storeId/settings`,

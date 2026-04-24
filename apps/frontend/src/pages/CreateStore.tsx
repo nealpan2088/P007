@@ -91,14 +91,24 @@ const CreateStore: React.FC = () => {
 
     // 自动生成slug
     if (name === 'name' && value.trim() && !formData.slug) {
-      const generatedSlug = value.trim()
+      // 去掉中文，只保留英文 + 数字，用连字符连接
+      const latinOnly = value.trim()
+        .replace(/[\u4e00-\u9fa5]+/g, '')  // 去掉中文
+        .trim();
+      
+      const generatedSlug = latinOnly
         .toLowerCase()
-        .replace(/[^\w\s]/g, '')
-        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9]+/g, '-')  // 只保留小写字母和数字
         .replace(/-+/g, '-')
         .replace(/^-|-$/g, '');
       
+      // 纯中文名或清理后为空 → 不自动填充，让用户手动输入
       if (generatedSlug.length >= 3) {
+        setFormData(prev => ({
+          ...prev,
+          slug: generatedSlug,
+        }));
+      } else if (generatedSlug.length > 0) {
         setFormData(prev => ({
           ...prev,
           slug: generatedSlug,
@@ -112,6 +122,17 @@ const CreateStore: React.FC = () => {
         ...prev,
         [name]: '',
       }));
+    }
+
+    // 实时校验：联系电话输入时即时检查格式
+    if (name === 'phone' && value.trim()) {
+      const isValid = /^[\d\s\-\+\(\)]{6,20}$/.test(value);
+      if (!isValid && value.length > 1) {
+        setValidationErrors(prev => ({
+          ...prev,
+          phone: '电话格式：6~20位数字、空格、+、-或括号',
+        }));
+      }
     }
   };
 

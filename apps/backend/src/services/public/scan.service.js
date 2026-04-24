@@ -361,15 +361,21 @@ class ScanService {
       }
     });
 
+    // 重新获取完整订单（含菜品名、餐桌号、店铺名）供打印使用
+    const fullOrder = await prisma.order.findUnique({
+      where: { id: order.id },
+      include: {
+        items: {
+          include: { menuItem: { select: { name: true, price: true } } }
+        },
+        table: { select: { tableNumber: true } },
+        store: { select: { name: true } }
+      }
+    });
+
     return {
       success: true,
-      order: {
-        id: order.id,
-        orderNumber: order.orderNumber,
-        totalAmount: order.totalAmount,
-        status: order.status,
-        createdAt: order.createdAt
-      }
+      order: fullOrder
     };
   }
 

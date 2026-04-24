@@ -258,12 +258,18 @@ export function useScanOrder(storeSlug: string, tableId: string) {
     cat => cat.id === state.selectedCategory,
   );
 
+  // 计算当前显示的分类列表（全部 or 选中）
+  const filteredCategories = state.selectedCategory
+    ? state.categories.filter(cat => cat.id === state.selectedCategory)
+    : state.categories;
+
   return {
     // 状态
     ...state,
     cartTotal,
     cartItemCount,
     currentCategory,
+    filteredCategories,
     
     // 操作方法
     selectCategory,

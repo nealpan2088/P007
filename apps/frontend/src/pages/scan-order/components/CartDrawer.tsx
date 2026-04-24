@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CartItem as CartItemType } from '../types';
-import CartItem from './CartItem';
+import CartItemComponent from './CartItem';
+import DigitVerify from './DigitVerify';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -29,13 +30,19 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
   const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showVerify, setShowVerify] = useState(false);
 
-  const handleSubmitOrder = async () => {
+  const handleSubmitOrder = () => {
     if (items.length === 0) {
       setError('购物车为空，请先添加菜品');
       return;
     }
+    // 先弹验证码
+    setShowVerify(true);
+  };
 
+  const handleVerifiedSubmit = async () => {
+    setShowVerify(false);
     try {
       setIsSubmitting(true);
       setError(null);
@@ -50,6 +57,11 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleVerifyCancel = () => {
+    setShowVerify(false);
+    setError(null);
   };
 
   const handleOverlayClick = (e: React.MouseEvent) => {
@@ -135,7 +147,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
           ) : (
             <div>
               {items.map((item) => (
-                <CartItem
+                <CartItemComponent
                   key={item.menuItemId}
                   item={item}
                   onUpdateQuantity={onUpdateQuantity}
@@ -246,6 +258,13 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
             </p>
           </div>
         )}
+
+        {/* 数字验证码弹窗 */}
+        <DigitVerify
+          isOpen={showVerify}
+          onVerify={handleVerifiedSubmit}
+          onCancel={handleVerifyCancel}
+        />
       </div>
     </>
   );

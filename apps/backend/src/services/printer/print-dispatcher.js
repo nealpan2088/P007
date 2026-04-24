@@ -36,7 +36,14 @@ export async function dispatchPrintJob(order, storeId) {
       for (const printer of printers) {
         try {
           const adapter = getAdapter(printer.brand.code);
-          const result = await adapter.print(order, {
+          // 标准化order数据结构（Prisma返回嵌套结构，formatPrintContent需要扁平字段）
+          const formattedOrder = {
+            ...order,
+            storeName: order.store?.name || '',
+            tableName: order.table?.tableNumber || order.tableId || '',
+            // items已经是完整结构，formatPrintContent兼容 item.menuItem?.name
+          };
+          const result = await adapter.print(formattedOrder, {
             serialNumber: printer.serialNumber,
             secretKey: printer.secretKey,
             model: printer.model,

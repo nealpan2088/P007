@@ -43,6 +43,7 @@ const ScanOrderPage: React.FC = () => {
     storeInfo,
     tableInfo,
     categories,
+    filteredCategories,
     selectedCategory,
     cartItems,
     isCartOpen,
@@ -266,6 +267,7 @@ const ScanOrderPage: React.FC = () => {
       {/* 菜单区域 */}
       <MenuSection
         categories={categories}
+        filteredCategories={filteredCategories}
         selectedCategory={selectedCategory}
         onSelectCategory={selectCategory}
         onAddToCart={addToCart}

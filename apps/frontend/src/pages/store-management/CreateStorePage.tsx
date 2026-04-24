@@ -1,3 +1,8 @@
+// 麒麟项目 - 新架构下的店铺创建页
+// ⚠️ 当前路由指向 pages/CreateStore.tsx（旧版，有完整逻辑）
+// 这个文件是重构中的新版本，等旧版稳定后可切换到此页
+// 迁移条件: 旧版 CreateStore.tsx 功能全部验证通过后
+
 import React, { useState } from 'react';
 import { Card, Typography, message } from 'antd';
 import { useNavigate } from 'react-router-dom';

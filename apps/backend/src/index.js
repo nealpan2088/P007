@@ -200,7 +200,7 @@ fastify.addHook('onRequest', async (request, reply) => {
   }
 })
 
-// 系统API路由（暂时注释，有导入问题）
+// 系统API路由 — TODO [2026-04-24]: 等 system.routes.js 创建后启用
 // import systemRoutes from './routes/system.routes.js'
 // fastify.register(systemRoutes, { prefix: '/api/system' })
 

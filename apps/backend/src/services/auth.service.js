@@ -472,7 +472,7 @@ export const userService = {
         },
       })
       
-      // 这里应该发送邮件，暂时只返回Token
+      // TODO [2026-04-24]: 集成邮件发送服务，当前只返回 Token
       return {
         success: true,
         message: '重置链接已发送',
@@ -839,9 +839,8 @@ export const authMiddleware = {
           throw new Error('用户未认证')
         }
         
-        // 这里需要从用户-租户关系中获取实际角色
-        // 暂时使用默认角色
-        const userRole = 'USER' // 实际应从数据库查询
+        // TODO [2026-04-24]: 从 UserTenant 关系查询实际角色，而非默认 USER
+        const userRole = 'USER'
         
         // 简单的角色检查逻辑
         const roleHierarchy = {

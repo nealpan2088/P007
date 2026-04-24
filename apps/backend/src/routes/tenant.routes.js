@@ -100,8 +100,6 @@ export async function registerTenantRoutes(fastify) {
   fastify.get(TENANT_ROUTES.TENANT.LIST, 
     { 
       preHandler: [
-        // requestTimer(),  // 暂时注释，有addHook错误
-        // requestLogger(), // 暂时注释，有addHook错误
         authenticate
       ]
     },

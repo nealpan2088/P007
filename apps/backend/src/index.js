@@ -32,6 +32,7 @@ console.log(`🌙 夜狼模块状态: ${process.env.NIGHTWOLF_ENABLED === 'true'
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import config from './config/index.js'
+import { setDevMode, formatErrorResponse } from './services/error.service.js'
 
 // 创建全新的Fastify实例
 const fastify = Fastify({
@@ -233,19 +234,22 @@ fastify.addHook('onSend', (request, reply, payload, done) => {
 })
 
 // ==================== 错误处理 ====================
-// 全局错误处理（包含夜狼模块错误）
+// 全局统一错误处理
+// 开发模式输出调试信息，生产模式隐藏细节
 
 fastify.setErrorHandler((error, request, reply) => {
-  // 记录错误
+  // 记录错误日志（生产环境也会记录完整 stack 到日志，但不返回给客户端）
   request.log.error({
     error: error.message,
     stack: error.stack,
     url: request.url,
     method: request.method,
+    code: error.code,
     module: error.module || 'core',
+    userId: request.user?.id
   })
-  
-  // 夜狼模块错误处理
+
+  // 夜狼模块错误处理（保留原有逻辑）
   if (error.module === 'nightwolf' || error.code?.startsWith('NIGHTWOLF')) {
     return reply.status(error.statusCode || 500).send({
       success: false,
@@ -258,24 +262,18 @@ fastify.setErrorHandler((error, request, reply) => {
       data: null,
     })
   }
-  
-  // 核心错误处理
-  const statusCode = error.statusCode || 500
-  const response = {
-    success: false,
-    error: {
-      message: error.message,
-      ...(config.server.env === 'development' && { stack: error.stack }),
-    },
-    data: null,
-  }
-  
-  return reply.status(statusCode).send(response)
+
+  // 统一格式响应（使用 formatErrorResponse 自动区分开发/生产模式）
+  const body = formatErrorResponse(error)
+  return reply.status(body.code).send(body)
 })
 
 // ==================== 启动服务器 ====================
 async function startServer() {
   try {
+    // 0. 设置错误服务开发模式（生产模式隐藏调试信息）
+    setDevMode(config.server.isDevelopment)
+
     // 1. 初始化夜狼模块（异步，不阻塞）
     if (process.env.NIGHTWOLF_ENABLED === 'true') {
       initializeNightWolfModule().catch(error => {

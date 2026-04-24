@@ -576,6 +576,121 @@ export function errorHandler(error, request, reply) {
   });
 }
 
+// ==================== 店铺访问中间件 ====================
+
+/**
+ * 店铺访问中间件
+ * 检查用户是否有权访问指定店铺
+ * @param {string} storeIdSource storeId 来源：'param'（URL路径参数）、'query'（查询参数）
+ * @param {string} paramName 参数名（默认 'storeId'）
+ */
+export function requireStoreAccess(storeIdSource = 'param', paramName = 'storeId') {
+  return async function (request, reply) {
+    try {
+      // 先进行认证
+      await authenticate(request, reply);
+      
+      // 如果认证失败，authenticate已经发送了响应
+      if (reply.sent) {
+        return;
+      }
+
+      let storeId;
+      
+      switch (storeIdSource) {
+        case 'param':
+          storeId = request.params[paramName];
+          break;
+        case 'query':
+          storeId = request.query[paramName];
+          break;
+        case 'both':
+          storeId = request.params[paramName] || request.query[paramName];
+          break;
+        default:
+          storeId = request.params[paramName] || request.query[paramName];
+      }
+      
+      if (!storeId) {
+        reply.code(400).send({
+          success: false,
+          message: '店铺ID是必需的',
+          code: 'MISSING_STORE_ID'
+        });
+        return;
+      }
+
+      // 检查店铺是否存在，并获取所属租户
+      const store = await request.db.publicDb.store.findUnique({
+        where: { id: String(storeId) },
+        select: { id: true, tenantId: true, name: true }
+      });
+
+      if (!store) {
+        reply.code(404).send({
+          success: false,
+          message: '店铺不存在',
+          code: 'STORE_NOT_FOUND'
+        });
+        return;
+      }
+
+      // 检查用户是否属于该店铺的租户
+      const userTenant = await request.db.publicDb.userTenant.findFirst({
+        where: {
+          tenantId: store.tenantId,
+          userId: request.user.id,
+          status: 'ACTIVE'
+        }
+      });
+
+      if (!userTenant) {
+        request.log.warn({
+          msg: '店铺访问被拒绝',
+          userId: request.user.id,
+          storeId: store.id,
+          storeName: store.name,
+          tenantId: store.tenantId,
+          attemptedAt: new Date().toISOString()
+        });
+        
+        reply.code(403).send({
+          success: false,
+          message: '无权访问该店铺',
+          code: 'STORE_ACCESS_DENIED'
+        });
+        return;
+      }
+
+      // 将店铺信息添加到请求对象
+      request.store = {
+        id: store.id,
+        name: store.name,
+        tenantId: store.tenantId
+      };
+
+      request.log.debug({
+        msg: '店铺访问成功',
+        userId: request.user.id,
+        storeId: store.id,
+        tenantId: store.tenantId
+      });
+    } catch (error) {
+      request.log.error({
+        msg: '店铺访问检查错误',
+        error: error.message,
+        stack: error.stack
+      });
+      
+      reply.code(500).send({
+        success: false,
+        message: '店铺访问检查失败',
+        code: 'STORE_CHECK_ERROR'
+      });
+    }
+  };
+}
+
 // ==================== 导出所有中间件 ====================
 
 export default {
@@ -587,6 +702,9 @@ export default {
   // 租户相关
   requireTenantAccess,
   requireTenantAdmin,
+  
+  // 店铺相关
+  requireStoreAccess,
   
   // 验证相关
   validateRequest,

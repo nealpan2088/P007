@@ -40,7 +40,8 @@ import {
   Store as StoreIcon,
   QrCode as QrCodeIcon,
   Star as StarIcon,
-
+  MenuBook as MenuIcon,
+  Print as PrintIcon,
 } from '@mui/icons-material';
 import { TENANT_ROUTES } from '../config/routes';
 
@@ -57,6 +58,9 @@ interface Store {
 
 const StoreManagement: React.FC = () => {
   const navigate = useNavigate();
+  // 从 URL 提取租户 slug（路径格式：/t/:tenantSlug/stores）
+  const tenantSlugFromUrl = window.location.pathname.match(/\/t\/([^/]+)\/stores/)?.[1] || '';
+
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -339,6 +343,26 @@ const StoreManagement: React.FC = () => {
                           sx={{ mr: 1 }}
                         >
                           <EditIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="菜单管理">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => navigate(`/t/${tenantSlugFromUrl}/s/${store.slug}/menu`)}
+                          sx={{ mr: 1 }}
+                        >
+                          <MenuIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="设备管理">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => navigate(`/t/${tenantSlugFromUrl}/s/${store.slug}/printers`)}
+                          sx={{ mr: 1 }}
+                        >
+                          <PrintIcon />
                         </IconButton>
                       </Tooltip>
                       {!store.is_default && (

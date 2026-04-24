@@ -79,9 +79,7 @@ function AdminNavLinks() {
     return (
       <>
         <li><Link to={`/t/${slug}/dashboard`}>🏠 工作台</Link></li>
-        <li><Link to={`/t/${slug}/stores`}>📋 店铺管理</Link></li>
-        <li><Link to={`/t/${slug}/stores`}>📦 菜单管理</Link></li>
-        <li><Link to={`/t/${slug}/stores`}>🖨️ 设备管理</Link></li>
+        <li><Link to={`/t/${slug}/stores`}>📋 店铺列表</Link></li>
       </>
     );
   }

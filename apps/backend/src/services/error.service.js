@@ -24,6 +24,8 @@ export function createError(code, message, details = null) {
   };
   
   error.statusCode = statusMap[code] || 500;
+  
+  error.statusCode = statusMap[code] || 500;
   error.name = code;
   
   return error;

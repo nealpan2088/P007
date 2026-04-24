@@ -110,13 +110,22 @@ class StoreService {
    * @returns {Promise<string>} 唯一的slug
    */
   async generateUniqueSlug(name, tenantId) {
-    // 将中文转换为拼音，移除特殊字符，转换为小写，用连字符连接
-    const baseSlug = name
+    // 移除中文字符，只保留拉丁字母、数字、连字符
+    // 这样 slug 永远是纯英文/数字 URL 友好格式
+    const latinPart = name
+      .replace(/[\u4e00-\u9fa5]+/g, '')  // 去掉中文
+      .trim();
+    
+    // 如果去掉中文后没有内容了，用简短哈希后缀避免冲突
+    const base = latinPart || `store-${Date.now().toString(36).slice(-4)}`;
+    
+    const baseSlug = base
       .toLowerCase()
-      .replace(/[^\w\u4e00-\u9fa5]+/g, '-') // 保留中文和字母数字
-      .replace(/^-+|-+$/g, '') // 移除首尾连字符
-      .replace(/-+/g, '-'); // 合并多个连字符
-
+      .replace(/[^a-z0-9]+/g, '-')  // 只保留小写字母和数字
+      .replace(/^-+|-+$/g, '')      // 移除首尾连字符
+      .replace(/-+/g, '-')          // 合并多个连字符
+      || `store-${Date.now().toString(36).slice(-4)}`;
+      
     let slug = baseSlug;
     let counter = 1;
     let isUnique = false;

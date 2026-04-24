@@ -49,6 +49,14 @@ class MenuService {
       select: { sortOrder: true }
     });
     
+    // 查重：同一店铺不能有同名分类
+    const existing = await prisma.menuCategory.findFirst({
+      where: { storeId, name: data.name }
+    });
+    if (existing) {
+      throw createError('CONFLICT', `分类 "${data.name}" 已存在`);
+    }
+
     const category = await prisma.menuCategory.create({
       data: {
         storeId,
@@ -115,6 +123,14 @@ class MenuService {
       where: { id: data.categoryId, storeId }
     });
     if (!category) throw createError('NOT_FOUND', '分类不存在');
+
+    // 查重：同一分类下不能有同名菜品
+    const existing = await prisma.menuItem.findFirst({
+      where: { categoryId: data.categoryId, name: data.name }
+    });
+    if (existing) {
+      throw createError('CONFLICT', `菜品 "${data.name}" 在该分类下已存在`);
+    }
 
     const item = await prisma.menuItem.create({
       data: {

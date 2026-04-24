@@ -3,7 +3,7 @@
 
 import adminRoutes from './admin.routes.js';
 import PrinterService from '../services/printer/printer.service.js';
-import { authenticate } from '../middleware/index.js';
+import { authenticate, requireStoreAccess } from '../middleware/index.js';
 
 const printerService = new PrinterService();
 
@@ -78,7 +78,7 @@ export function registerAdminRoutes(fastify) {
         if (!storeId) {
           return reply.code(400).send({ success: false, error: '缺少 storeId' });
         }
-        const printers = await printerService.getStorePrinters(storeId);
+        const printers = await printerService.getStorePrinters(storeId, request.user.id);
         return { success: true, data: printers };
       } catch (error) {
         return reply.code(500).send({ success: false, error: '获取打印机列表失败' });
@@ -88,7 +88,7 @@ export function registerAdminRoutes(fastify) {
     // 添加打印机
     fastify.post('/printers', async (request, reply) => {
       try {
-        const printer = await printerService.addPrinter(request.body);
+        const printer = await printerService.addPrinter(request.body, request.user.id);
         return reply.code(201).send({ success: true, data: printer });
       } catch (error) {
         return reply.code(error.statusCode || 500).send({
@@ -101,7 +101,7 @@ export function registerAdminRoutes(fastify) {
     // 更新打印机
     fastify.put('/printers/:id', async (request, reply) => {
       try {
-        const printer = await printerService.updatePrinter(request.params.id, request.body);
+        const printer = await printerService.updatePrinter(request.params.id, request.body, request.user.id);
         return { success: true, data: printer };
       } catch (error) {
         return reply.code(error.statusCode || 500).send({
@@ -114,7 +114,7 @@ export function registerAdminRoutes(fastify) {
     // 删除打印机
     fastify.delete('/printers/:id', async (request, reply) => {
       try {
-        await printerService.deletePrinter(request.params.id);
+        await printerService.deletePrinter(request.params.id, request.user.id);
         return { success: true, message: '打印机已删除' };
       } catch (error) {
         return reply.code(500).send({ success: false, error: '删除打印机失败' });
@@ -124,7 +124,7 @@ export function registerAdminRoutes(fastify) {
     // 测试打印机
     fastify.post('/printers/:id/test', async (request, reply) => {
       try {
-        const result = await printerService.testPrinter(request.params.id);
+        const result = await printerService.testPrinter(request.params.id, request.user.id);
         return { success: true, data: result };
       } catch (error) {
         return reply.code(error.statusCode || 500).send({
@@ -137,7 +137,7 @@ export function registerAdminRoutes(fastify) {
     // 清空打印机待打印队列
     fastify.post('/printers/:id/clear-queue', async (request, reply) => {
       try {
-        const result = await printerService.clearPrintQueue(request.params.id);
+        const result = await printerService.clearPrintQueue(request.params.id, request.user.id);
         return { success: true, data: result };
       } catch (error) {
         return reply.code(error.statusCode || 500).send({
@@ -150,7 +150,7 @@ export function registerAdminRoutes(fastify) {
     // 获取打印机信息（含在线状态）
     fastify.get('/printers/:id/info', async (request, reply) => {
       try {
-        const result = await printerService.getPrinterInfo(request.params.id);
+        const result = await printerService.getPrinterInfo(request.params.id, request.user.id);
         return { success: true, data: result };
       } catch (error) {
         return reply.code(error.statusCode || 500).send({

@@ -164,6 +164,15 @@ fastify.get('/api/config/routes', async (request, reply) => {
   };
 });
 
+// ==================== 安全响应头 ====================
+// 零风险安全头：防止点击劫持、MIME嗅探
+fastify.addHook('onSend', (request, reply, payload, done) => {
+  reply.header('X-Frame-Options', 'DENY')
+  reply.header('X-Content-Type-Options', 'nosniff')
+  reply.header('X-XSS-Protection', '0')  // 已退役，无害遗留
+  done()
+})
+
 // ==================== 错误处理 ====================
 // 全局错误处理（包含夜狼模块错误）
 

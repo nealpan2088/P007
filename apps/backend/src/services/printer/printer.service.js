@@ -10,9 +10,43 @@ const prisma = new PrismaClient();
 
 export default class PrinterService {
   /**
+   * 验证用户是否有权访问店铺
+   */
+  async verifyStoreAccess(storeId, userId) {
+    const store = await prisma.store.findUnique({
+      where: { id: storeId },
+      select: { id: true, tenantId: true }
+    });
+    if (!store) {
+      throw Object.assign(new Error('店铺不存在'), { statusCode: 404, code: 'STORE_NOT_FOUND' });
+    }
+    const userTenant = await prisma.userTenant.findFirst({
+      where: { tenantId: store.tenantId, userId }
+    });
+    if (!userTenant) {
+      throw Object.assign(new Error('无权访问该店铺'), { statusCode: 403, code: 'STORE_ACCESS_DENIED' });
+    }
+  }
+
+  /**
+   * 通过打印机ID查出店铺，再验证用户权限
+   */
+  async verifyPrinterAccess(printerId, userId) {
+    const printer = await prisma.printer.findUnique({
+      where: { id: printerId },
+      select: { id: true, storeId: true }
+    });
+    if (!printer) {
+      throw Object.assign(new Error('打印机不存在'), { statusCode: 404, code: 'PRINTER_NOT_FOUND' });
+    }
+    await this.verifyStoreAccess(printer.storeId, userId);
+  }
+
+  /**
    * 获取店铺的打印机列表
    */
-  async getStorePrinters(storeId) {
+  async getStorePrinters(storeId, userId) {
+    await this.verifyStoreAccess(storeId, userId);
     return prisma.printer.findMany({
       where: { storeId },
       include: { brand: { select: { name: true, code: true, baseUrl: true } } },
@@ -24,8 +58,11 @@ export default class PrinterService {
    * 添加打印机
    * 同步注册到云端（如商鹏云）+ 写入本地数据库
    */
-  async addPrinter(data) {
+  async addPrinter(data, userId) {
     const { storeId, brandCode, name, serialNumber, secretKey, model, printCopies, isDefault } = data;
+
+    // 验证用户对该店铺有权限
+    await this.verifyStoreAccess(storeId, userId);
 
     // 验证品牌存在
     const brand = await prisma.printerBrand.findUnique({ where: { code: brandCode } });
@@ -71,7 +108,9 @@ export default class PrinterService {
   /**
    * 更新打印机（仅本地）
    */
-  async updatePrinter(id, data) {
+  async updatePrinter(id, data, userId) {
+    // 先验证用户对该打印机所属店铺有权限
+    await this.verifyPrinterAccess(id, userId);
     const { name, serialNumber, secretKey, model, printCopies, status, isDefault } = data;
 
     const updateData = {};
@@ -103,7 +142,9 @@ export default class PrinterService {
    * 删除打印机
    * 同步从云端移除 + 删除本地记录
    */
-  async deletePrinter(id) {
+  async deletePrinter(id, userId) {
+    // 先验证用户对该打印机所属店铺有权限
+    await this.verifyPrinterAccess(id, userId);
     const printer = await prisma.printer.findUnique({
       where: { id },
       include: { brand: { select: { code: true } } },
@@ -130,7 +171,8 @@ export default class PrinterService {
   /**
    * 清空打印机待打印队列
    */
-  async clearPrintQueue(printerId) {
+  async clearPrintQueue(printerId, userId) {
+    await this.verifyPrinterAccess(printerId, userId);
     const printer = await prisma.printer.findUnique({
       where: { id: printerId },
       include: { brand: { select: { code: true } } },
@@ -151,7 +193,8 @@ export default class PrinterService {
   /**
    * 测试打印机连接
    */
-  async testPrinter(printerId) {
+  async testPrinter(printerId, userId) {
+    await this.verifyPrinterAccess(printerId, userId);
     const printer = await prisma.printer.findUnique({
       where: { id: printerId },
       include: { brand: true },
@@ -172,7 +215,8 @@ export default class PrinterService {
   /**
    * 获取打印机信息（含在线状态）
    */
-  async getPrinterInfo(printerId) {
+  async getPrinterInfo(printerId, userId) {
+    await this.verifyPrinterAccess(printerId, userId);
     const printer = await prisma.printer.findUnique({
       where: { id: printerId },
       include: { brand: { select: { code: true } } },

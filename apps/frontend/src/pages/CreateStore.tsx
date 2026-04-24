@@ -34,6 +34,7 @@ import {
   AccessTime as AccessTimeIcon,
 } from '@mui/icons-material';
 import { TENANT_ROUTES } from '../config/routes';
+import { API_ENDPOINTS } from '../config/api-routes';
 
 interface StoreFormData {
   name: string;
@@ -207,7 +208,7 @@ const CreateStore: React.FC = () => {
 
   const checkSlugAvailability = async (slug: string): Promise<boolean> => {
     try {
-      const res = await apiPost<any>('/tenant/store/check-slug', { slug });
+      const res = await apiPost<any>(API_ENDPOINTS.STORE.CHECK_SLUG, { slug });
       return res.success && res.data?.available === true;
     } catch (error) {
       console.error('检查标识符可用性错误:', error);
@@ -232,7 +233,7 @@ const CreateStore: React.FC = () => {
       }
 
       // 创建店铺
-      const res = await apiPost<any>('/tenant/store/create', {
+      const res = await apiPost<any>(API_ENDPOINTS.STORE.CREATE, {
         tenant_id: 8,
         name: formData.name,
         slug: formData.slug,

@@ -5,6 +5,7 @@ import storeService from '../services/store.service.js';
 import { requireTenantAccess } from '../middleware/index.js';
 import { STORE_TYPES, STORE_STATUS, STORE_VALIDATION, STORE_DEFAULTS } from '../constants/store.constants.js';
 import routes from '../config/routes.js';
+import { publicDb } from '../db/index.js';
 const STORES = routes.tenant.STORES;
 
 /**
@@ -94,6 +95,21 @@ async function storeRoutes(fastify) {
         error: '获取店铺详情失败',
         code: 'INTERNAL_ERROR'
       });
+    }
+  });
+
+  // 检查店铺标识符可用性
+  fastify.post(STORES.CHECK_SLUG, async (request, reply) => {
+    try {
+      const { slug } = request.body;
+      if (!slug) {
+        return reply.status(400).send({ success: false, message: '标识符是必需的' });
+      }
+      const existing = await publicDb.store.findUnique({ where: { slug } });
+      return { success: true, data: { available: !existing, slug } };
+    } catch (error) {
+      request.log.error({ msg: '检查标识符错误', error: error.message, stack: error.stack });
+      return reply.status(500).send({ success: false, message: error.message || '检查标识符失败' });
     }
   });
 

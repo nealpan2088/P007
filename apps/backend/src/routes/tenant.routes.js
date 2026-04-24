@@ -96,31 +96,6 @@ export async function registerTenantRoutes(fastify) {
     }
   });
 
-  // 检查店铺标识符可用性（需要认证）
-  fastify.post(TENANT_ROUTES.STORES.CHECK_SLUG, async (request, reply) => {
-    try {
-      const { slug, tenantId } = request.body;
-      
-      if (!slug) {
-        return reply.status(400).send({ success: false, message: '标识符是必需的' });
-      }
-
-      // 检查 slug 是否已被占用（跨租户检查）
-      const existing = await publicDb.store.findUnique({ where: { slug } });
-      
-      return {
-        success: true,
-        data: { available: !existing, slug },
-      };
-    } catch (error) {
-      request.log.error({ msg: '检查标识符错误', error: error.message, stack: error.stack });
-      return reply.status(500).send({
-        success: false,
-        message: error.message || '检查标识符失败',
-      });
-    }
-  });
-
   // 获取当前用户的租户列表（需要认证）
   fastify.get(TENANT_ROUTES.TENANT.LIST, 
     { 

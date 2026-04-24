@@ -65,7 +65,7 @@ export const TENANT_API_ROUTES = {
     CREATE: '/api/store/stores',
     UPDATE: '/api/store/stores/:storeId',
     DELETE: '/api/store/stores/:storeId',
-    CHECK_SLUG: '/api/store/check-slug',
+    CHECK_SLUG: '/api/store/stores/check-slug',
   },
 
   // 菜单管理

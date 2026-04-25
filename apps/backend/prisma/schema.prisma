@@ -29,9 +29,10 @@ model User {
   createdAt                 DateTime  @default(now())
   updatedAt                 DateTime  @updatedAt
   deletedAt                 DateTime?
-  
+
   sessions                  Session[]
   userTenants               UserTenant[]
+  storeAssignments          UserStore[]
 }
 
 model Tenant {
@@ -47,7 +48,7 @@ model Tenant {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   deletedAt   DateTime?
-  
+
   sessions    Session[]
   userTenants UserTenant[]
   stores      Store[]
@@ -62,10 +63,10 @@ model UserTenant {
   joinedAt  DateTime @default(now())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@unique([userId, tenantId])
   @@index([userId])
   @@index([tenantId])
@@ -81,10 +82,10 @@ model Session {
   revokedReason         String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
-  
+
   tenant                Tenant?  @relation(fields: [tenantId], references: [id])
   user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@index([userId])
   @@index([token])
   @@index([expiresAt])
@@ -121,39 +122,59 @@ model Store {
   description      String?
   type             StoreType   @default(RESTAURANT)
   status           StoreStatus @default(DRAFT)
-  
+
   // 联系信息
   contactPhone     String?
   contactEmail     String?
   address          String?
-  
+
   // 配置
   timezone         String?  @default("Asia/Shanghai")
   currency         String?  @default("CNY")
   language         String?  @default("zh-CN")
   logoUrl          String?
   themeColor       String?  @default("#1976d2")
-  
+
   // 业务设置
   tableCount       Int?     @default(20)
   printerEnabled   Boolean  @default(false)
   qrCodeEnabled    Boolean  @default(true)
-  
+
   // 时间戳
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   deletedAt        DateTime?
-  
+
   // 关系
   tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   tables           Table[]
   menuCategories   MenuCategory[]
   printers         Printer[]
   orders           Order[]
-  
+  storeAssignments UserStore[]
+  flowOverrides    StoreFlowOverride[]
+
   @@index([tenantId])
   @@index([slug])
   @@index([status])
+}
+
+// 用户-店铺关联（店长、店员等店铺级角色）
+model UserStore {
+  id        String   @id @default(cuid())
+  userId    String
+  storeId   String
+  role      String   @default("STORE_ADMIN") // 预留扩展：STORE_ADMIN, STORE_STAFF 等
+  status    String   @default("ACTIVE")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storeId])
+  @@index([userId])
+  @@index([storeId])
 }
 
 model Table {
@@ -167,10 +188,10 @@ model Table {
   notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
   orders      Order[]
-  
+
   @@unique([storeId, tableNumber])
   @@index([storeId])
   @@index([tableNumber])
@@ -190,10 +211,10 @@ model MenuCategory {
   imageUrl    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
   items       MenuItem[]
-  
+
   @@unique([storeId, name])
   @@index([storeId])
   @@index([sortOrder])
@@ -212,13 +233,13 @@ model MenuItem {
   sortOrder       Int      @default(0)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  
+
   category        MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   orderItems      OrderItem[]
 
   // 模板来源标记（可选，仅平台级素材库中有值）
   templateId      String?
-  
+
   @@unique([categoryId, name])
   @@index([categoryId])
   @@index([isAvailable])
@@ -290,11 +311,11 @@ model Order {
   cancellationReason String?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
-  
+
   store              Store        @relation(fields: [storeId], references: [id], onDelete: Cascade)
   table              Table?       @relation(fields: [tableId], references: [id])
   items              OrderItem[]
-  
+
   @@index([storeId])
   @@index([orderNumber])
   @@index([status])
@@ -313,10 +334,10 @@ model OrderItem {
   notes               String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
-  
+
   order               Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   menuItem            MenuItem @relation(fields: [menuItemId], references: [id])
-  
+
   @@index([orderId])
   @@index([menuItemId])
   @@index([status])
@@ -368,4 +389,39 @@ model Printer {
   @@index([storeId])
   @@index([brandId])
   @@index([status])
+}
+
+// ============================================
+// 夜狼业务流程配置模型
+// ============================================
+
+// 店铺类别级默认流程配置（StoreType 就是类别标识）
+model StoreFlowConfig {
+  id        String      @id @default(cuid())
+  storeType StoreType
+  name      String
+  rules     Json        // [{ trigger, conditions, actions, timeout }]
+  status    String      @default("ACTIVE")
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  overrides StoreFlowOverride[]
+
+  @@unique([storeType])
+}
+
+// 店铺级流程覆盖（个别店铺覆盖默认配置的部分规则）
+model StoreFlowOverride {
+  id        String   @id @default(cuid())
+  storeId   String
+  configId  String
+  overrides Json     // 只存改动的规则，合并到默认配置上
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  store  Store           @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  config StoreFlowConfig @relation(fields: [configId], references: [id])
+
+  @@unique([storeId])
+  @@index([storeId])
 }

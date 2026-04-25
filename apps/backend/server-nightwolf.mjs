@@ -9,13 +9,17 @@ BigInt.prototype.toJSON = function() {
 // 加载环境变量
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 强制加载.env文件
-const envPath = path.join(__dirname, '.env');
+// 加载环境变量文件
+// 优先加载 .env.development（开发环境），否则加载 .env（生产环境）
+const devEnvPath = path.join(__dirname, '.env.development');
+const prodEnvPath = path.join(__dirname, '.env');
+const envPath = fs.existsSync(devEnvPath) ? devEnvPath : prodEnvPath;
 console.log(`🔧 加载环境变量文件: ${envPath}`);
 dotenv.config({ path: envPath, override: true });
 

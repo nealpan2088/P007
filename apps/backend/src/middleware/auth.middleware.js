@@ -2,6 +2,7 @@
 
 import jwt from 'jsonwebtoken';
 import config from '../config/index.js';
+import { publicDb } from '../db/index.js';
 
 /**
  * JWT认证中间件
@@ -427,10 +428,42 @@ export function errorHandler(error, request, reply) {
   });
 }
 
+// 店长（STORE_ADMIN）专用认证
+// 直接用 JWT 解码，不查 session 表
+export async function storeAdminAuth(request, reply) {
+  try {
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return reply.status(401).send({ success: false, error: '缺少认证 Token', code: 'NO_TOKEN' });
+    }
+
+    const token = authHeader.substring(7);
+    const decoded = jwt.verify(token, config.auth.jwtSecret);
+
+    if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+      return reply.status(401).send({ success: false, error: 'Token 已过期', code: 'TOKEN_EXPIRED' });
+    }
+
+    // 用户信息挂到 request 上
+    request.user = {
+      id: decoded.userId,
+      email: decoded.email,
+      role: decoded.role,
+    };
+  } catch (error) {
+    return reply.status(401).send({
+      success: false,
+      error: error.message === 'jwt expired' ? 'Token 已过期' : 'Token 无效',
+      code: 'INVALID_TOKEN',
+    });
+  }
+}
+
 // 导出所有中间件
 export default {
   authenticate,
   authorize,
+  storeAdminAuth,
   requireEmailVerification,
   requireTenantAccess,
   requireTenantAdmin,

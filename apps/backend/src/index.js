@@ -27,7 +27,7 @@ for (const varName of requiredVars) {
 }
 
 // 夜狼模块环境变量
-console.log(`🌙 夜狼模块状态: ${process.env.NIGHTWOLF_ENABLED === 'true' ? '已启用' : '未启用'}`);
+console.log(`🌙 夜狼模块: 已内置（配置路由 + 执行引擎）`);
 // ==================== 环境变量加载完成 ====================
 
 import Fastify from 'fastify'
@@ -59,36 +59,20 @@ await fastify.register(cors, {
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
 })
 
-// ==================== 夜狼模块初始化 ====================
-let nightWolfModule = null;
-let nightWolfInitialized = false;
+// ==================== 夜狼业务流程引擎 ====================
 
-async function initializeNightWolfModule() {
+async function initializeNightWolf() {
   try {
-    console.log('🌙 开始初始化夜狼模块...');
-    
-    // 导入ES模块版本的夜狼模块
-    const nightWolf = await import('./modules/nightwolf/index-simple.mjs');
-    console.log('✅ 夜狼模块加载成功 (ES模块)');
-    
-    // 初始化夜狼模块
-    const initResult = await nightWolf.initialize(fastify, {
-      logLevel: process.env.NIGHTWOLF_LOG_LEVEL || 'info',
-    });
-    
-    if (initResult.success) {
-      nightWolfModule = nightWolf;
-      nightWolfInitialized = true;
-      console.log('🎉 夜狼模块初始化成功:', initResult.module?.name || 'nightwolf');
-      console.log('📊 夜狼模块版本:', initResult.module?.version || '0.1.0-simple');
+    // 动态导入（ESM 环境不支持 require）
+    const { registerNightwolf } = await import('./modules/nightwolf/index.mjs');
+    const result = await registerNightwolf(fastify);
+    if (result.initialized) {
+      console.log('🌙 夜狼业务流程引擎已启动');
     } else {
-      console.warn('⚠️  夜狼模块初始化失败，但不影响核心功能:', initResult.reason || initResult.error);
-      console.log('ℹ️  核心功能将继续正常运行');
+      console.warn('⚠️ 夜狼引擎启动失败，不影响核心功能:', result.error);
     }
-    
-  } catch (error) {
-    console.error('❌ 夜狼模块加载失败，但不影响核心功能:', error.message);
-    console.log('ℹ️  核心功能将继续正常运行');
+  } catch (err) {
+    console.warn('⚠️ 夜狼模块加载异常，不影响核心功能:', err.message);
   }
 }
 
@@ -105,29 +89,10 @@ fastify.get(PUBLIC_ROUTES.HEALTH, async () => {
     timestamp: new Date().toISOString(),
   };
   
-  // 添加夜狼模块状态
-  if (nightWolfInitialized && nightWolfModule) {
-    try {
-      const nightWolfHealth = await nightWolfModule.healthCheck();
-      coreHealth.nightwolf = {
-        enabled: true,
-        healthy: nightWolfHealth.healthy,
-        version: '0.1.0',
-      };
-    } catch (error) {
-      coreHealth.nightwolf = {
-        enabled: true,
-        healthy: false,
-        error: error.message,
-      };
-    }
-  } else {
-    coreHealth.nightwolf = {
-      enabled: process.env.NIGHTWOLF_ENABLED === 'true',
-      initialized: nightWolfInitialized,
-      message: nightWolfInitialized ? '模块已初始化' : '模块未初始化',
-    };
-  }
+  coreHealth.nightwolf = {
+    enabled: true,
+    version: '0.2.0'
+  };
   
   return coreHealth;
 })
@@ -215,6 +180,10 @@ fastify.addHook('onRequest', async (request, reply) => {
 // 认证API路由
 import { registerAuthRoutes } from './routes/auth.routes.js'
 fastify.register(registerAuthRoutes, { prefix: '/api/v1/auth' })
+
+// 店长端API路由（独立于管理后台）
+import storeAdminRoutes from './routes/store-admin.routes.js'
+fastify.register(storeAdminRoutes, { prefix: '/api/store-admin' })
 
 // ==================== 图片上传 ====================
 import multipart from '@fastify/multipart';
@@ -395,12 +364,10 @@ async function startServer() {
     // 0. 设置错误服务开发模式（生产模式隐藏调试信息）
     setDevMode(config.server.isDevelopment)
 
-    // 1. 初始化夜狼模块（异步，不阻塞）
-    if (process.env.NIGHTWOLF_ENABLED === 'true') {
-      initializeNightWolfModule().catch(error => {
-        console.error('夜狼模块初始化异常（非致命）:', error);
-      });
-    }
+    // 1. 初始化夜狼业务流程引擎
+    await initializeNightWolf().catch(error => {
+      console.error('夜狼引擎初始化异常（非致命）:', error);
+    });
 
     // 2. 等待所有路由注册完成
     await fastify.ready()
@@ -426,9 +393,7 @@ async function startServer() {
     console.log(`🚀 服务器运行在 http://localhost:${process.env.PORT || 33038}`)
     console.log(`📊 健康检查: http://localhost:${process.env.PORT || 33038}/api/health`)
     
-    if (process.env.NIGHTWOLF_ENABLED === 'true') {
-      console.log(`🌙 夜狼模块API: http://localhost:${process.env.PORT || 33038}/api/nightwolf/v1/health`)
-    }
+    console.log('🌙 夜狼引擎已就绪');
     
     // 3. 初始化打印机默认品牌数据
     try {
@@ -446,15 +411,8 @@ async function startServer() {
       process.on(signal, async () => {
         console.log(`\n${signal} 收到，开始优雅关闭...`)
         
-        // 关闭夜狼模块
-        if (nightWolfModule && nightWolfInitialized) {
-          try {
-            await nightWolfModule.cleanup();
-            console.log('✅ 夜狼模块资源已清理');
-          } catch (error) {
-            console.error('❌ 夜狼模块清理失败:', error);
-          }
-        }
+        // 夜狼引擎无需额外清理（日志）
+        console.log('🌙 夜狼引擎关闭');
         
         // 关闭服务器
         await fastify.close()

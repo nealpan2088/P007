@@ -212,6 +212,15 @@ export const API_ENDPOINTS = {
     ITEM: getApiUrl('/api/admin/menu-templates/items/:id'),
     IMPORT: getApiUrl('/api/admin/menu-templates/import'),
   },
+
+  // 用户管理
+  USERS: {
+    LIST: getApiUrl('/api/admin/users'),
+    CREATE: getApiUrl('/api/admin/users/create'),
+    SET_STORE_ADMIN: (userId: string) => getApiUrl(`/api/admin/users/${userId}/set-store-admin`),
+    REMOVE_STORE_ADMIN: (userId: string) => getApiUrl(`/api/admin/users/${userId}/remove-store-admin`),
+  },
+
   utils: {
     buildUrl: buildApiUrl,
     buildTenantStoreInfoUrl: apiBuilders.tenantStoreInfo,

@@ -337,6 +337,48 @@ export const ADMIN_ROUTES = {
     ITEM: '/menu-templates/items/:id',
     IMPORT: '/menu-templates/import',
   },
+
+  // 用户管理（超管后台）
+  USERS: {
+    LIST: '/users',
+    CREATE: '/users/create',
+    // 设为店长
+    SET_STORE_ADMIN: '/users/:userId/set-store-admin',
+    REMOVE_STORE_ADMIN: '/users/:userId/remove-store-admin',
+    // 获取用户的店长关联
+    STORE_ASSIGNMENTS: '/users/:userId/store-assignments',
+  },
+};
+
+// ====== 店长端路由（STORE_ADMIN 专用，相对 /api/store-admin 前缀）======
+export const STORE_ADMIN_ROUTES = {
+  // 认证
+  AUTH: {
+    LOGIN: '/login',
+    PROFILE: '/profile',
+  },
+  // 我的店铺
+  MY_STORES: '/my-stores',
+  // 菜单管理
+  MENU: {
+    CATEGORIES: `/stores/:storeId/menu/categories`,
+    CATEGORY_DETAIL: `/stores/:storeId/menu/categories/:categoryId`,
+    ITEMS: `/stores/:storeId/menu/items`,
+    ITEM_DETAIL: `/stores/:storeId/menu/items/:itemId`,
+    ITEM_AVAILABILITY: `/stores/:storeId/menu/items/:itemId/availability`,
+  },
+  // 打印机管理
+  PRINTERS: {
+    LIST: `/stores/:storeId/printers`,
+    DETAIL: `/stores/:storeId/printers/:printerId`,
+    TEST: `/stores/:storeId/printers/:printerId/test`,
+  },
+  // 订单管理
+  ORDERS: {
+    LIST: `/stores/:storeId/orders`,
+    DETAIL: `/stores/:storeId/orders/:orderId`,
+    UPDATE_STATUS: `/stores/:storeId/orders/:orderId/status`,
+  },
 };
 
 // 上传与文件服务（全局，无前缀）

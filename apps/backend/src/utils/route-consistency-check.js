@@ -65,6 +65,18 @@ function collectDefinedPaths() {
     });
   }
 
+  // 收集夜狼路由文件（modules/nightwolf/routes/config.routes.mjs）里的硬编码路径
+  const nightwolfRoutesFile = path.join(projectRoot, 'modules', 'nightwolf', 'routes', 'config.routes.mjs');
+  if (fs.existsSync(nightwolfRoutesFile)) {
+    const nwContent = fs.readFileSync(nightwolfRoutesFile, 'utf-8');
+    // 提取 fastify.get/post/put/delete 后面的字符串路径
+    const nwPaths = nwContent.match(/fastify\.\w+\(['"](\/[^'"]*)['"]/g) || [];
+    nwPaths.forEach(p => {
+      const clean = p.replace(/fastify\.\w+\(['"]/, '').replace(/['"]$/, '');
+      if (clean.startsWith('/')) definedPaths.add(clean);
+    });
+  }
+
   return definedPaths;
 }
 
@@ -160,11 +172,45 @@ export function checkRouteConsistency(fastify) {
   const registeredRoutes = extractRegisteredRoutes(fastify);
 
   if (registeredRoutes.length === 0) {
-    // 如果无法从内部树获取，使用 printRoutes 的文本输出
+    // 如果无法从内部树获取，改用文件扫描方式
     try {
       const printed = fastify.printRoutes({ commonPrefix: false });
       console.log('📋 注册的路由列表:\n' + printed);
-      console.log('✅ 无法进行自动化扫描，但列表已输出供人工检查');
+
+      // 文件扫描：直接检查夜狼路由文件是否有硬编码
+      const projectRoot = path.resolve(__dirname, '..');
+      const nwRoutesFile = path.join(projectRoot, 'modules', 'nightwolf', 'routes', 'config.routes.mjs');
+      if (fs.existsSync(nwRoutesFile)) {
+        const nwContent = fs.readFileSync(nwRoutesFile, 'utf-8');
+        const hardcodedRoutes = nwContent.match(/fastify\.\w+\(['"](\/[^'"]*)['"]/g);
+        if (hardcodedRoutes && hardcodedRoutes.length > 0) {
+          console.log(`❌ 发现 ${hardcodedRoutes.length} 处硬编码路由（夜狼路由文件）:`);
+          hardcodedRoutes.forEach(r => console.log(`   ${r}`));
+          return {
+            passed: false,
+            violations: hardcodedRoutes.map(r => ({
+              source: 'config.routes.mjs',
+              path: r,
+              suggestion: '使用 ADMIN_ROUTES.NIGHTWOLF.* 常量替代'
+            }))
+          };
+        }
+      }
+
+      // 扫描其它常见路由文件的硬编码
+      const routeFiles = ['admin.routes.register.js', 'auth.routes.js', 'scan.routes.js'];
+      for (const file of routeFiles) {
+        const rFile = path.join(projectRoot, 'routes', file);
+        if (!fs.existsSync(rFile)) continue;
+        const content = fs.readFileSync(rFile, 'utf-8');
+        const hardcoded = content.match(/fastify\.\w+\(['"](\/[^'"]*)['"]/g) || [];
+        if (hardcoded.length > 0) {
+          console.log(`⚠️  ${file}: ${hardcoded.length} 处可能硬编码（需人工确认）`);
+          hardcoded.forEach(r => console.log(`   ${r}`));
+        }
+      }
+
+      console.log('✅ 文件扫描完成');
       return { passed: true, violations: [] };
     } catch (e) {
       console.log('⚠️  无法打印路由:', e.message);

@@ -384,6 +384,17 @@ async function startServer() {
       console.warn('⚠️ ⚠️ ⚠️  建议在 config/routes.js 中添加对应常量 ⚠️ ⚠️ ⚠️\n')
     }
 
+    // 3.5 前后端 API 路径一致性检查
+    try {
+      const { checkApiRouteSync } = await import('./utils/api-route-sync-check.mjs')
+      checkApiRouteSync(fastify)
+    } catch (e) {
+      // 前端 api-routes.ts 可能不存在（纯后端部署场景），静默跳过
+      if (!e.message?.includes('ENOENT') && !e.message?.includes('ERR_MODULE_NOT_FOUND')) {
+        console.warn('  ⚠️  API 路径同步检查异常:', e.message)
+      }
+    }
+
     // 4. 启动服务器
     await fastify.listen({ 
       port: process.env.PORT || 33038,

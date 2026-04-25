@@ -95,6 +95,22 @@ export const TENANT_API_ROUTES = {
 };
 
 // ============================================
+// 夜狼业务流程配置 API（需要认证）
+// ============================================
+export const NIGHTWOLF_API_ROUTES = {
+  CONFIGS: '/nightwolf/configs',
+  CONFIG_BY_TYPE: '/nightwolf/configs/:storeType',
+  STORE_CONFIG: '/nightwolf/store/:storeId/config',
+  STORE_OVERRIDE: '/nightwolf/store/:storeId/override',
+  HEALTH: '/nightwolf/health',
+  TRIGGER: '/nightwolf/store/:storeId/trigger',
+};
+
+// ============================================
+// 工具函数
+// ============================================
+
+// ============================================
 // 工具函数
 // ============================================
 

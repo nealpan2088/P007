@@ -3,8 +3,26 @@
 // 店铺状态
 export type StoreStatus = 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE' | 'CLOSED';
 
-// 店铺类型
-export type StoreType = 'RESTAURANT' | 'CAFE' | 'FAST_FOOD' | 'BAKERY' | 'OTHER';
+// 店铺类型（与后端 StoreType 枚举对齐）
+export type StoreType = 'RESTAURANT' | 'CAFE' | 'FAST_FOOD' | 'BAKERY' | 'BAR' | 'FOOD_TRUCK' | 'CATERING' | 'OTHER';
+
+// 店铺类型显示名称映射
+export const STORE_TYPE_LABELS: Record<StoreType, string> = {
+  RESTAURANT: '🏪 餐厅',
+  CAFE: '☕ 咖啡厅',
+  FAST_FOOD: '🍔 快餐店',
+  BAKERY: '🥖 面包店',
+  BAR: '🍺 酒吧',
+  FOOD_TRUCK: '🚚 餐车',
+  CATERING: '🍱 食堂/团餐',
+  OTHER: '📦 其他',
+};
+
+// 店铺类型列表（用于下拉选择框）
+export const STORE_TYPE_OPTIONS = Object.entries(STORE_TYPE_LABELS).map(([value, label]) => ({
+  value: value as StoreType,
+  label,
+}));
 
 // 营业时间
 export interface BusinessHours {

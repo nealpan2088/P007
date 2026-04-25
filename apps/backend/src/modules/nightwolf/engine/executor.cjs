@@ -3,6 +3,8 @@
 // 轻量级，不依赖复杂规则引擎
 
 const { publicDb } = require('../../../db/index.js');
+const path = require('path');
+const { fileURLToPath } = require('url');
 
 // 注册的动作处理器
 const actionHandlers = {
@@ -161,9 +163,40 @@ async function scheduleTimeout(timeout, eventType, eventData, storeId) {
 // ========== 动作处理器（占位，后续实现具体业务逻辑） ==========
 
 async function handlePrint(params, eventData, storeId) {
-  console.log(`[夜狼] 🖨️ 打印:`, JSON.stringify(params));
-  // TODO: 调用打印机API打印订单
-  return { message: '打印队列已提交（占位）' };
+  try {
+    const { default: PrinterService } = await import('../../../services/printer/printer.service.js');
+    const printerService = new PrinterService();
+
+    // 判断打印类型：params 有 message 字段说明是超时催单
+    const printType = params.message === '超时提醒' ? 'timeout_reminder' : 'order';
+
+    console.log(`[夜狼] 🖨️ 尝试打印店铺 ${storeId} 订单 ${eventData.orderId || '未知'} (${printType})`);
+
+    const result = await printerService.printStoreOrder(storeId, {
+      orderNumber: eventData.orderId || 'N/A',
+      storeName: eventData.storeName || '',
+      tableName: eventData.tableNo || eventData.tableName || '',
+      items: (eventData.items || []).map(item => ({
+        name: typeof item === 'string' ? item : (item.name || '未知菜品'),
+        quantity: item.quantity || 1,
+        price: item.price || 0,
+        specialInstructions: item.remark || '',
+      })),
+      totalAmount: eventData.total || eventData.totalAmount || 0,
+      createdAt: new Date().toISOString(),
+    }, printType);
+
+    if (result.success) {
+      console.log(`[夜狼] 🖨️ ✅ 打印成功: ${eventData.orderId}`);
+    } else {
+      console.warn(`[夜狼] 🖨️ ⚠️ 打印未完成: ${result.message}`);
+    }
+
+    return { message: result.message || '打印完成', success: result.success };
+  } catch (err) {
+    console.error(`[夜狼] 🖨️ ❌ 打印失败:`, err.message);
+    return { message: `打印失败: ${err.message}`, success: false, error: err.message };
+  }
 }
 
 async function handleVoice(params, eventData, storeId) {

@@ -348,6 +348,16 @@ export const ADMIN_ROUTES = {
     // 获取用户的店长关联
     STORE_ASSIGNMENTS: '/users/:userId/store-assignments',
   },
+
+  // 夜狼业务流程配置
+  NIGHTWOLF: {
+    CONFIGS: '/nightwolf/configs',
+    CONFIG_BY_TYPE: '/nightwolf/configs/:storeType',
+    STORE_CONFIG: '/nightwolf/store/:storeId/config',
+    STORE_OVERRIDE: '/nightwolf/store/:storeId/override',
+    HEALTH: '/nightwolf/health',
+    TRIGGER: '/nightwolf/store/:storeId/trigger',
+  },
 };
 
 // ====== 店长端路由（STORE_ADMIN 专用，相对 /api/store-admin 前缀）======

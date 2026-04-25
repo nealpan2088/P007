@@ -235,6 +235,48 @@ export default class PrinterService {
   }
 
   /**
+   * 按店铺打印订单（供夜狼引擎调用）
+   * 找出店铺的默认打印机（或第一个可用打印机），发送打印
+   * @param {string} storeId - 店铺ID
+   * @param {object} orderData - 订单数据（需含 items, orderNumber, totalAmount 等）
+   * @returns {Promise<object>} 打印结果
+   */
+  async printStoreOrder(storeId, orderData, printType) {
+    // 找店铺的打印机（优先默认，否则第一个 ACTIVE 的）
+    const printer = await prisma.printer.findFirst({
+      where: { storeId, status: 'ACTIVE' },
+      orderBy: { isDefault: 'desc' },
+      include: { brand: true },
+    });
+
+    if (!printer) {
+      return { success: false, message: '店铺未配置打印机' };
+    }
+
+    const adapter = getAdapter(printer.brand.code);
+    if (!adapter || typeof adapter.print !== 'function') {
+      return { success: false, message: `打印机品牌 "${printer.brand.code}" 不支持打印` };
+    }
+
+    // 组装订单打印数据
+    const printOrder = {
+      orderNumber: orderData.orderNumber,
+      storeName: orderData.storeName || '',
+      tableName: orderData.tableName || '',
+      items: orderData.items || [],
+      totalAmount: orderData.totalAmount || 0,
+      createdAt: orderData.createdAt || new Date().toISOString(),
+      printType: printType || 'order',  // order | timeout_reminder
+    };
+
+    return adapter.print(printOrder, {
+      serialNumber: printer.serialNumber,
+      secretKey: printer.secretKey,
+      name: printer.name,
+    });
+  }
+
+  /**
    * 获取所有打印机品牌
    */
   async getBrands() {

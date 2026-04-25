@@ -2,6 +2,15 @@
 // 管理 StoreFlowConfig（类别级）和 StoreFlowOverride（店铺级）
 
 import { publicDb } from '../../../db/index.js';
+import { ADMIN_ROUTES } from '../../../config/routes.js';
+
+const API_PREFIX = process.env.API_PREFIX || '/api';
+
+// 夜狼路由常量（基于 routes.js 的 ADMIN_ROUTES.NIGHTWOLF + API 前缀拼接）
+const NW = {};
+for (const [key, val] of Object.entries(ADMIN_ROUTES.NIGHTWOLF)) {
+  NW[key] = `${API_PREFIX}${val}`;
+}
 
 // 简化的认证辅助函数（不带 done 参数，兼容 Fastify 4.x+）
 import jwt from 'jsonwebtoken';
@@ -47,6 +56,12 @@ function authorize(...allowedRoles) {
   };
 }
 
+const VALID_STORE_TYPES = ['RESTAURANT', 'CAFE', 'FAST_FOOD', 'BAKERY', 'BAR', 'FOOD_TRUCK', 'CATERING', 'OTHER'];
+
+function validStoreType(type) {
+  return VALID_STORE_TYPES.includes(type);
+}
+
 /**
  * 路由注册函数
  */
@@ -54,7 +69,7 @@ export default async function configRoutes(fastify) {
 
   // ========== 类别级默认配置 ==========
 
-  fastify.get('/api/nightwolf/configs', async (request, reply) => {
+  fastify.get(NW.CONFIGS, async (request, reply) => {
     await authenticate(request, reply);
     if (reply.sent) return;
     await authorize('SUPER_ADMIN', 'TENANT_ADMIN')(request, reply);
@@ -66,13 +81,17 @@ export default async function configRoutes(fastify) {
     return reply.send({ code: 200, message: 'success', data: configs });
   });
 
-  fastify.get('/api/nightwolf/configs/:storeType', async (request, reply) => {
+  fastify.get(NW.CONFIG_BY_TYPE, async (request, reply) => {
     await authenticate(request, reply);
     if (reply.sent) return;
     await authorize('SUPER_ADMIN', 'TENANT_ADMIN')(request, reply);
     if (reply.sent) return;
 
     const { storeType } = request.params;
+    if (!validStoreType(storeType)) {
+      return reply.status(400).send({ code: 400, error: `无效的店铺类别: ${storeType}，有效值: ${VALID_STORE_TYPES.join(', ')}` });
+    }
+
     const config = await publicDb.storeFlowConfig.findUnique({
       where: { storeType }
     });
@@ -82,13 +101,16 @@ export default async function configRoutes(fastify) {
     return reply.send({ code: 200, message: 'success', data: config });
   });
 
-  fastify.put('/api/nightwolf/configs/:storeType', async (request, reply) => {
+  fastify.put(NW.CONFIG_BY_TYPE, async (request, reply) => {
     await authenticate(request, reply);
     if (reply.sent) return;
     await authorize('SUPER_ADMIN')(request, reply);
     if (reply.sent) return;
 
     const { storeType } = request.params;
+    if (!validStoreType(storeType)) {
+      return reply.status(400).send({ code: 400, error: `无效的店铺类别: ${storeType}，有效值: ${VALID_STORE_TYPES.join(', ')}` });
+    }
     const { name, rules } = request.body;
 
     if (!name || !rules) {
@@ -104,20 +126,23 @@ export default async function configRoutes(fastify) {
     return reply.send({ code: 200, message: 'success', data: config });
   });
 
-  fastify.delete('/api/nightwolf/configs/:storeType', async (request, reply) => {
+  fastify.delete(NW.CONFIG_BY_TYPE, async (request, reply) => {
     await authenticate(request, reply);
     if (reply.sent) return;
     await authorize('SUPER_ADMIN')(request, reply);
     if (reply.sent) return;
 
     const { storeType } = request.params;
-    await publicDb.storeFlowConfig.delete({ where: { storeType } });
+    if (!validStoreType(storeType)) {
+      return reply.status(400).send({ code: 400, error: `无效的店铺类别: ${storeType}，有效值: ${VALID_STORE_TYPES.join(', ')}` });
+    }
+    await publicDb.storeFlowConfig.delete({ where: { storeType } }).catch(() => {});
     return reply.send({ code: 200, message: 'success' });
   });
 
   // ========== 店铺级覆盖 ==========
 
-  fastify.get('/api/nightwolf/store/:storeId/config', async (request, reply) => {
+  fastify.get(NW.STORE_CONFIG, async (request, reply) => {
     await authenticate(request, reply);
     if (reply.sent) return;
 
@@ -155,7 +180,7 @@ export default async function configRoutes(fastify) {
     });
   });
 
-  fastify.put('/api/nightwolf/store/:storeId/override', async (request, reply) => {
+  fastify.put(NW.STORE_OVERRIDE, async (request, reply) => {
     await authenticate(request, reply);
     if (reply.sent) return;
 
@@ -186,7 +211,7 @@ export default async function configRoutes(fastify) {
     return reply.send({ code: 200, message: 'success', data: record });
   });
 
-  fastify.delete('/api/nightwolf/store/:storeId/override', async (request, reply) => {
+  fastify.delete(NW.STORE_OVERRIDE, async (request, reply) => {
     await authenticate(request, reply);
     if (reply.sent) return;
 
@@ -196,7 +221,7 @@ export default async function configRoutes(fastify) {
   });
 
   // 健康检查（无需认证）
-  fastify.get('/api/nightwolf/health', async (request, reply) => {
+  fastify.get(NW.HEALTH, async (request, reply) => {
     return reply.send({
       code: 200, message: 'success',
       data: {
@@ -206,6 +231,24 @@ export default async function configRoutes(fastify) {
         initialized: true
       }
     });
+  });
+
+  // 触发流程测试端点（模拟事件）
+  fastify.post(NW.TRIGGER, async (request, reply) => {
+    const { event, context } = request.body;
+    if (!event) {
+      return reply.status(400).send({ code: 400, error: '缺少 event 参数' });
+    }
+
+    // 从 executor 导入 triggerFlow
+    const { triggerFlow } = await import('../engine/executor.cjs');
+
+    try {
+      const results = await triggerFlow(request.params.storeId, event, context || {});
+      return reply.send({ code: 200, message: 'success', data: results });
+    } catch (err) {
+      return reply.send({ code: 200, message: 'success', data: { triggered: true, warning: err.message } });
+    }
   });
 }
 

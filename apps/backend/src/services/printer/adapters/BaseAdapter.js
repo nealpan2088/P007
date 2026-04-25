@@ -34,6 +34,20 @@ export default class BaseAdapter {
    * 格式化打印内容（子类可覆写）
    */
   formatPrintContent(order) {
+    // printType: order(普通订单) | timeout_reminder(超时催单)
+    const printType = order.printType || 'order';
+
+    if (printType === 'timeout_reminder') {
+      return this._formatTimeoutReminder(order);
+    }
+
+    return this._formatOrderTicket(order);
+  }
+
+  /**
+   * 普通订单小票排版
+   */
+  _formatOrderTicket(order) {
     const items = order.items || [];
     const lines = [];
 
@@ -66,7 +80,42 @@ export default class BaseAdapter {
     lines.push('[C]感谢您的光临！');
     lines.push('[C]祝您用餐愉快！');
     lines.push('');
-    lines.push('');  // 切纸留空
+    lines.push('');
+
+    return lines.join('\n');
+  }
+
+  /**
+   * 超时催单小票排版（醒目区分，顶部大标题+闪烁）
+   */
+  _formatTimeoutReminder(order) {
+    const items = order.items || [];
+    const lines = [];
+
+    lines.push('[C]<B><FB>⚠️ 超时提醒 ⚠️</FB></B>');
+    lines.push('[C]==============================');
+    lines.push('[C]以下订单已超15分钟未出餐！');
+    lines.push('[C]请尽快处理！');
+    lines.push('[C]==============================');
+    lines.push('订单号: ' + order.orderNumber);
+    if (order.tableName) {
+      lines.push('桌号: ' + order.tableName);
+    }
+    lines.push('下单时间: ' + (order.createdAt ? new Date(order.createdAt).toLocaleString('zh-CN') : ''));
+    lines.push('[C]==============================');
+    if (items.length > 0) {
+      lines.push('[C]未出餐菜品:');
+      items.forEach(item => {
+        const name = item.name || item.menuItem?.name || '未知菜品';
+        const qty = item.quantity || 1;
+        lines.push('  ' + name + ' x' + qty);
+      });
+    }
+    lines.push('[C]==============================');
+    lines.push('[C]<B><FB>请尽快出餐！</FB></B>');
+    lines.push('[C]==============================');
+    lines.push('');
+    lines.push('');
 
     return lines.join('\n');
   }

@@ -21,7 +21,7 @@ import {
   PlusOutlined,
   MinusCircleOutlined,
 } from '@ant-design/icons';
-import { Store, StoreRequest, BusinessHours } from '../types';
+import { Store, StoreRequest, BusinessHours, STORE_TYPE_OPTIONS } from '../types';
 import * as storeUtils from '../utils/store.utils';
 import * as apiUtils from '../utils/api.utils';
 
@@ -229,11 +229,9 @@ const StoreForm: React.FC<StoreFormProps> = ({
                   rules={[{ required: true, message: '请选择店铺类型' }]}
                 >
                   <Select placeholder="请选择店铺类型">
-                    <Option value="RESTAURANT">餐厅</Option>
-                    <Option value="CAFE">咖啡厅</Option>
-                    <Option value="FAST_FOOD">快餐店</Option>
-                    <Option value="BAKERY">面包店</Option>
-                    <Option value="OTHER">其他</Option>
+                    {STORE_TYPE_OPTIONS.map(opt => (
+                      <Option key={opt.value} value={opt.value}>{opt.label}</Option>
+                    ))}
                   </Select>
                 </Form.Item>
               </Col>

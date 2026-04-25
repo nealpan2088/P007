@@ -122,6 +122,12 @@ export const ADMIN_ROUTES = {
     UPDATES: '/admin/system/updates',
   },
 
+  // 夜狼业务流程配置
+  NIGHTWOLF: {
+    LIST: '/admin/nightwolf',
+    EDIT: '/admin/nightwolf/:storeType',
+  },
+
   // 财务管理
   FINANCE: {
     OVERVIEW: '/admin/finance',

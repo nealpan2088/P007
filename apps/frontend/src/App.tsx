@@ -23,6 +23,7 @@ import PrinterManagement from './pages/printer/PrinterManagement';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminStoresPage from './pages/admin/AdminStoresPage';
 import UserManagementPage from './pages/admin/UserManagementPage';
+import NightwolfConfigPage from './pages/admin/NightwolfConfigPage';
 import FoodTemplateLibrary from './pages/admin/FoodTemplateLibrary';
 import { PUBLIC_ROUTES, ADMIN_ROUTES, TENANT_ROUTES } from './config/routes';
 import SCAN_ROUTES from './config/scan-routes';
@@ -69,6 +70,7 @@ function AdminNavLinks() {
         <li><Link to={ADMIN_ROUTES.TENANTS.LIST}>🏢 租户管理</Link></li>
         <li><Link to={ADMIN_ROUTES.STORES.LIST}>🏪 店铺管理</Link></li>
         <li><Link to={ADMIN_ROUTES.USERS.LIST}>👥 用户管理</Link></li>
+        <li><Link to={ADMIN_ROUTES.NIGHTWOLF.LIST}>🌙 业务配置</Link></li>
         <li><Link to={ADMIN_ROUTES.SYSTEM.SETTINGS}>⚙️ 系统管理</Link></li>
       </>
     );
@@ -143,6 +145,8 @@ function AppContent() {
           <Route path={ADMIN_ROUTES.TENANTS.EDIT} element={<EditTenant />} />
           <Route path={ADMIN_ROUTES.TENANTS.DETAIL} element={<TenantDashboard />} />
           <Route path={ADMIN_ROUTES.USERS.LIST} element={<UserManagementPage />} />
+          <Route path={ADMIN_ROUTES.NIGHTWOLF.LIST} element={<NightwolfConfigPage />} />
+          <Route path={ADMIN_ROUTES.NIGHTWOLF.EDIT} element={<NightwolfConfigPage />} />
           <Route path={ADMIN_ROUTES.SYSTEM.SETTINGS} element={<AdminDashboard />} />
           <Route path={ADMIN_ROUTES.STORES.LIST} element={<AdminStoresPage />} />
           <Route path={ADMIN_ROUTES.PRINTERS.LIST} element={<PrinterManagement />} />

@@ -112,6 +112,7 @@ fastify.register(registerStoreRoutes, { prefix: '/api/store' })
 
 // 管理API路由 - 使用.register.js文件
 import { registerAdminRoutes } from './routes/admin.routes.register.js'
+import { authenticate } from './middleware/index.js'
 fastify.register(registerAdminRoutes, { prefix: '/api/admin' })
 
 // 无独立 import，rateLimitStore 直接在此定义
@@ -256,8 +257,8 @@ fastify.post(UPLOAD_ROUTES.FOOD_IMAGE, async (request, reply) => {
   }
 });
 
-// 店铺 Logo 上传接口
-fastify.post(UPLOAD_ROUTES.STORE_LOGO, async (request, reply) => {
+// 店铺 Logo 上传接口（需认证）
+fastify.post(UPLOAD_ROUTES.STORE_LOGO, { preHandler: [authenticate] }, async (request, reply) => {
   try {
     const data = await request.file();
     if (!data) {
@@ -279,11 +280,11 @@ fastify.post(UPLOAD_ROUTES.STORE_LOGO, async (request, reply) => {
     }
     const buffer = Buffer.concat(chunks);
 
-    // 校验文件大小（Logo 放宽到 5MB）
-    if (buffer.length > 5 * 1024 * 1024) {
+    // 校验文件大小（Logo 限制 1MB）
+    if (buffer.length > 1 * 1024 * 1024) {
       return reply.code(400).send({
         success: false,
-        error: 'Logo 图片大小不能超过 5MB',
+        error: 'Logo 图片大小不能超过 1MB',
       });
     }
 

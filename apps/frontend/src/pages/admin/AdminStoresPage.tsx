@@ -236,7 +236,12 @@ function ThemeEditorModal({ store, onClose, onSaved }: {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const res = await fetch('/api/upload/store-logo', { method: 'POST', body: formData });
+      const token = localStorage.getItem('qilin_access_token');
+      const res = await fetch('/api/upload/store-logo', {
+        method: 'POST',
+        body: formData,
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
       const json = await res.json();
       if (json.success) {
         setLogoUrl(json.data.url);

@@ -21,6 +21,22 @@ export const PUBLIC_ROUTES = {
     RESET_PASSWORD: `/auth/reset-password`,
     VERIFY_EMAIL: `/auth/verify-email`,
   },
+
+  // 认证路由（相对路径，供 /api/v1/auth 前缀使用）
+  AUTH_RELATIVE: {
+    REGISTER: '/register',
+    LOGIN: '/login',
+    REFRESH_TOKEN: '/refresh-token',
+    VERIFY_EMAIL: '/verify-email/:token',
+    FORGOT_PASSWORD: '/request-password-reset',
+    RESET_PASSWORD: '/reset-password',
+    LOGOUT: '/logout',
+    PROFILE: '/profile',
+    CHANGE_PASSWORD: '/change-password',
+    SESSIONS: '/sessions',
+    REVOKE_SESSION: '/revoke-session',
+    HEALTH: '/health',
+  },
   
   // 租户
   TENANT: {
@@ -324,9 +340,23 @@ export const CUSTOMER_ROUTES = {
 export const ADMIN_ROUTES = {
   // 店铺管理（路径相对 /api/admin 前缀）
   STORES: {
+    SELECT: '/stores/select',
     LIST: '/stores',
+    LIST_WITH_TENANT: '/stores/list',
     STATS: '/stores/stats',
     HEALTH: '/health',
+  },
+
+  // 打印机管理（超管后台，路径相对 /api/admin 前缀）
+  PRINTERS: {
+    BRANDS: '/printers/brands',
+    LIST: '/printers',
+    CREATE: '/printers',
+    UPDATE: '/printers/:id',
+    DELETE: '/printers/:id',
+    TEST: '/printers/:id/test',
+    CLEAR_QUEUE: '/printers/:id/clear-queue',
+    INFO: '/printers/:id/info',
   },
 
   // 素材库（平台级菜品模板）

@@ -435,15 +435,19 @@ async function startServer() {
   } catch (err) {
     console.error('❌ 服务器启动失败:', err)
     
-    // 清理夜狼模块
-    if (nightWolfModule && nightWolfInitialized) {
-      try {
-        await nightWolfModule.cleanup();
-      } catch (error) {
-        console.error('夜狼模块清理失败:', error);
+    // 清理夜狼模块（安全引用，如果夜狼引擎已注册则尝试清理）
+    try {
+      // 检查夜狼路由是否已注册
+      if (fastify.hasRoute?.({ method: 'GET', url: '/api/nightwolf/health' })) {
+        const { registerNightwolf } = await import('./modules/nightwolf/index.mjs');
+        if (typeof registerNightwolf.cleanup === 'function') {
+          await registerNightwolf.cleanup();
+        }
       }
+    } catch (cleanupError) {
+      // 清理失败不阻塞退出
     }
-    
+
     process.exit(1)
   }
 }

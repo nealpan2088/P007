@@ -2,7 +2,7 @@
 // 店铺管理、租户管理等
 
 import { PrismaClient } from '@prisma/client';
-import { authenticate, requestTimer, requestLogger } from '../middleware/index.js';
+import { authenticate } from '../middleware/index.js';
 import { ADMIN_ROUTES } from '../config/routes.js';
 
 const prisma = new PrismaClient();
@@ -12,12 +12,50 @@ const prisma = new PrismaClient();
  * @param {FastifyInstance} fastify - Fastify实例
  */
 async function adminRoutes(fastify) {
-  // 添加性能监控中间件
-  fastify.addHook('preHandler', requestTimer());
-  fastify.addHook('preHandler', requestLogger());
-  
   // 添加认证中间件到所有管理API
   fastify.addHook('preHandler', authenticate);
+  
+  // 响应完成后记录处理时间
+  fastify.addHook('onResponse', (request, reply, done) => {
+    if (request.requestTimer?.startTime) {
+      const elapsed = Date.now() - request.requestTimer.startTime;
+      const statusCode = reply.statusCode;
+      
+      // 根据处理时间记录不同级别的日志
+      if (elapsed > 1000) {
+        request.log.warn({
+          msg: '请求处理时间过长',
+          method: request.method,
+          url: request.url,
+          elapsedMs: elapsed,
+          statusCode
+        });
+      } else if (elapsed > 500) {
+        request.log.info({
+          msg: '请求处理时间中等',
+          method: request.method,
+          url: request.url,
+          elapsedMs: elapsed,
+          statusCode
+        });
+      }
+    }
+    done();
+  });
+  
+  // 记录请求开始日志
+  fastify.addHook('onRequest', (request, reply, done) => {
+    request.requestTimer = { startTime: Date.now() };
+    request.log.info({
+      msg: '请求开始',
+      method: request.method,
+      url: request.url,
+      ip: request.ip,
+      userAgent: request.headers['user-agent'],
+      contentType: request.headers['content-type']
+    });
+    done();
+  });
   
   // 获取店铺列表（需要认证）
   fastify.get(ADMIN_ROUTES.STORES.LIST, {

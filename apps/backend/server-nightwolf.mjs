@@ -21,7 +21,7 @@ const devEnvPath = path.join(__dirname, '.env.development');
 const prodEnvPath = path.join(__dirname, '.env');
 const envPath = fs.existsSync(devEnvPath) ? devEnvPath : prodEnvPath;
 console.log(`🔧 加载环境变量文件: ${envPath}`);
-dotenv.config({ path: envPath, override: true });
+dotenv.config({ path: envPath, override: false });
 
 // 导入新的主应用入口
 import { fastify } from './src/index.js';

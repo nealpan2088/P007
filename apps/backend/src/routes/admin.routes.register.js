@@ -5,6 +5,11 @@ import adminRoutes from './admin.routes.js';
 import menuTemplateRoutes from './menu-template.routes.js';
 import PrinterService from '../services/printer/printer.service.js';
 import { authenticate, requireStoreAccess } from '../middleware/index.js';
+import { ADMIN_ROUTES } from '../config/routes.js';
+
+const STORES = ADMIN_ROUTES.STORES;
+const PRINTERS = ADMIN_ROUTES.PRINTERS;
+const USERS = ADMIN_ROUTES.USERS;
 
 const printerService = new PrinterService();
 
@@ -22,7 +27,7 @@ export function registerAdminRoutes(fastify) {
   // ====== 公开接口（无需认证）======
 
   // 获取店铺列表（供选择使用）
-  fastify.get('/stores/select', async (request, reply) => {
+  fastify.get(STORES.SELECT, async (request, reply) => {
     const { PrismaClient } = await import('@prisma/client');
     const prisma = new PrismaClient();
     try {
@@ -47,7 +52,7 @@ export function registerAdminRoutes(fastify) {
   });
 
   // 获取店铺列表（管理后台用，含租户信息，支持分页与搜索）
-  fastify.get('/stores/list', async (request, reply) => {
+  fastify.get(STORES.LIST_WITH_TENANT, async (request, reply) => {
     const { PrismaClient } = await import('@prisma/client');
     const prisma = new PrismaClient();
     try {
@@ -97,7 +102,7 @@ export function registerAdminRoutes(fastify) {
     fastify.addHook('preHandler', authenticate);
 
     // 获取打印机品牌列表
-    fastify.get('/printers/brands', async (request, reply) => {
+    fastify.get(PRINTERS.BRANDS, async (request, reply) => {
       try {
         const brands = await printerService.getBrands();
         return { success: true, data: brands };
@@ -107,7 +112,7 @@ export function registerAdminRoutes(fastify) {
     });
 
     // 获取店铺打印机列表
-    fastify.get('/printers', async (request, reply) => {
+    fastify.get(PRINTERS.LIST, async (request, reply) => {
       try {
         const { storeId } = request.query;
         if (!storeId) {
@@ -121,7 +126,7 @@ export function registerAdminRoutes(fastify) {
     });
 
     // 添加打印机
-    fastify.post('/printers', async (request, reply) => {
+    fastify.post(PRINTERS.CREATE, async (request, reply) => {
       try {
         const printer = await printerService.addPrinter(request.body, request.user.id);
         return reply.code(201).send({ success: true, data: printer });
@@ -134,7 +139,7 @@ export function registerAdminRoutes(fastify) {
     });
 
     // 更新打印机
-    fastify.put('/printers/:id', async (request, reply) => {
+    fastify.put(PRINTERS.UPDATE, async (request, reply) => {
       try {
         const printer = await printerService.updatePrinter(request.params.id, request.body, request.user.id);
         return { success: true, data: printer };
@@ -147,7 +152,7 @@ export function registerAdminRoutes(fastify) {
     });
 
     // 删除打印机
-    fastify.delete('/printers/:id', async (request, reply) => {
+    fastify.delete(PRINTERS.DELETE, async (request, reply) => {
       try {
         await printerService.deletePrinter(request.params.id, request.user.id);
         return { success: true, message: '打印机已删除' };
@@ -157,7 +162,7 @@ export function registerAdminRoutes(fastify) {
     });
 
     // 测试打印机
-    fastify.post('/printers/:id/test', async (request, reply) => {
+    fastify.post(PRINTERS.TEST, async (request, reply) => {
       try {
         const result = await printerService.testPrinter(request.params.id, request.user.id);
         return { success: true, data: result };
@@ -170,7 +175,7 @@ export function registerAdminRoutes(fastify) {
     });
 
     // 清空打印机待打印队列
-    fastify.post('/printers/:id/clear-queue', async (request, reply) => {
+    fastify.post(PRINTERS.CLEAR_QUEUE, async (request, reply) => {
       try {
         const result = await printerService.clearPrintQueue(request.params.id, request.user.id);
         return { success: true, data: result };
@@ -183,7 +188,7 @@ export function registerAdminRoutes(fastify) {
     });
 
     // 获取打印机信息（含在线状态）
-    fastify.get('/printers/:id/info', async (request, reply) => {
+    fastify.get(PRINTERS.INFO, async (request, reply) => {
       try {
         const result = await printerService.getPrinterInfo(request.params.id, request.user.id);
         return { success: true, data: result };
@@ -204,7 +209,7 @@ export function registerAdminRoutes(fastify) {
     fastify.addHook('preHandler', authenticate);
 
     // 用户列表
-    fastify.get('/users', async (request, reply) => {
+    fastify.get(USERS.LIST, async (request, reply) => {
       try {
         const { PrismaClient } = await import('@prisma/client');
         const prisma = new PrismaClient();
@@ -253,7 +258,7 @@ export function registerAdminRoutes(fastify) {
     });
 
     // 设为店长
-    fastify.post('/users/:userId/set-store-admin', async (request, reply) => {
+    fastify.post(USERS.SET_STORE_ADMIN, async (request, reply) => {
       try {
         const { PrismaClient } = await import('@prisma/client');
         const prisma = new PrismaClient();
@@ -293,7 +298,7 @@ export function registerAdminRoutes(fastify) {
     });
 
     // 移除店长
-    fastify.post('/users/:userId/remove-store-admin', async (request, reply) => {
+    fastify.post(USERS.REMOVE_STORE_ADMIN, async (request, reply) => {
       try {
         const { PrismaClient } = await import('@prisma/client');
         const prisma = new PrismaClient();

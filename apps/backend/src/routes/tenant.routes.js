@@ -3,7 +3,7 @@
 import tenantService from '../services/tenant.service.js';
 import storeService from '../services/store.service.js';
 import orderService from '../services/order.service.js';
-import { authenticate, requestTimer, requestLogger, requireTenantAdmin } from '../middleware/index.js';
+import { authenticate, requireTenantAdmin } from '../middleware/index.js';
 import { TENANT_ROUTES } from '../config/routes.js';
 import systemMode from '../utils/system-mode.js';
 import { publicDb } from '../db/index.js';
@@ -138,7 +138,7 @@ export async function registerTenantRoutes(fastify) {
 
   // 获取租户详情（需要认证，且用户必须属于该租户）
   fastify.get(TENANT_ROUTES.TENANT.DETAIL, 
-    { preHandler: [ requestTimer(), requestLogger(), authenticate ] },
+    { preHandler: [ authenticate ] },
     async (request, reply) => {
       try {
         const { tenantId } = request.params;
@@ -183,7 +183,7 @@ export async function registerTenantRoutes(fastify) {
 
   // 更新租户信息（需要认证，且用户必须是OWNER或ADMIN）
   fastify.put(TENANT_ROUTES.TENANT.UPDATE, 
-    { preHandler: [ requestTimer(), requestLogger(), authenticate ] },
+    { preHandler: [ authenticate ] },
     async (request, reply) => {
       try {
         const { tenantId } = request.params;
@@ -226,7 +226,7 @@ export async function registerTenantRoutes(fastify) {
 
   // 获取租户统计信息（需要认证，且用户必须属于该租户）
   fastify.get(TENANT_ROUTES.TENANT.STATS, 
-    { preHandler: [ requestTimer(), requestLogger(), authenticate ] },
+    { preHandler: [ authenticate ] },
     async (request, reply) => {
       try {
         const { tenantId } = request.params;
@@ -266,7 +266,7 @@ export async function registerTenantRoutes(fastify) {
 
   // 添加用户到租户（需要认证，且用户必须是OWNER或ADMIN）
   fastify.post(TENANT_ROUTES.TENANT.ADD_USER, 
-    { preHandler: [ requestTimer(), requestLogger(), authenticate ] },
+    { preHandler: [ authenticate ] },
     async (request, reply) => {
       try {
         const { tenantId } = request.params;
@@ -309,7 +309,7 @@ export async function registerTenantRoutes(fastify) {
 
   // 从租户移除用户（需要认证，且用户必须是OWNER或ADMIN）
   fastify.delete(TENANT_ROUTES.TENANT.REMOVE_USER, 
-    { preHandler: [ requestTimer(), requestLogger(), authenticate ] },
+    { preHandler: [ authenticate ] },
     async (request, reply) => {
       try {
         const { tenantId, userId: targetUserId } = request.params;
@@ -369,7 +369,7 @@ export async function registerTenantRoutes(fastify) {
 
   // 更新用户在租户中的角色（需要认证，且用户必须是OWNER）
   fastify.put(TENANT_ROUTES.TENANT.UPDATE_USER_ROLE, 
-    { preHandler: [ requestTimer(), requestLogger(), authenticate ] },
+    { preHandler: [ authenticate ] },
     async (request, reply) => {
       try {
         const { tenantId, userId: targetUserId } = request.params;

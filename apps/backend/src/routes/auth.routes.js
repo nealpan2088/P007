@@ -2,7 +2,9 @@
 // 用户注册、登录、验证、密码管理等
 
 import authService from '../services/auth.service.js'
-import routes from '../config/routes.js'
+import { PUBLIC_ROUTES } from '../config/routes.js'
+
+const AUTH = PUBLIC_ROUTES.AUTH_RELATIVE
 
 // 认证路由处理器
 export const authHandlers = {
@@ -10,7 +12,7 @@ export const authHandlers = {
   register: async (request, reply) => {
     try {
       const { email, password, username, fullName, phone } = request.body
-      
+
       // 验证请求数据
       if (!email || !password) {
         return reply.code(400).send({
@@ -19,7 +21,7 @@ export const authHandlers = {
           code: 'VALIDATION_ERROR',
         })
       }
-      
+
       // 调用注册服务
       const result = await authService.userService.register({
         email,
@@ -28,7 +30,7 @@ export const authHandlers = {
         fullName,
         phone,
       })
-      
+
       if (!result.success) {
         return reply.code(400).send({
           error: 'Registration Failed',
@@ -36,7 +38,7 @@ export const authHandlers = {
           code: 'REGISTRATION_FAILED',
         })
       }
-      
+
       return reply.code(201).send({
         success: true,
         message: result.message,
@@ -51,12 +53,12 @@ export const authHandlers = {
       })
     }
   },
-  
+
   // 用户登录
   login: async (request, reply) => {
     try {
       const { email, password } = request.body
-      
+
       // 验证请求数据
       if (!email || !password) {
         return reply.code(400).send({
@@ -65,7 +67,7 @@ export const authHandlers = {
           code: 'VALIDATION_ERROR',
         })
       }
-      
+
       // 获取请求信息
       const requestInfo = {
         userAgent: request.headers['user-agent'],
@@ -73,13 +75,13 @@ export const authHandlers = {
         deviceType: request.headers['device-type'] || 'web',
         deviceId: request.headers['device-id'],
       }
-      
+
       // 调用登录服务
       const result = await authService.userService.login(
         { email, password },
         requestInfo
       )
-      
+
       if (!result.success) {
         return reply.code(401).send({
           error: 'Authentication Failed',
@@ -87,7 +89,7 @@ export const authHandlers = {
           code: 'AUTHENTICATION_FAILED',
         })
       }
-      
+
       return reply.send({
         success: true,
         user: result.user,
@@ -103,12 +105,12 @@ export const authHandlers = {
       })
     }
   },
-  
+
   // 刷新Token
   refreshToken: async (request, reply) => {
     try {
       const { refreshToken } = request.body
-      
+
       if (!refreshToken) {
         return reply.code(400).send({
           error: 'Bad Request',
@@ -116,7 +118,7 @@ export const authHandlers = {
           code: 'VALIDATION_ERROR',
         })
       }
-      
+
       // 获取请求信息
       const requestInfo = {
         userAgent: request.headers['user-agent'],
@@ -124,10 +126,10 @@ export const authHandlers = {
         deviceType: request.headers['device-type'] || 'web',
         deviceId: request.headers['device-id'],
       }
-      
+
       // 调用刷新Token服务
       const result = await authService.userService.refreshToken(refreshToken, requestInfo)
-      
+
       if (!result.success) {
         return reply.code(401).send({
           error: 'Token Refresh Failed',
@@ -135,7 +137,7 @@ export const authHandlers = {
           code: 'TOKEN_REFRESH_FAILED',
         })
       }
-      
+
       return reply.send({
         success: true,
         tokens: result.tokens,
@@ -150,13 +152,13 @@ export const authHandlers = {
       })
     }
   },
-  
+
   // 用户注销
   logout: async (request, reply) => {
     try {
       const { sessionId } = request.body
       const userId = request.user?.id
-      
+
       if (!sessionId || !userId) {
         return reply.code(400).send({
           error: 'Bad Request',
@@ -164,10 +166,10 @@ export const authHandlers = {
           code: 'VALIDATION_ERROR',
         })
       }
-      
+
       // 调用注销服务
       const result = await authService.userService.logout(sessionId, userId)
-      
+
       if (!result.success) {
         return reply.code(400).send({
           error: 'Logout Failed',
@@ -175,7 +177,7 @@ export const authHandlers = {
           code: 'LOGOUT_FAILED',
         })
       }
-      
+
       return reply.send({
         success: true,
         message: result.message,
@@ -189,12 +191,12 @@ export const authHandlers = {
       })
     }
   },
-  
+
   // 验证邮箱
   verifyEmail: async (request, reply) => {
     try {
       const { token } = request.params
-      
+
       if (!token) {
         return reply.code(400).send({
           error: 'Bad Request',
@@ -202,10 +204,10 @@ export const authHandlers = {
           code: 'VALIDATION_ERROR',
         })
       }
-      
+
       // 调用邮箱验证服务
       const result = await authService.userService.verifyEmail(token)
-      
+
       if (!result.success) {
         return reply.code(400).send({
           error: 'Email Verification Failed',
@@ -213,7 +215,7 @@ export const authHandlers = {
           code: 'EMAIL_VERIFICATION_FAILED',
         })
       }
-      
+
       return reply.send({
         success: true,
         message: result.message,
@@ -227,12 +229,12 @@ export const authHandlers = {
       })
     }
   },
-  
+
   // 请求密码重置
   requestPasswordReset: async (request, reply) => {
     try {
       const { email } = request.body
-      
+
       if (!email) {
         return reply.code(400).send({
           error: 'Bad Request',
@@ -240,10 +242,10 @@ export const authHandlers = {
           code: 'VALIDATION_ERROR',
         })
       }
-      
+
       // 调用密码重置请求服务
       const result = await authService.userService.requestPasswordReset(email)
-      
+
       return reply.send({
         success: true,
         message: result.message,
@@ -258,12 +260,12 @@ export const authHandlers = {
       })
     }
   },
-  
+
   // 重置密码
   resetPassword: async (request, reply) => {
     try {
       const { token, newPassword } = request.body
-      
+
       if (!token || !newPassword) {
         return reply.code(400).send({
           error: 'Bad Request',
@@ -271,10 +273,10 @@ export const authHandlers = {
           code: 'VALIDATION_ERROR',
         })
       }
-      
+
       // 调用密码重置服务
       const result = await authService.userService.resetPassword(token, newPassword)
-      
+
       if (!result.success) {
         return reply.code(400).send({
           error: 'Password Reset Failed',
@@ -282,7 +284,7 @@ export const authHandlers = {
           code: 'PASSWORD_RESET_FAILED',
         })
       }
-      
+
       return reply.send({
         success: true,
         message: result.message,
@@ -296,12 +298,12 @@ export const authHandlers = {
       })
     }
   },
-  
+
   // 获取用户信息
   getProfile: async (request, reply) => {
     try {
       const userId = request.user?.id
-      
+
       if (!userId) {
         return reply.code(401).send({
           error: 'Unauthorized',
@@ -309,10 +311,10 @@ export const authHandlers = {
           code: 'UNAUTHORIZED',
         })
       }
-      
+
       // 调用获取用户信息服务
       const result = await authService.userService.getUserProfile(userId)
-      
+
       if (!result.success) {
         return reply.code(404).send({
           error: 'User Not Found',
@@ -320,7 +322,7 @@ export const authHandlers = {
           code: 'USER_NOT_FOUND',
         })
       }
-      
+
       return reply.send({
         success: true,
         user: result.user,
@@ -334,13 +336,13 @@ export const authHandlers = {
       })
     }
   },
-  
+
   // 更新用户信息
   updateProfile: async (request, reply) => {
     try {
       const userId = request.user?.id
       const updates = request.body
-      
+
       if (!userId) {
         return reply.code(401).send({
           error: 'Unauthorized',
@@ -348,10 +350,10 @@ export const authHandlers = {
           code: 'UNAUTHORIZED',
         })
       }
-      
+
       // 调用更新用户信息服务
       const result = await authService.userService.updateUserProfile(userId, updates)
-      
+
       if (!result.success) {
         return reply.code(400).send({
           error: 'Profile Update Failed',
@@ -359,7 +361,7 @@ export const authHandlers = {
           code: 'PROFILE_UPDATE_FAILED',
         })
       }
-      
+
       return reply.send({
         success: true,
         user: result.user,
@@ -373,13 +375,13 @@ export const authHandlers = {
       })
     }
   },
-  
+
   // 更改密码
   changePassword: async (request, reply) => {
     try {
       const userId = request.user?.id
       const { currentPassword, newPassword } = request.body
-      
+
       if (!userId) {
         return reply.code(401).send({
           error: 'Unauthorized',
@@ -387,7 +389,7 @@ export const authHandlers = {
           code: 'UNAUTHORIZED',
         })
       }
-      
+
       if (!currentPassword || !newPassword) {
         return reply.code(400).send({
           error: 'Bad Request',
@@ -395,14 +397,14 @@ export const authHandlers = {
           code: 'VALIDATION_ERROR',
         })
       }
-      
+
       // 调用更改密码服务
       const result = await authService.userService.changePassword(
         userId,
         currentPassword,
         newPassword
       )
-      
+
       if (!result.success) {
         return reply.code(400).send({
           error: 'Password Change Failed',
@@ -410,7 +412,7 @@ export const authHandlers = {
           code: 'PASSWORD_CHANGE_FAILED',
         })
       }
-      
+
       return reply.send({
         success: true,
         message: result.message,
@@ -424,12 +426,12 @@ export const authHandlers = {
       })
     }
   },
-  
+
   // 获取用户会话
   getSessions: async (request, reply) => {
     try {
       const userId = request.user?.id
-      
+
       if (!userId) {
         return reply.code(401).send({
           error: 'Unauthorized',
@@ -437,10 +439,10 @@ export const authHandlers = {
           code: 'UNAUTHORIZED',
         })
       }
-      
+
       // 调用获取用户会话服务
       const result = await authService.userService.getUserSessions(userId)
-      
+
       if (!result.success) {
         return reply.code(400).send({
           error: 'Get Sessions Failed',
@@ -448,7 +450,7 @@ export const authHandlers = {
           code: 'GET_SESSIONS_FAILED',
         })
       }
-      
+
       return reply.send({
         success: true,
         sessions: result.sessions,
@@ -462,13 +464,13 @@ export const authHandlers = {
       })
     }
   },
-  
+
   // 撤销会话
   revokeSession: async (request, reply) => {
     try {
       const userId = request.user?.id
       const { sessionId } = request.body
-      
+
       if (!userId) {
         return reply.code(401).send({
           error: 'Unauthorized',
@@ -476,7 +478,7 @@ export const authHandlers = {
           code: 'UNAUTHORIZED',
         })
       }
-      
+
       if (!sessionId) {
         return reply.code(400).send({
           error: 'Bad Request',
@@ -484,10 +486,10 @@ export const authHandlers = {
           code: 'VALIDATION_ERROR',
         })
       }
-      
+
       // 调用撤销会话服务
       const result = await authService.userService.revokeSession(userId, sessionId)
-      
+
       if (!result.success) {
         return reply.code(400).send({
           error: 'Revoke Session Failed',
@@ -495,7 +497,7 @@ export const authHandlers = {
           code: 'REVOKE_SESSION_FAILED',
         })
       }
-      
+
       return reply.send({
         success: true,
         message: result.message,
@@ -509,7 +511,7 @@ export const authHandlers = {
       })
     }
   },
-  
+
   // 健康检查
   healthCheck: async (request, reply) => {
     try {
@@ -532,54 +534,52 @@ export const authHandlers = {
 
 // 注册认证路由
 export const registerAuthRoutes = (fastify) => {
-  // 路由相对路径（由 index.js 的 prefix 拼接）
-  
   // 公共路由（无需认证）
-  fastify.post('/register', authHandlers.register)
-  fastify.post('/login', authHandlers.login)
-  fastify.post('/refresh-token', authHandlers.refreshToken)
-  fastify.get('/verify-email/:token', authHandlers.verifyEmail)
-  fastify.post('/request-password-reset', authHandlers.requestPasswordReset)
-  fastify.post('/reset-password', authHandlers.resetPassword)
-  fastify.get('/health', authHandlers.healthCheck)
-  
+  fastify.post(AUTH.REGISTER, authHandlers.register)
+  fastify.post(AUTH.LOGIN, authHandlers.login)
+  fastify.post(AUTH.REFRESH_TOKEN, authHandlers.refreshToken)
+  fastify.get(AUTH.VERIFY_EMAIL, authHandlers.verifyEmail)
+  fastify.post(AUTH.FORGOT_PASSWORD, authHandlers.requestPasswordReset)
+  fastify.post(AUTH.RESET_PASSWORD, authHandlers.resetPassword)
+  fastify.get(AUTH.HEALTH, authHandlers.healthCheck)
+
   // 受保护路由（需要认证）
   fastify.post(
-    '/logout',
+    AUTH.LOGOUT,
     { preHandler: authService.authMiddleware.verifyToken },
     authHandlers.logout
   )
-  
+
   fastify.get(
-    '/profile',
+    AUTH.PROFILE,
     { preHandler: authService.authMiddleware.verifyToken },
     authHandlers.getProfile
   )
-  
+
   fastify.put(
-    '/profile',
+    AUTH.PROFILE,
     { preHandler: authService.authMiddleware.verifyToken },
     authHandlers.updateProfile
   )
-  
+
   fastify.post(
-    '/change-password',
+    AUTH.CHANGE_PASSWORD,
     { preHandler: authService.authMiddleware.verifyToken },
     authHandlers.changePassword
   )
-  
+
   fastify.get(
-    '/sessions',
+    AUTH.SESSIONS,
     { preHandler: authService.authMiddleware.verifyToken },
     authHandlers.getSessions
   )
-  
+
   fastify.post(
-    '/revoke-session',
+    AUTH.REVOKE_SESSION,
     { preHandler: authService.authMiddleware.verifyToken },
     authHandlers.revokeSession
   )
-  
+
   console.log('✅ 认证路由注册完成')
 }
 

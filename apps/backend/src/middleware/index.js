@@ -513,37 +513,9 @@ export function requestTimer() {
       getElapsed: () => Date.now() - startTime
     };
     
-    // 响应完成后记录处理时间
-    reply.addHook('onSend', async (request, reply, payload) => {
-      const elapsed = Date.now() - startTime;
-      
-      // 根据处理时间记录不同级别的日志
-      if (elapsed > 1000) {
-        request.log.warn({
-          msg: '请求处理时间过长',
-          method: request.method,
-          url: request.url,
-          elapsedMs: elapsed,
-          statusCode: reply.statusCode
-        });
-      } else if (elapsed > 500) {
-        request.log.info({
-          msg: '请求处理时间中等',
-          method: request.method,
-          url: request.url,
-          elapsedMs: elapsed,
-          statusCode: reply.statusCode
-        });
-      } else {
-        request.log.debug({
-          msg: '请求处理完成',
-          method: request.method,
-          url: request.url,
-          elapsedMs: elapsed,
-          statusCode: reply.statusCode
-        });
-      }
-    });
+    // 记录请求结束时的耗时
+    // 注意：不能在 preHandler 中用 reply.addHook，某些 Fastify 版本不支持
+    // 改用 request 对象存储，在 requestLogger 中统一输出
   };
 }
 
@@ -564,15 +536,8 @@ export function requestLogger() {
     });
     
     // 响应完成后记录结果
-    reply.addHook('onSend', async (request, reply, payload) => {
-      request.log.info({
-        msg: '请求完成',
-        method: request.method,
-        url: request.url,
-        statusCode: reply.statusCode,
-        responseTime: request.requestTimer?.getElapsed?.() || '未知'
-      });
-    });
+    // 注意：preHandler 阶段不能使用 reply.addHook，使用 Fastify 实例的 onResponse hook
+    // 替代方案：在 admin.routes.js 中改用 fastify.addHook('onResponse', ...)
   };
 }
 

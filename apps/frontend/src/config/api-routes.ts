@@ -76,6 +76,7 @@ export const TENANT_API_ROUTES = {
     CATEGORY_REORDER: '/api/store/stores/:storeId/menu/categories/reorder',
     // 菜品
     ITEMS: '/api/store/stores/:storeId/menu/items',
+    BATCH_CREATE: '/api/admin/menu-templates/batch-create',
     ITEM_DETAIL: '/api/store/stores/:storeId/menu/items/:itemId',
     ITEM_AVAILABILITY: '/api/store/stores/:storeId/menu/items/:itemId/availability',
   },
@@ -207,6 +208,7 @@ export const API_ENDPOINTS = {
   MENU_TEMPLATES: {
     CATEGORIES: getApiUrl('/api/admin/menu-templates/categories'),
     ITEMS: getApiUrl('/api/admin/menu-templates/items'),
+    BATCH_CREATE: getApiUrl('/api/admin/menu-templates/batch-create'),
     ITEM: getApiUrl('/api/admin/menu-templates/items/:id'),
     IMPORT: getApiUrl('/api/admin/menu-templates/import'),
   },

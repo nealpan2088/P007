@@ -88,6 +88,56 @@ export default async function menuTemplateRoutes(fastify) {
     }
   });
 
+  // 批量创建素材菜品（从 CSV 导入）
+  fastify.post(MENU_TPL.BATCH_CREATE, async (request, reply) => {
+    try {
+      const { items } = request.body;
+      if (!Array.isArray(items) || items.length === 0) {
+        return reply.code(400).send({ success: false, error: '菜品列表为空' });
+      }
+      if (items.length > 200) {
+        return reply.code(400).send({ success: false, error: '单次最多导入 200 条' });
+      }
+
+      let created = 0, skipped = 0, errors = [];
+      for (const item of items) {
+        const { name, categoryName, price, description, imageUrl, tags } = item;
+        if (!name || !categoryName || price === undefined) {
+          errors.push(`跳过: "${name || '无名'}" - 缺少必填字段`);
+          continue;
+        }
+
+        const existing = await prisma.menuTemplate.findFirst({
+          where: { name, categoryName },
+        });
+        if (existing) {
+          skipped++;
+          continue;
+        }
+
+        await prisma.menuTemplate.create({
+          data: {
+            name,
+            categoryName,
+            description: description || null,
+            price: parseFloat(price),
+            imageUrl: imageUrl || null,
+            tags: tags ? (Array.isArray(tags) ? JSON.stringify(tags) : tags) : null,
+            sortOrder: 0,
+            isActive: true,
+            createdById: request.user.id,
+          },
+        });
+        created++;
+      }
+
+      return { success: true, data: { created, skipped, errors: errors.length > 0 ? errors : undefined } };
+    } catch (error) {
+      request.log.error({ msg: '批量创建素材菜品失败', error: error.message });
+      return reply.code(500).send({ success: false, error: '批量创建失败: ' + error.message });
+    }
+  });
+
   // 更新素材菜品
   fastify.put(MENU_TPL.ITEM, async (request, reply) => {
     try {

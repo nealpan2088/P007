@@ -333,6 +333,7 @@ export const ADMIN_ROUTES = {
   MENU_TEMPLATES: {
     CATEGORIES: '/menu-templates/categories',
     ITEMS: '/menu-templates/items',
+    BATCH_CREATE: '/menu-templates/batch-create',
     ITEM: '/menu-templates/items/:id',
     IMPORT: '/menu-templates/import',
   },

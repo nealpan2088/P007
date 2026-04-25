@@ -5,7 +5,7 @@
  */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Table, Button, Modal, Form, Input, InputNumber, Select, Tag, Space, message, Popconfirm, Upload } from 'antd';
-import { PlusOutlined, ImportOutlined, SearchOutlined, UploadOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, ImportOutlined, SearchOutlined, UploadOutlined, DeleteOutlined, FileAddOutlined } from '@ant-design/icons';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/api-client';
 import { API_ENDPOINTS } from '../../config/api-routes';
 import { getFoodImageUrl, validateImageFile, DEFAULT_FOOD_IMAGE } from '../../utils/image.utils';
@@ -171,6 +171,87 @@ export default function FoodTemplateLibrary() {
   };
 
   // 导入
+  const csvFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleBatchCsvImport = () => {
+    csvFileInputRef.current?.click();
+  };
+
+  const handleCsvFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const csv = evt.target?.result as string;
+      const lines = csv.split('\n').map(l => l.trim()).filter(l => l);
+      if (lines.length < 2) {
+        message.error('CSV 文件为空或格式不正确');
+        return;
+      }
+
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      const nameIdx = headers.indexOf('name');
+      const priceIdx = headers.indexOf('price');
+      const catIdx = headers.indexOf('categoryname') > -1 ? headers.indexOf('categoryname') : headers.indexOf('category');
+      if (nameIdx === -1 || priceIdx === -1 || catIdx === -1) {
+        message.error('CSV 格式错误，需要包含 name, price, categoryName 列');
+        return;
+      }
+
+      const items: any[] = [];
+      const parseErrors: string[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const vals = lines[i].split(',').map(v => v.trim());
+        const name = vals[nameIdx];
+        const price = parseFloat(vals[priceIdx]);
+        const categoryName = vals[catIdx];
+        if (!name || isNaN(price) || !categoryName) {
+          parseErrors.push(`第 ${i + 1} 行: 缺少必填字段`);
+          continue;
+        }
+        items.push({
+          name,
+          price,
+          categoryName,
+          description: headers.includes('description') ? vals[headers.indexOf('description')] : undefined,
+          imageUrl: headers.includes('imageurl') ? vals[headers.indexOf('imageurl')] : undefined,
+          tags: headers.includes('tags') ? vals[headers.indexOf('tags')] : undefined,
+        });
+      }
+
+      if (items.length === 0) {
+        message.error('没有有效的菜品数据');
+        return;
+      }
+
+      Modal.confirm({
+        title: '确认批量导入',
+        content: `共读取 ${lines.length - 1} 行，有效数据 ${items.length} 条${parseErrors.length ? `，${parseErrors.length} 行跳过` : ''}。确定导入？`,
+        onOk: async () => {
+          try {
+            const json = await apiPost(API_ENDPOINTS.MENU_TEMPLATES.BATCH_CREATE, { items });
+            if (json.success) {
+              const { created, skipped, errors } = json.data;
+              let msg = `✅ 导入完成：新增 ${created} 个`;
+              if (skipped) msg += `，跳过 ${skipped} 个（已存在）`;
+              if (errors?.length) msg += `，${errors.length} 个错误`;
+              message.success(msg);
+              loadItems();
+              loadCategories();
+            } else {
+              message.error(json.error || '批量导入失败');
+            }
+          } catch (err: any) {
+            message.error('批量导入失败: ' + (err.message || ''));
+          }
+        },
+      });
+    };
+    reader.readAsText(file);
+  };
+
   const openImportModal = async () => {
     try {
       const json = await apiGet(API_ENDPOINTS.STORES_SELECT + '?limit=20');
@@ -265,6 +346,9 @@ export default function FoodTemplateLibrary() {
         <Space>
           <Button icon={<ImportOutlined />} onClick={openImportModal}>
             导入到店铺
+          </Button>
+          <Button icon={<FileAddOutlined />} onClick={handleBatchCsvImport}>
+            批量导入 CSV
           </Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={() => openEditModal()}>
             新增菜品
@@ -433,6 +517,15 @@ export default function FoodTemplateLibrary() {
           如果店铺已有同名菜品则会跳过。
         </p>
       </Modal>
+
+      {/* 隐藏的 CSV 文件选择器 */}
+      <input
+        ref={csvFileInputRef}
+        type="file"
+        accept=".csv,.txt"
+        style={{ display: 'none' }}
+        onChange={handleCsvFileChange}
+      />
     </div>
   );
 }

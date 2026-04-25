@@ -211,6 +211,9 @@ function ThemeEditorModal({ store, onClose, onSaved }: {
 }) {
   const [themeColor, setThemeColor] = useState(store?.themeColor || '#ff6b35');
   const [customColor, setCustomColor] = useState('');
+  const [logoUrl, setLogoUrl] = useState(store?.logoUrl || '');
+  const [logoPreview, setLogoPreview] = useState(store?.logoUrl || '');
+  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -218,9 +221,37 @@ function ThemeEditorModal({ store, onClose, onSaved }: {
     if (store) {
       setThemeColor(store.themeColor || '#ff6b35');
       setCustomColor('');
+      setLogoUrl(store.logoUrl || '');
+      setLogoPreview(store.logoUrl || '');
       setMessage('');
     }
   }, [store]);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // 本地预览
+    setLogoPreview(URL.createObjectURL(file));
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload/store-logo', { method: 'POST', body: formData });
+      const json = await res.json();
+      if (json.success) {
+        setLogoUrl(json.data.url);
+        setMessage('✅ Logo 上传成功，请点击保存');
+      } else {
+        setMessage('❌ 上传失败: ' + (json.error || ''));
+        setLogoPreview(store?.logoUrl || '');
+      }
+    } catch (err: any) {
+      setMessage('❌ 上传失败: ' + err.message);
+      setLogoPreview(store?.logoUrl || '');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (!store) return null;
 
@@ -231,7 +262,7 @@ function ThemeEditorModal({ store, onClose, onSaved }: {
       const res = await fetch(`/api/admin/stores/${store.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ themeColor, logoUrl: store.logoUrl }),
+        body: JSON.stringify({ themeColor, logoUrl: logoUrl }),
       });
       const json = await res.json();
       if (json.success || res.ok) {
@@ -304,6 +335,33 @@ function ThemeEditorModal({ store, onClose, onSaved }: {
               />
             </div>
             <p className="text-xs text-gray-400 mt-1">输入 Hex 色值或使用颜色选择器</p>
+          </div>
+
+          {/* Logo 上传 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">店铺 Logo</label>
+            <div className="flex items-center gap-4">
+              {/* Logo 预览 */}
+              <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 flex-shrink-0">
+                {logoPreview ? (
+                  <img src={logoPreview} alt="Logo 预览" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-2xl">🏪</span>
+                )}
+              </div>
+              <div className="flex-1">
+                <label className="inline-block px-4 py-2 text-sm text-purple-600 border border-purple-300 rounded-lg cursor-pointer hover:bg-purple-50 transition-colors">
+                  {uploading ? '上传中...' : '选择图片'}
+                  <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" disabled={uploading} />
+                </label>
+                <p className="text-xs text-gray-400 mt-1">支持 JPG/PNG/GIF/WebP，最大 5MB</p>
+                {logoUrl && (
+                  <button onClick={() => { setLogoUrl(''); setLogoPreview(''); }} className="text-xs text-red-500 mt-1 hover:underline">
+                    清除 Logo
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
           {message && (

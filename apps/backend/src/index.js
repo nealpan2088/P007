@@ -199,7 +199,8 @@ fastify.register(multipart, {
 // 创建上传目录
 const UPLOAD_BASE = path.join(__dirname, '../../uploads');
 const FOOD_DIR = path.join(UPLOAD_BASE, 'food');
-for (const dir of [UPLOAD_BASE, FOOD_DIR]) {
+const LOGO_DIR = path.join(UPLOAD_BASE, 'logos');
+for (const dir of [UPLOAD_BASE, FOOD_DIR, LOGO_DIR]) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
 
@@ -252,6 +253,54 @@ fastify.post(UPLOAD_ROUTES.FOOD_IMAGE, async (request, reply) => {
   } catch (error) {
     request.log.error({ msg: '图片上传失败', error: error.message });
     return reply.code(500).send({ success: false, error: '图片上传失败: ' + error.message });
+  }
+});
+
+// 店铺 Logo 上传接口
+fastify.post(UPLOAD_ROUTES.STORE_LOGO, async (request, reply) => {
+  try {
+    const data = await request.file();
+    if (!data) {
+      return reply.code(400).send({ success: false, error: '请选择要上传的图片' });
+    }
+
+    // 校验 MIME 类型
+    if (!ALLOWED_TYPES.includes(data.mimetype)) {
+      return reply.code(400).send({
+        success: false,
+        error: `不支持的图片格式: ${data.mimetype}。支持: JPG, PNG, GIF, WebP`,
+      });
+    }
+
+    // 读取文件流
+    const chunks = [];
+    for await (const chunk of data.file) {
+      chunks.push(chunk);
+    }
+    const buffer = Buffer.concat(chunks);
+
+    // 校验文件大小（Logo 放宽到 5MB）
+    if (buffer.length > 5 * 1024 * 1024) {
+      return reply.code(400).send({
+        success: false,
+        error: 'Logo 图片大小不能超过 5MB',
+      });
+    }
+
+    // 生成唯一文件名
+    const hash = crypto.createHash('md5').update(buffer).digest('hex').slice(0, 8);
+    const ext = path.extname(data.filename).toLowerCase() || '.png';
+    const safeName = `logo_${Date.now()}_${hash}${ext}`;
+    const filePath = path.join(LOGO_DIR, safeName);
+
+    // 写入文件
+    fs.writeFileSync(filePath, buffer);
+
+    const url = `/uploads/logos/${safeName}`;
+    return { success: true, data: { url, filename: safeName, size: buffer.length } };
+  } catch (error) {
+    request.log.error({ msg: 'Logo 上传失败', error: error.message });
+    return reply.code(500).send({ success: false, error: 'Logo 上传失败: ' + error.message });
   }
 });
 

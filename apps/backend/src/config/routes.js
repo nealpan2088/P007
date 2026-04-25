@@ -425,6 +425,7 @@ export const STORE_ADMIN_ROUTES = {
 // 上传与文件服务（全局，无前缀）
 export const UPLOAD_ROUTES = {
   FOOD_IMAGE: '/api/upload/food-image',
+  STORE_LOGO: '/api/upload/store-logo',
   DEFAULT_FOOD_IMAGE: '/api/default-food-image',
   STATIC: '/uploads/*',
 };

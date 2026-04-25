@@ -359,7 +359,8 @@ function ThemeEditorModal({ store, onClose, onSaved }: {
                   {uploading ? '上传中...' : '选择图片'}
                   <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" disabled={uploading} />
                 </label>
-                <p className="text-xs text-gray-400 mt-1">支持 JPG/PNG/GIF/WebP，最大 5MB</p>
+                <p className="text-xs text-gray-400 mt-1">支持 JPG/PNG/GIF/WebP，最大 1MB</p>
+                <p className="text-xs text-gray-400">建议使用 1:1 正方形图片，多余部分会被裁剪</p>
                 {logoUrl && (
                   <button onClick={() => { setLogoUrl(''); setLogoPreview(''); }} className="text-xs text-red-500 mt-1 hover:underline">
                     清除 Logo

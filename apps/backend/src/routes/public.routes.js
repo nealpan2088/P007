@@ -35,12 +35,14 @@ function rateLimit(maxRequests, name = '') {
     const key = name ? `ip:${name}:${ip}` : `ip:${ip}`;
     const result = checkRateLimit(key, maxRequests);
     if (!result.allowed) {
-      return reply.code(429).send({
+      reply.code(429).send({
         success: false,
         error: '请求过于频繁，请稍后再试',
         code: 'RATE_LIMITED'
       });
+      return;
     }
+    done();
   };
 }
 

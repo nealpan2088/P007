@@ -4,7 +4,9 @@
 import { PrismaClient } from '@prisma/client';
 import { createError } from '../error.service.js';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  log: ['warn', 'error'],
+});
 
 // 简单菜单缓存 (TTL: 5秒)
 const menuCache = new Map();

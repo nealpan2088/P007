@@ -26,8 +26,8 @@ export function registerAdminRoutes(fastify) {
     const { PrismaClient } = await import('@prisma/client');
     const prisma = new PrismaClient();
     try {
-      const { search, limit = 20 } = request.query as { search?: string; limit?: string };
-      const where: any = { deletedAt: null };
+      const { search, limit = '20' } = request.query;
+      const where = { deletedAt: null };
       if (search) {
         where.OR = [
           { name: { contains: search, mode: 'insensitive' } },
@@ -38,7 +38,7 @@ export function registerAdminRoutes(fastify) {
         select: { id: true, name: true, slug: true },
         where,
         orderBy: { name: 'asc' },
-        take: Math.min(parseInt(limit as string) || 20, 100),
+        take: Math.min(parseInt(limit) || 20, 100),
       });
       return { success: true, data: stores };
     } finally {

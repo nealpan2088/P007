@@ -57,6 +57,7 @@ export interface StoreInfo {
   name: string;
   description?: string;
   logoUrl?: string;
+  themeColor?: string;
   address?: string;
   phone?: string;
   businessHours?: {

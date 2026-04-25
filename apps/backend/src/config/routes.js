@@ -344,6 +344,7 @@ export const ADMIN_ROUTES = {
     LIST: '/stores',
     LIST_WITH_TENANT: '/stores/list',
     STATS: '/stores/stats',
+    UPDATE: '/stores/:storeId',
     HEALTH: '/health',
   },
 

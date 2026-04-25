@@ -207,6 +207,8 @@ async function storeRoutes(fastify) {
           contactPhone: { type: 'string', pattern: '^[0-9+\\-\\s()]{10,20}$' },
           contactEmail: { type: 'string', format: 'email' },
           address: { type: 'string', maxLength: 500 },
+          logoUrl: { type: 'string', maxLength: 500 },
+          themeColor: { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' },
           status: { 
             type: 'string', 
             enum: Object.values(STORE_STATUS)

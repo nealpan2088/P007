@@ -126,6 +126,8 @@ const ScanOrderPage: React.FC = () => {
           cartItemCount={cartItemCount}
           onCartClick={openCart}
           onBack={handleBack}
+          themeColor={storeInfo?.themeColor}
+          logoUrl={storeInfo?.logoUrl}
         />
 
         <div className="container mx-auto px-4 py-8">
@@ -262,6 +264,8 @@ const ScanOrderPage: React.FC = () => {
         cartItemCount={cartItemCount}
         onCartClick={toggleCart}
         onBack={handleBack}
+        themeColor={storeInfo?.themeColor}
+        logoUrl={storeInfo?.logoUrl}
       />
 
       {/* 菜单区域 */}

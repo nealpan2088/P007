@@ -92,6 +92,33 @@ export function registerAdminRoutes(fastify) {
     }
   });
 
+  // 更新店铺（装修设置：主题色、Logo等）
+  fastify.put(STORES.UPDATE, async (request, reply) => {
+    const { PrismaClient } = await import('@prisma/client');
+    const prisma = new PrismaClient();
+    try {
+      const { storeId } = request.params;
+      const { themeColor, logoUrl, name, description, address, contactPhone } = request.body;
+      const updateData = {};
+      if (themeColor !== undefined) updateData.themeColor = themeColor;
+      if (logoUrl !== undefined) updateData.logoUrl = logoUrl;
+      if (name !== undefined) updateData.name = name;
+      if (description !== undefined) updateData.description = description;
+      if (address !== undefined) updateData.address = address;
+      if (contactPhone !== undefined) updateData.contactPhone = contactPhone;
+
+      const store = await prisma.store.update({
+        where: { id: storeId },
+        data: updateData,
+      });
+      return { success: true, data: store };
+    } catch (error) {
+      return reply.code(500).send({ success: false, error: '更新店铺失败: ' + error.message });
+    } finally {
+      await prisma.$disconnect();
+    }
+  });
+
   // ====== 素材库API ======
   fastify.register(menuTemplateRoutes);
 

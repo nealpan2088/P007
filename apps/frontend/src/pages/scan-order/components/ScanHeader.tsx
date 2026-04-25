@@ -8,10 +8,29 @@ interface ScanHeaderProps {
   cartItemCount: number;
   onCartClick: () => void;
   onBack?: () => void;
+  /** 店铺主题色，默认 #ff6b35（美団暖橙） */
+  themeColor?: string;
+  /** 店铺 Logo URL */
+  logoUrl?: string;
 }
 
-// 美团风格暖色渐变
-const BANNER_GRADIENT = 'linear-gradient(135deg, #ff6b35 0%, #f7c948 100%)';
+/**
+ * 根据主题色生成渐变（浅 -> 深）
+ */
+function buildGradient(hex: string): string {
+  return `linear-gradient(135deg, ${hex} 0%, ${adjustColor(hex, -20)} 100%)`;
+}
+
+/**
+ * 简单颜色变暗
+ */
+function adjustColor(hex: string, amount: number): string {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = Math.min(255, Math.max(0, ((num >> 16) & 0xff) + amount));
+  const g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + amount));
+  const b = Math.min(255, Math.max(0, (num & 0xff) + amount));
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+}
 
 const ScanHeader: React.FC<ScanHeaderProps> = ({
   storeName,
@@ -21,15 +40,19 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
   cartItemCount,
   onCartClick,
   onBack,
+  themeColor = '#ff6b35',
+  logoUrl,
 }) => {
+  const bannerGradient = buildGradient(themeColor);
+
   return (
     <div style={{ position: 'relative', marginBottom: 0 }}>
-      {/* 封面图区 — 暖色渐变 */}
+      {/* 封面图区 — 店铺主题色渐变 */}
       <div
         style={{
           position: 'relative',
           height: 160,
-          background: BANNER_GRADIENT,
+          background: bannerGradient,
           overflow: 'hidden',
         }}
       >
@@ -138,8 +161,13 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
               fontSize: 22,
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
               flexShrink: 0,
+              overflow: 'hidden',
             }}>
-              🏪
+              {logoUrl ? (
+                <img src={logoUrl} alt={storeName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                '🏪'
+              )}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <h1 style={{
@@ -170,7 +198,7 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
         borderBottom: '1px solid #f0f0f0',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 13, color: '#ff6b35', fontWeight: 600 }}>🏠 {tableCode}号桌</span>
+          <span style={{ fontSize: 13, color: themeColor, fontWeight: 600 }}>🏠 {tableCode}号桌</span>
           <span style={{ fontSize: 11, color: '#52c41a', background: '#f6ffed', padding: '2px 8px', borderRadius: 10 }}>
             营业中
           </span>

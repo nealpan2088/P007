@@ -14,6 +14,8 @@ interface Store {
   name: string;
   slug: string;
   status: string;
+  themeColor?: string;
+  logoUrl?: string;
   createdAt: string;
   tenant: Tenant;
 }
@@ -26,6 +28,7 @@ export default function AdminStoresPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [editingStore, setEditingStore] = useState<Store | null>(null);
   const pageSize = 15;
   const navigate = useNavigate();
 
@@ -59,6 +62,8 @@ export default function AdminStoresPage() {
 
   const filtered = stores;
   const totalPages = Math.ceil(total / pageSize);
+
+  const openThemeEditor = (store: Store) => setEditingStore(store);
 
   const statusBadge = (status: string) => {
     const colors: Record<string, string> = {
@@ -137,6 +142,12 @@ export default function AdminStoresPage() {
                         >
                           🖨️ 打印机
                         </button>
+                        <button
+                          onClick={() => openThemeEditor(store)}
+                          className="px-3 py-1.5 text-xs bg-purple-50 text-purple-600 border border-purple-200 rounded-md hover:bg-purple-100 transition-colors"
+                        >
+                          🎨 装修
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -167,6 +178,164 @@ export default function AdminStoresPage() {
           </div>
         </div>
       )}
+
+      {/* 装修弹窗 */}
+      <ThemeEditorModal
+        store={editingStore}
+        onClose={() => setEditingStore(null)}
+        onSaved={loadStores}
+      />
     </div>
   );
+}
+
+// ====== 装修弹窗组件 ======
+
+const THEME_COLORS = [
+  '#ff6b35', // 暖橙（美团风格）
+  '#1976d2', // 蓝
+  '#e53935', // 红
+  '#43a047', // 绿
+  '#8e24aa', // 紫
+  '#00acc1', // 青
+  '#f4511e', // 深橙
+  '#3949ab', // 靛蓝
+  '#6d4c41', // 棕
+  '#546e7a', // 蓝灰
+];
+
+function ThemeEditorModal({ store, onClose, onSaved }: {
+  store: Store | null;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [themeColor, setThemeColor] = useState(store?.themeColor || '#ff6b35');
+  const [customColor, setCustomColor] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+
+  React.useEffect(() => {
+    if (store) {
+      setThemeColor(store.themeColor || '#ff6b35');
+      setCustomColor('');
+      setMessage('');
+    }
+  }, [store]);
+
+  if (!store) return null;
+
+  const handleSave = async () => {
+    setSaving(true);
+    setMessage('');
+    try {
+      const res = await fetch(`/api/admin/stores/${store.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ themeColor, logoUrl: store.logoUrl }),
+      });
+      const json = await res.json();
+      if (json.success || res.ok) {
+        setMessage('✅ 保存成功！');
+        setTimeout(onSaved, 800);
+      } else {
+        setMessage('❌ 保存失败: ' + (json.error || json.message || '未知错误'));
+      }
+    } catch (err: any) {
+      setMessage('❌ 网络错误: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-900">🎨 装修设置 — {store.name}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+
+        <div className="px-5 py-4 space-y-5">
+          {/* 主题色预览 */}
+          <div className="h-20 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-inner transition-all"
+            style={{ background: `linear-gradient(135deg, ${themeColor}, ${adjustHex(themeColor, -25)})` }}>
+            主题色预览
+          </div>
+
+          {/* 预设颜色 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">预设颜色</label>
+            <div className="flex flex-wrap gap-2">
+              {THEME_COLORS.map(c => (
+                <button
+                  key={c}
+                  onClick={() => setThemeColor(c)}
+                  className={`w-8 h-8 rounded-full border-2 transition-all ${
+                    themeColor === c ? 'border-gray-900 scale-110' : 'border-transparent hover:scale-105'
+                  }`}
+                  style={{ backgroundColor: c }}
+                  title={c}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* 自定义颜色 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">自定义颜色</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={customColor}
+                onChange={e => {
+                  setCustomColor(e.target.value);
+                  if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) {
+                    setThemeColor(e.target.value);
+                  }
+                }}
+                placeholder="#ff6b35"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-purple-500"
+              />
+              <input
+                type="color"
+                value={themeColor}
+                onChange={e => { setThemeColor(e.target.value); setCustomColor(e.target.value); }}
+                className="w-10 h-10 rounded cursor-pointer border border-gray-300"
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-1">输入 Hex 色值或使用颜色选择器</p>
+          </div>
+
+          {message && (
+            <div className={`text-sm px-3 py-2 rounded-lg ${
+              message.startsWith('✅') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+            }`}>{message}</div>
+          )}
+        </div>
+
+        <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50">
+            取消
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 text-sm text-white rounded-lg"
+            style={{ background: saving ? '#999' : themeColor }}
+          >
+            {saving ? '保存中...' : '保存'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** 简单颜色变暗辅助函数 */
+function adjustHex(hex: string, amount: number): string {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = Math.min(255, Math.max(0, ((num >> 16) & 0xff) + amount));
+  const g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + amount));
+  const b = Math.min(255, Math.max(0, (num & 0xff) + amount));
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
 }

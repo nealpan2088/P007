@@ -1,5 +1,6 @@
 import React from 'react';
 import { MenuItem } from '../types';
+import { getFoodImageUrl } from '../../../utils/image.utils';
 
 interface MenuItemCardProps {
   item: MenuItem;
@@ -85,23 +86,16 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
     >
       {/* 左侧图片 */}
       <div className="w-[88px] h-[88px] shrink-0 relative">
-        {item.imageUrl ? (
-          <>
-            <img
-              src={item.imageUrl}
-              alt={item.name}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-            {item.isAvailable === false && (
-              <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-                <span className="text-white text-xs font-medium bg-gray-800 bg-opacity-70 px-2 py-0.5 rounded">已售罄</span>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${getFoodGradient(item.name)} flex items-center justify-center`}>
-            <span className="text-2xl">{getFoodEmoji(item.name)}</span>
+        <img
+          src={getFoodImageUrl(item.imageUrl)}
+          alt={item.name}
+          className="w-full h-full object-cover"
+          loading="lazy"
+          onError={e => { (e.target as HTMLImageElement).src = getFoodImageUrl(''); }}
+        />
+        {item.isAvailable === false && (
+          <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+            <span className="text-white text-xs font-medium bg-gray-800 bg-opacity-70 px-2 py-0.5 rounded">已售罄</span>
           </div>
         )}
       </div>

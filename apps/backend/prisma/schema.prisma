@@ -215,11 +215,36 @@ model MenuItem {
   
   category        MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   orderItems      OrderItem[]
+
+  // 模板来源标记（可选，仅平台级素材库中有值）
+  templateId      String?
   
   @@unique([categoryId, name])
   @@index([categoryId])
   @@index([isAvailable])
   @@index([isRecommended])
+  @@index([templateId])
+}
+
+// 平台级菜品模板（管理员维护的公共素材库）
+model MenuTemplate {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  categoryName    String   // 对应分类名称（素材库中的分类名）
+  price           Float
+  imageUrl        String?  // 图片URL或上传路径
+  tags            String?  // JSON数组：["推荐","辣","新品"]
+  isActive        Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdById     String   // 创建人
+
+  @@index([categoryName])
+  @@index([name])
+  @@index([isActive])
+  @@index([sortOrder])
 }
 
 // ============================================

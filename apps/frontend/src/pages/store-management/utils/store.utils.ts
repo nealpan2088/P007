@@ -52,7 +52,10 @@ export function getDayOfWeekName(day: number): string {
 /**
  * 格式化营业时间
  */
-export function formatBusinessHours(hours: BusinessHours[]): string {
+export function formatBusinessHours(hours: BusinessHours[] | undefined | null): string {
+  if (!hours || !Array.isArray(hours) || hours.length === 0) {
+    return '未设置营业时间';
+  }
   if (!hours || hours.length === 0) {
     return '未设置营业时间';
   }
@@ -81,7 +84,10 @@ export function formatBusinessHours(hours: BusinessHours[]): string {
 /**
  * 检查店铺当前是否营业
  */
-export function isStoreOpenNow(businessHours: BusinessHours[]): boolean {
+export function isStoreOpenNow(businessHours: BusinessHours[] | undefined | null): boolean {
+  if (!businessHours || !Array.isArray(businessHours) || businessHours.length === 0) {
+    return false;
+  }
   const now = new Date();
   const currentDay = now.getDay(); // 0-6，0表示周日
   const currentTime = now.getHours() * 60 + now.getMinutes(); // 转换为分钟数

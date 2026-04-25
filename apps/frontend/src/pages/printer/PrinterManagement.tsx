@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { Select } from 'antd';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/api-client';
 import { API_ENDPOINTS } from '../../config/api-routes';
 
@@ -81,7 +82,7 @@ export default function PrinterManagement() {
 
   async function fetchStores() {
     try {
-      const json = await apiGet(API_ENDPOINTS.STORES_SELECT);
+      const json = await apiGet(API_ENDPOINTS.STORES_SELECT + '?limit=20');
       if (json.success && Array.isArray(json.data)) {
         setStores(json.data);
       }
@@ -218,18 +219,23 @@ export default function PrinterManagement() {
       {/* 选择店铺 */}
       <div className="bg-white rounded-lg shadow p-4 mb-6">
         <label className="block mb-2 font-medium">选择店铺</label>
-        <select
-          className="w-full md:w-96 border rounded p-2"
-          value={selectedStoreId}
-          onChange={e => setSelectedStoreId(e.target.value)}
-        >
-          <option value="">-- 请选择店铺 --</option>
-          {stores.map(store => (
-            <option key={store.id} value={store.id}>
-              {store.name} ({store.slug})
-            </option>
-          ))}
-        </select>
+        <Select
+          className="w-full md:w-96"
+          placeholder="🔍 搜索并选择店铺..."
+          showSearch
+          allowClear
+          value={selectedStoreId || undefined}
+          onChange={value => setSelectedStoreId(value || '')}
+          filterOption={(input, option) =>
+            (option?.label as string || '').toLowerCase().includes(input.toLowerCase())
+          }
+          options={[
+            ...stores.map(store => ({
+              value: store.id,
+              label: `${store.name} (${store.slug})`,
+            })),
+          ]}
+        />
       </div>
 
       {selectedStoreId && (

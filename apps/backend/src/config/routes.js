@@ -328,6 +328,21 @@ export const ADMIN_ROUTES = {
     STATS: '/stores/stats',
     HEALTH: '/health',
   },
+
+  // 素材库（平台级菜品模板）
+  MENU_TEMPLATES: {
+    CATEGORIES: '/menu-templates/categories',
+    ITEMS: '/menu-templates/items',
+    ITEM: '/menu-templates/items/:id',
+    IMPORT: '/menu-templates/import',
+  },
+};
+
+// 上传与文件服务（全局，无前缀）
+export const UPLOAD_ROUTES = {
+  FOOD_IMAGE: '/api/upload/food-image',
+  DEFAULT_FOOD_IMAGE: '/api/default-food-image',
+  STATIC: '/uploads/*',
 };
 
 // 工具函数

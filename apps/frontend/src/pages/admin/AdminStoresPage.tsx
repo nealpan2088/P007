@@ -23,27 +23,42 @@ export default function AdminStoresPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageSize = 15;
   const navigate = useNavigate();
 
   useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const res = await fetch(API_ENDPOINTS.STORES_LIST);
-        const json = await res.json();
-        setStores(json?.data || []);
-      } catch (err: any) {
-        setError('加载失败: ' + (err.message || ''));
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-  const filtered = stores.filter(s =>
-    !search || s.name.includes(search) || s.tenant?.name?.includes(search) || s.slug.includes(search)
-  );
+  useEffect(() => {
+    loadStores();
+  }, [page, debouncedSearch]);
+
+  async function loadStores() {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(page), limit: String(pageSize) });
+      if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim());
+      const res = await fetch(`${API_ENDPOINTS.STORES_LIST}?${params}`);
+      const json = await res.json();
+      setStores(json?.data || []);
+      setTotal(json?.total || 0);
+    } catch (err: any) {
+      setError('加载失败: ' + (err.message || ''));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const filtered = stores;
+  const totalPages = Math.ceil(total / pageSize);
 
   const statusBadge = (status: string) => {
     const colors: Record<string, string> = {
@@ -132,8 +147,23 @@ export default function AdminStoresPage() {
               </tbody>
             </table>
           </div>
-          <div className="px-4 py-2 bg-gray-50 text-xs text-gray-400 border-t border-gray-200">
-            共 {filtered.length} 家店铺
+          <div className="px-4 py-2 bg-gray-50 text-xs text-gray-400 border-t border-gray-200 flex items-center justify-between">
+            <span>共 {total} 家店铺</span>
+            {totalPages > 1 && (
+              <div className="flex gap-2 items-center">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="px-2 py-1 text-xs border rounded disabled:opacity-40 hover:bg-gray-100"
+                >上一页</button>
+                <span className="text-xs text-gray-500">{page} / {totalPages}</span>
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="px-2 py-1 text-xs border rounded disabled:opacity-40 hover:bg-gray-100"
+                >下一页</button>
+              </div>
+            )}
           </div>
         </div>
       )}

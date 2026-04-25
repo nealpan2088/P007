@@ -194,4 +194,5 @@ apps/backend/node_modules/@prisma/
 
 # Development logs
 /tmp/
-/logs/
+/logs/uploads/
+apps/uploads/

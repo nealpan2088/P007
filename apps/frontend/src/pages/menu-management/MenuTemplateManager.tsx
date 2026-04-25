@@ -110,7 +110,7 @@ export default function MenuTemplateManager() {
     async function loadStores() {
       setStoresLoading(true);
       try {
-        const url = buildUrl(API_ENDPOINTS.STORES_SELECT, {});
+        const url = buildUrl(API_ENDPOINTS.STORES_SELECT, {}) + '?limit=20';
         const res = await fetch(url);
         const json = await res.json();
         const list: Store[] = json?.data || [];

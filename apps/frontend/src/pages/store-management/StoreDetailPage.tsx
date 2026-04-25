@@ -96,7 +96,7 @@ const StoreDetailPage: React.FC = () => {
   if (loading) {
     return (
       <div style={{ padding: 24, textAlign: 'center' }}>
-        <Spin size="large" tip="加载店铺数据中..." />
+        <Spin size="large" description="加载店铺数据中..." />
       </div>
     );
   }
@@ -227,13 +227,12 @@ const StoreDetailPage: React.FC = () => {
           <Card title="营业时间">
             <div>
             </div>
-            <Timeline>
-              {store.businessHours.map((hour, index) => (
-                <Timeline.Item
-                  key={index}
-                  color={hour.isOpen ? 'green' : 'red'}
-                  dot={hour.isOpen ? <ClockCircleOutlined /> : null}
-                >
+            <Timeline
+              items={(store.businessHours || []).map((hour, index) => ({
+                key: index,
+                color: hour.isOpen ? 'green' : 'red',
+                dot: hour.isOpen ? <ClockCircleOutlined /> : null,
+                children: (
                   <Space>
                     <strong>{storeUtils.getDayOfWeekName(hour.dayOfWeek)}:</strong>
                     {hour.isOpen ? (
@@ -242,9 +241,9 @@ const StoreDetailPage: React.FC = () => {
                       <span style={{ color: '#999' }}>休息</span>
                     )}
                   </Space>
-                </Timeline.Item>
-              ))}
-            </Timeline>
+                ),
+              }))}
+            />
             <div style={{ marginTop: 16 }}>
               <p>
                 <strong>营业时间总结:</strong>{' '}
@@ -340,17 +339,14 @@ const StoreDetailPage: React.FC = () => {
             
             <div>
               <h4>店铺状态时间线</h4>
-              <Timeline mode="left">
-                <Timeline.Item color="green">
-                  创建时间: {new Date(store.createdAt).toLocaleDateString()}
-                </Timeline.Item>
-                <Timeline.Item color="blue">
-                  最后更新: {new Date(store.updatedAt).toLocaleDateString()}
-                </Timeline.Item>
-                <Timeline.Item color={isOpenNow ? 'green' : 'red'}>
-                  当前状态: {isOpenNow ? '营业中' : '休息中'}
-                </Timeline.Item>
-              </Timeline>
+              <Timeline
+                mode="start"
+                items={[
+                  { color: 'green', children: `创建时间: ${new Date(store.createdAt).toLocaleDateString()}` },
+                  { color: 'blue', children: `最后更新: ${new Date(store.updatedAt).toLocaleDateString()}` },
+                  { color: isOpenNow ? 'green' : 'red', children: `当前状态: ${isOpenNow ? '营业中' : '休息中'}` },
+                ]}
+              />
             </div>
           </Card>
 
@@ -358,7 +354,7 @@ const StoreDetailPage: React.FC = () => {
           <Card title="快速操作" style={{ marginTop: 24 }}>
             <div>
             </div>
-            <Space direction="vertical" style={{ width: '100%' }}>
+            <Space orientation="vertical" style={{ width: '100%' }}>
               <Button
                 type="primary"
                 block

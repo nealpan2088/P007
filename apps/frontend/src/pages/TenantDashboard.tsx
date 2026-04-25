@@ -20,6 +20,7 @@ import {
   ListItemIcon,
   IconButton,
   Avatar,
+  Switch,
 } from '@mui/material';
 import {
   Store as StoreIcon,
@@ -362,12 +363,30 @@ const TenantDashboard: React.FC = () => {
                     primary={
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <Typography variant="body1">{store.name}</Typography>
-                        <Chip
-                          label={store.status === 'active' ? '营业中' : '已关闭'}
+                        <Switch
                           size="small"
-                          color={getStatusColor(store.status) as any}
+                          checked={store.status?.toLowerCase() === 'active'}
+                          onChange={async () => {
+                            const newStatus = store.status?.toLowerCase() === 'active' ? 'INACTIVE' : 'ACTIVE';
+                            try {
+                              const { apiPut } = await import('../utils/api-client');
+                              const res = await apiPut(
+                                TENANT_API_ROUTES.STORE.UPDATE.replace(':storeId', store.id),
+                                { status: newStatus }
+                              );
+                              if (res.success) {
+                                store.status = newStatus;
+                                _setStores([...stores]);
+                              }
+                            } catch (e: any) {
+                              alert('操作失败: ' + (e.message || ''));
+                            }
+                          }}
                           sx={{ ml: 2 }}
                         />
+                        <Typography variant="caption" color={store.status?.toLowerCase() === 'active' ? 'success.main' : 'text.secondary'} sx={{ ml: 0.5 }}>
+                          {store.status?.toLowerCase() === 'active' ? '营业中' : '已关闭'}
+                        </Typography>
                       </Box>
                     }
                     secondary={

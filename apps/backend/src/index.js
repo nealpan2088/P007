@@ -5,6 +5,7 @@
 // 确保.env文件在任何其他导入之前加载
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -207,6 +208,120 @@ fastify.addHook('onRequest', async (request, reply) => {
 // 认证API路由
 import { registerAuthRoutes } from './routes/auth.routes.js'
 fastify.register(registerAuthRoutes, { prefix: '/api/v1/auth' })
+
+// ==================== 图片上传 ====================
+import multipart from '@fastify/multipart';
+import crypto from 'crypto';
+import { UPLOAD_ROUTES } from './config/routes.js';
+
+fastify.register(multipart, {
+  limits: {
+    fileSize: 2 * 1024 * 1024, // 2MB
+    files: 1,
+  },
+});
+
+// 创建上传目录
+const UPLOAD_BASE = path.join(__dirname, '../../uploads');
+const FOOD_DIR = path.join(UPLOAD_BASE, 'food');
+for (const dir of [UPLOAD_BASE, FOOD_DIR]) {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+}
+
+// 支持的文件格式
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const ALLOWED_EXTS = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+
+// 菜品图片上传接口
+fastify.post(UPLOAD_ROUTES.FOOD_IMAGE, async (request, reply) => {
+  try {
+    const data = await request.file();
+    if (!data) {
+      return reply.code(400).send({ success: false, error: '请选择要上传的图片' });
+    }
+
+    // 校验 MIME 类型
+    if (!ALLOWED_TYPES.includes(data.mimetype)) {
+      return reply.code(400).send({
+        success: false,
+        error: `不支持的图片格式: ${data.mimetype}。支持: JPG, PNG, GIF, WebP`,
+      });
+    }
+
+    // 读取文件流
+    const chunks = [];
+    for await (const chunk of data.file) {
+      chunks.push(chunk);
+    }
+    const buffer = Buffer.concat(chunks);
+
+    // 校验文件大小
+    if (buffer.length > 2 * 1024 * 1024) {
+      return reply.code(400).send({
+        success: false,
+        error: '图片大小不能超过 2MB',
+      });
+    }
+
+    // 生成唯一文件名
+    const hash = crypto.createHash('md5').update(buffer).digest('hex').slice(0, 8);
+    const ext = path.extname(data.filename).toLowerCase() || '.jpg';
+    const safeName = `${Date.now()}_${hash}${ext}`;
+    const filePath = path.join(FOOD_DIR, safeName);
+
+    // 写入文件
+    fs.writeFileSync(filePath, buffer);
+
+    const url = `/uploads/food/${safeName}`;
+    return { success: true, data: { url, filename: safeName, size: buffer.length } };
+  } catch (error) {
+    request.log.error({ msg: '图片上传失败', error: error.message });
+    return reply.code(500).send({ success: false, error: '图片上传失败: ' + error.message });
+  }
+});
+
+// 静态文件服务
+fastify.get(UPLOAD_ROUTES.STATIC, async (request, reply) => {
+  const filePath = path.join(UPLOAD_BASE, request.url.replace('/uploads', ''));
+  try {
+    if (!fs.existsSync(filePath)) {
+      return reply.code(404).send({ success: false, error: '文件不存在' });
+    }
+    const content = fs.readFileSync(filePath);
+    const ext = path.extname(filePath).toLowerCase();
+    const mimeTypes = {
+      '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
+      '.gif': 'image/gif', '.webp': 'image/webp',
+    };
+    reply.header('Content-Type', mimeTypes[ext] || 'application/octet-stream');
+    reply.header('Cache-Control', 'public, max-age=604800'); // 缓存7天
+    return reply.send(content);
+  } catch {
+    return reply.code(404).send({ success: false, error: '文件不存在' });
+  }
+});
+
+// 默认菜品占位图（内嵌 base64 SVG）
+const DEFAULT_FOOD_PLACEHOLDER = 'data:image/svg+xml,' + encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <rect fill="#f3f4f6" width="400" height="400"/>
+  <g transform="translate(140, 140)">
+    <circle cx="60" cy="60" r="60" fill="#d1d5db"/>
+    <path d="M60 80C30 80 0 95 0 140h120c0-45-30-60-60-60z" fill="#9ca3af"/>
+    <line x1="20" y1="100" x2="100" y2="100" stroke="#9ca3af" stroke-width="2" stroke-dasharray="4"/>
+    <line x1="25" y1="110" x2="95" y2="110" stroke="#9ca3af" stroke-width="2" stroke-dasharray="4"/>
+    <line x1="30" y1="120" x2="90" y2="120" stroke="#9ca3af" stroke-width="2" stroke-dasharray="4"/>
+  </g>
+  <text x="200" y="310" text-anchor="middle" fill="#9ca3af" font-size="14" font-family="sans-serif">暂无图片</text>
+</svg>`);
+
+// 获取默认占位图
+fastify.get(UPLOAD_ROUTES.DEFAULT_FOOD_IMAGE, async () => {
+  return {
+    success: true,
+    data: { url: DEFAULT_FOOD_PLACEHOLDER }
+  };
+});
 
 // ==================== 配置端点 ====================
 // 提供路由配置供前端消费，确保前后端路由一致

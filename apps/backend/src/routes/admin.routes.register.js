@@ -2,6 +2,7 @@
 // 店铺管理、租户管理等需要认证的API
 
 import adminRoutes from './admin.routes.js';
+import menuTemplateRoutes from './menu-template.routes.js';
 import PrinterService from '../services/printer/printer.service.js';
 import { authenticate, requireStoreAccess } from '../middleware/index.js';
 
@@ -20,15 +21,24 @@ const printerService = new PrinterService();
 export function registerAdminRoutes(fastify) {
   // ====== 公开接口（无需认证）======
 
-  // 获取店铺列表（供选择使用）- 选择店铺需要先看到列表，公开
+  // 获取店铺列表（供选择使用）
   fastify.get('/stores/select', async (request, reply) => {
     const { PrismaClient } = await import('@prisma/client');
     const prisma = new PrismaClient();
     try {
+      const { search, limit = 20 } = request.query as { search?: string; limit?: string };
+      const where: any = { deletedAt: null };
+      if (search) {
+        where.OR = [
+          { name: { contains: search, mode: 'insensitive' } },
+          { slug: { contains: search, mode: 'insensitive' } },
+        ];
+      }
       const stores = await prisma.store.findMany({
         select: { id: true, name: true, slug: true },
-        where: { deletedAt: null },
+        where,
         orderBy: { name: 'asc' },
+        take: Math.min(parseInt(limit as string) || 20, 100),
       });
       return { success: true, data: stores };
     } finally {
@@ -36,27 +46,52 @@ export function registerAdminRoutes(fastify) {
     }
   });
 
-  // 获取店铺列表（管理后台用，含租户信息）
+  // 获取店铺列表（管理后台用，含租户信息，支持分页与搜索）
   fastify.get('/stores/list', async (request, reply) => {
     const { PrismaClient } = await import('@prisma/client');
     const prisma = new PrismaClient();
     try {
-      const stores = await prisma.store.findMany({
-        select: {
-          id: true, name: true, slug: true, status: true, createdAt: true,
-          tenant: { select: { id: true, name: true, subdomain: true } }
-        },
-        where: { deletedAt: null },
-        orderBy: { createdAt: 'desc' },
-      });
-      return { success: true, data: stores };
+      const { page = '1', limit = '20', search = '' } = request.query;
+      const pageNum = Math.max(1, parseInt(page, 10) || 1);
+      const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+      const skip = (pageNum - 1) * limitNum;
+
+      const where = { deletedAt: null };
+      if (search.trim()) {
+        const q = search.trim();
+        where.OR = [
+          { name: { contains: q, mode: 'insensitive' } },
+          { slug: { contains: q, mode: 'insensitive' } },
+          { tenant: { name: { contains: q, mode: 'insensitive' } } },
+          { tenant: { subdomain: { contains: q, mode: 'insensitive' } } },
+        ];
+      }
+
+      const [stores, total] = await Promise.all([
+        prisma.store.findMany({
+          select: {
+            id: true, name: true, slug: true, status: true, createdAt: true,
+            tenant: { select: { id: true, name: true, subdomain: true } }
+          },
+          where,
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limitNum,
+        }),
+        prisma.store.count({ where }),
+      ]);
+
+      return { success: true, data: stores, total, page: pageNum, limit: limitNum };
     } finally {
       await prisma.$disconnect();
     }
   });
 
+  // ====== 素材库API ======
+  fastify.register(menuTemplateRoutes);
+
   // ====== 打印机API（需要SUPER_ADMIN或TENANT_ADMIN角色）======
-  // 添加 auth/authorize preHandler 到打印机路由分组
+  // 注册打印机路由
   fastify.register(async function printerRoutes(fastify) {
     // 所有打印机路由都需要认证
     fastify.addHook('preHandler', authenticate);

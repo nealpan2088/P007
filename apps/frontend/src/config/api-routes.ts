@@ -171,6 +171,7 @@ export const API_ENDPOINTS = {
       CREATE: getApiUrl(TENANT_API_ROUTES.STORE.CREATE),
       DETAIL: getApiUrl(TENANT_API_ROUTES.STORE.DETAIL),
       CHECK_SLUG: getApiUrl(TENANT_API_ROUTES.STORE.CHECK_SLUG),
+      UPDATE: getApiUrl(TENANT_API_ROUTES.STORE.UPDATE),
     },
   },
   // 菜单管理（新规范）
@@ -196,6 +197,18 @@ export const API_ENDPOINTS = {
   STORES_LIST: getApiUrl('/api/admin/stores/list'),
   UPLOAD: {
     MENU_IMAGE: getApiUrl(TENANT_API_ROUTES.UPLOAD.MENU_IMAGE),
+    FOOD_IMAGE: getApiUrl('/api/upload/food-image'),
+  },
+
+  // 默认占位图
+  DEFAULT_FOOD_IMAGE: getApiUrl('/api/default-food-image'),
+
+  // 菜品素材库
+  MENU_TEMPLATES: {
+    CATEGORIES: getApiUrl('/api/admin/menu-templates/categories'),
+    ITEMS: getApiUrl('/api/admin/menu-templates/items'),
+    ITEM: getApiUrl('/api/admin/menu-templates/items/:id'),
+    IMPORT: getApiUrl('/api/admin/menu-templates/import'),
   },
   utils: {
     buildUrl: buildApiUrl,

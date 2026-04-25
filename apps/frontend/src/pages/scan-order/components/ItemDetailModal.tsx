@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { MenuItem } from '../types';
+import { getFoodImageUrl } from '../../../utils/image.utils';
 
 interface ItemDetailModalProps {
   item: MenuItem | null;
@@ -93,13 +94,12 @@ const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, onClose, onAddT
         <div className="bg-white rounded-t-2xl overflow-hidden shadow-xl max-h-[80vh] flex flex-col">
           {/* 图片 */}
           <div className={`relative h-52 shrink-0 bg-gradient-to-br ${getGradientClass(item.name)}`}>
-            {item.imageUrl ? (
-              <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="text-6xl">{getFoodEmoji(item.name)}</span>
-              </div>
-            )}
+            <img
+              src={getFoodImageUrl(item.imageUrl)}
+              alt={item.name}
+              className="w-full h-full object-cover"
+              onError={e => { (e.target as HTMLImageElement).src = getFoodImageUrl(''); }}
+            />
             <button onClick={onClose} className="absolute top-3 right-3 w-7 h-7 bg-black bg-opacity-40 rounded-full flex items-center justify-center text-white active:scale-90 transition-transform">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

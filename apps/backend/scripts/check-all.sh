@@ -51,12 +51,12 @@ echo "----------------------"
 
 # 1. 检查硬编码
 echo "1. 硬编码检查..."
-check_command "硬编码检查" "../../scripts/check-hardcoded.sh"
+check_command "硬编码检查" "../../scripts/check-hardcoded-simple.sh"
 
 # 2. 检查配置
 echo ""
 echo "2. 配置验证..."
-check_command "配置验证" "node -e \"import('./src/config/dynamic-config.js').then(c => { c.default.validate(); }).catch(e => { console.error(e.message); process.exit(1); })\""
+check_command "配置验证" "node -e \"import('./src/config/index.js').then(c => { c.validate(); }).catch(e => { console.error(e.message); process.exit(1); })\""
 
 # 3. 检查路由
 echo ""

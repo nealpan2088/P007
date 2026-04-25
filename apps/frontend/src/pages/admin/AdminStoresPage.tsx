@@ -349,7 +349,7 @@ function ThemeEditorModal({ store, onClose, onSaved }: {
               {/* Logo 预览 */}
               <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 flex-shrink-0">
                 {logoPreview ? (
-                  <img src={logoPreview} alt="Logo 预览" className="w-full h-full object-cover" />
+                  <img src={logoPreview} alt="Logo 预览" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display='none'; (e.target as HTMLImageElement).parentElement!.innerHTML = '🏪'; }} />
                 ) : (
                   <span className="text-2xl">🏪</span>
                 )}

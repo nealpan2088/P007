@@ -164,7 +164,8 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
               overflow: 'hidden',
             }}>
               {logoUrl ? (
-                <img src={logoUrl} alt={storeName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={logoUrl} alt={storeName} style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={e => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.innerText = '🏪'; }} />
               ) : (
                 '🏪'
               )}

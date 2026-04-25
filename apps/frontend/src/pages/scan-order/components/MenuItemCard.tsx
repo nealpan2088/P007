@@ -1,10 +1,72 @@
 import React from 'react';
 import { MenuItem } from '../types';
+import { getFoodImageUrl } from '../../../utils/image.utils';
 
 interface MenuItemCardProps {
   item: MenuItem;
   onAddToCart: (itemId: string) => void;
   onViewDetails?: (item: MenuItem) => void;
+}
+
+// 菜品名称 → 美食emoji映射
+const foodEmojiMap: Record<string, string> = {
+  '麒麟红烧肉': '🥩', '红烧肉': '🥩', '红烧': '🥩',
+  '清蒸鲈鱼': '🐟', '鲈鱼': '🐟', '鱼': '🐟',
+  '宫保鸡丁': '🍗', '鸡丁': '🍗', '鸡': '🍗',
+  '鱼香肉丝': '🥓', '肉丝': '🥓', '回锅肉': '🥓',
+  '麻婆豆腐': '🫘', '豆腐': '🫘',
+  '糖醋排骨': '🍖', '排骨': '🍖',
+  '干煸四季豆': '🫛', '四季豆': '🫛',
+  '凉拌黄瓜': '🥒', '黄瓜': '🥒',
+  '口水鸡': '🐔', '白切鸡': '🐔',
+  '皮蛋豆腐': '🥚', '皮蛋': '🥚',
+  '米饭': '🍚', '蛋炒饭': '🍚', '炒饭': '🍚',
+  '手工面条': '🍜', '面条': '🍜', '面': '🍜',
+  '可乐': '🥤', '橙汁': '🧃', '啤酒': '🍺', '青岛啤酒': '🍺',
+  '茶': '🍵', '清茶': '🍵',
+  '紫菜蛋花汤': '🥣', '蛋花汤': '🥣',
+  '番茄蛋汤': '🍅', '酸辣汤': '🌶️',
+};
+
+// 菜品名称 → 渐变背景色
+const foodGradientMap: Record<string, string> = {
+  '麒麟红烧肉': 'from-red-400 to-red-600',
+  '红烧肉': 'from-red-400 to-red-600',
+  '清蒸鲈鱼': 'from-blue-300 to-blue-500',
+  '鲈鱼': 'from-blue-300 to-blue-500',
+  '宫保鸡丁': 'from-orange-300 to-red-500',
+  '鱼香肉丝': 'from-rose-300 to-rose-500',
+  '麻婆豆腐': 'from-red-300 to-orange-500',
+  '糖醋排骨': 'from-amber-300 to-amber-600',
+  '干煸四季豆': 'from-green-300 to-green-500',
+  '凉拌黄瓜': 'from-lime-300 to-green-400',
+  '口水鸡': 'from-yellow-300 to-orange-500',
+  '皮蛋豆腐': 'from-gray-200 to-gray-400',
+  '米饭': 'from-white to-gray-200',
+  '蛋炒饭': 'from-yellow-200 to-yellow-500',
+  '手工面条': 'from-yellow-300 to-amber-500',
+  '可乐': 'from-red-400 to-red-600',
+  '橙汁': 'from-orange-200 to-orange-400',
+  '啤酒': 'from-yellow-200 to-yellow-400',
+  '青岛啤酒': 'from-yellow-200 to-yellow-400',
+  '茶': 'from-green-200 to-green-400',
+  '紫菜蛋花汤': 'from-purple-200 to-purple-400',
+  '番茄蛋汤': 'from-red-200 to-red-400',
+  '酸辣汤': 'from-orange-200 to-red-400',
+};
+
+function getFoodEmoji(name: string): string {
+  for (const [key, emoji] of Object.entries(foodEmojiMap)) {
+    if (name.includes(key)) return emoji;
+  }
+  return '🍽️';
+}
+
+function getFoodGradient(name: string): string {
+  for (const [key, grad] of Object.entries(foodGradientMap)) {
+    if (name.includes(key)) return grad;
+  }
+  return 'from-orange-200 to-orange-400';
 }
 
 const MenuItemCard: React.FC<MenuItemCardProps> = ({
@@ -24,25 +86,16 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
     >
       {/* 左侧图片 */}
       <div className="w-[88px] h-[88px] shrink-0 relative">
-        {item.imageUrl ? (
-          <>
-            <img
-              src={item.imageUrl}
-              alt={item.name}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-            {item.isAvailable === false && (
-              <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-                <span className="text-white text-xs font-medium bg-gray-800 bg-opacity-70 px-2 py-0.5 rounded">已售罄</span>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-            <svg className="w-7 h-7 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+        <img
+          src={getFoodImageUrl(item.imageUrl)}
+          alt={item.name}
+          className="w-full h-full object-cover"
+          loading="lazy"
+          onError={e => { (e.target as HTMLImageElement).src = getFoodImageUrl(''); }}
+        />
+        {item.isAvailable === false && (
+          <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+            <span className="text-white text-xs font-medium bg-gray-800 bg-opacity-70 px-2 py-0.5 rounded">已售罄</span>
           </div>
         )}
       </div>

@@ -1,11 +1,13 @@
 {
   "name": "p007-backend",
-  "version": "0.2.5",
+  "version": "0.3.2",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --watch server-optimized.mjs",
-    "start": "node server-optimized.mjs",
+    "dev": "node --watch server-nightwolf.mjs",
+    "start": "node server-nightwolf.mjs",
+    "dev:legacy": "node --watch server-optimized.mjs",
+    "start:legacy": "node server-optimized.mjs",
     "dev:simple": "node server-simple.cjs",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
@@ -23,6 +25,7 @@
   },
   "dependencies": {
     "@fastify/cors": "^11.2.0",
+    "@fastify/multipart": "^10.0.0",
     "@prisma/client": "^5.0.0",
     "bcrypt": "^6.0.0",
     "dotenv": "^16.0.0",

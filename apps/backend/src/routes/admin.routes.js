@@ -3,6 +3,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { authenticate, requestTimer, requestLogger } from '../middleware/index.js';
+import { ADMIN_ROUTES } from '../config/routes.js';
 
 const prisma = new PrismaClient();
 
@@ -19,7 +20,7 @@ async function adminRoutes(fastify) {
   fastify.addHook('preHandler', authenticate);
   
   // 获取店铺列表（需要认证）
-  fastify.get('/stores', {
+  fastify.get(ADMIN_ROUTES.STORES.LIST, {
     schema: {
       querystring: {
         type: 'object',
@@ -102,7 +103,7 @@ async function adminRoutes(fastify) {
   });
   
   // 获取店铺统计信息
-  fastify.get('/stores/stats', async (request, reply) => {
+  fastify.get(ADMIN_ROUTES.STORES.STATS, async (request, reply) => {
     try {
       // 获取各种状态的店铺数量
       const stats = await prisma.store.groupBy({
@@ -141,14 +142,6 @@ async function adminRoutes(fastify) {
     }
   });
   
-  // 健康检查
-  fastify.get('/health', async (request, reply) => {
-    return {
-      status: 'ok',
-      service: 'qilin-admin-api',
-      timestamp: new Date().toISOString()
-    };
-  });
 }
 
 export default adminRoutes;

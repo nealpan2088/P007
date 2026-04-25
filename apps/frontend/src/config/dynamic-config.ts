@@ -1,5 +1,7 @@
 // 麒麟项目前端 - 动态配置管理系统
 // 所有配置通过环境变量管理，禁止硬编码
+// 注意：API端点常量请统一使用 api-routes.ts 中的路由常量
+// 此文件仅保留应用配置和功能开关，不再包含API路径
 
 // 从环境变量加载配置
 const env = import.meta.env;
@@ -24,30 +26,10 @@ export const getAppConfig = () => ({
 });
 
 export const getApiConfig = () => ({
-  // API配置
+  // API配置（路径常量请使用 api-routes.ts）
   baseUrl: env.VITE_API_BASE_URL || '',
   timeout: parseInt(env.VITE_API_TIMEOUT || '30000', 10),
   version: env.VITE_API_VERSION || 'v1',
-  
-  // 端点
-  endpoints: {
-    auth: {
-      register: '/api/v1/auth/register',
-      login: '/api/v1/auth/login',
-      logout: '/api/v1/auth/logout',
-      refreshToken: '/api/v1/auth/refresh-token',
-      profile: '/api/v1/auth/profile',
-    },
-    public: {
-      health: '/api/health',
-      version: '/api/v1/public/version',
-      features: '/api/v1/public/features',
-    },
-    tenant: {
-      checkSubdomain: '/api/v1/tenant/check-subdomain',
-      publicInfo: '/api/v1/tenant/:tenantId/public',
-    },
-  },
 });
 
 export const getFeatureConfig = () => ({

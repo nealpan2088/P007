@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { apiPost } from '../utils/api-client';
 import {
   Container,
   Box,
@@ -33,6 +34,7 @@ import {
   AccessTime as AccessTimeIcon,
 } from '@mui/icons-material';
 import { TENANT_ROUTES } from '../config/routes';
+import { API_ENDPOINTS } from '../config/api-routes';
 
 interface StoreFormData {
   name: string;
@@ -48,6 +50,7 @@ interface StoreFormData {
 
 const CreateStore: React.FC = () => {
   const navigate = useNavigate();
+  const { tenantSlug } = useParams<{ tenantSlug: string }>();
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,14 +93,24 @@ const CreateStore: React.FC = () => {
 
     // 自动生成slug
     if (name === 'name' && value.trim() && !formData.slug) {
-      const generatedSlug = value.trim()
+      // 去掉中文，只保留英文 + 数字，用连字符连接
+      const latinOnly = value.trim()
+        .replace(/[\u4e00-\u9fa5]+/g, '')  // 去掉中文
+        .trim();
+      
+      const generatedSlug = latinOnly
         .toLowerCase()
-        .replace(/[^\w\s]/g, '')
-        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9]+/g, '-')  // 只保留小写字母和数字
         .replace(/-+/g, '-')
         .replace(/^-|-$/g, '');
       
+      // 纯中文名或清理后为空 → 不自动填充，让用户手动输入
       if (generatedSlug.length >= 3) {
+        setFormData(prev => ({
+          ...prev,
+          slug: generatedSlug,
+        }));
+      } else if (generatedSlug.length > 0) {
         setFormData(prev => ({
           ...prev,
           slug: generatedSlug,
@@ -111,6 +124,17 @@ const CreateStore: React.FC = () => {
         ...prev,
         [name]: '',
       }));
+    }
+
+    // 实时校验：联系电话输入时即时检查格式
+    if (name === 'phone' && value.trim()) {
+      const isValid = /^[\d\s\-\+\(\)]{6,20}$/.test(value);
+      if (!isValid && value.length > 1) {
+        setValidationErrors(prev => ({
+          ...prev,
+          phone: '电话格式：6~20位数字、空格、+、-或括号',
+        }));
+      }
     }
   };
 
@@ -185,17 +209,8 @@ const CreateStore: React.FC = () => {
 
   const checkSlugAvailability = async (slug: string): Promise<boolean> => {
     try {
-      const response = await fetch(TENANT_ROUTES.STORES.API.CHECK_SLUG, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('qilin_access_token')}`,
-        },
-        body: JSON.stringify({ slug }),
-      });
-
-      const data = await response.json();
-      return data.success && data.data?.available === true;
+      const res = await apiPost<any>(API_ENDPOINTS.TENANT.STORES.CHECK_SLUG, { slug });
+      return res.success && res.data?.available === true;
     } catch (error) {
       console.error('检查标识符可用性错误:', error);
       return false;
@@ -219,30 +234,21 @@ const CreateStore: React.FC = () => {
       }
 
       // 创建店铺
-      const response = await fetch(TENANT_ROUTES.STORES.API.CREATE, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('qilin_access_token')}`,
-        },
-        body: JSON.stringify({
-          tenant_id: 8,
-          name: formData.name,
-          slug: formData.slug,
-          description: formData.description,
-          address: formData.address,
-          phone: formData.phone,
-          status: formData.status,
-        }),
+      const res = await apiPost<any>(API_ENDPOINTS.TENANT.STORES.CREATE, {
+        name: formData.name,
+        type: 'RESTAURANT',
+        slug: formData.slug,
+        tenantSlug: tenantSlug, // 传递租户标识符
+        description: formData.description,
+        address: formData.address,
+        contactPhone: formData.phone, // 前端用 phone 但后端期望 contactPhone
+        status: formData.status,
       });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || '创建店铺失败');
+      if (!res.success) {
+        throw new Error(res.message || '创建店铺失败');
       }
 
-      setCreatedStore(data.data);
+      setCreatedStore(res.data);
       setSuccess(true);
       setActiveStep(2);
     } catch (err: any) {
@@ -476,7 +482,7 @@ const CreateStore: React.FC = () => {
                       </Grid>
                       <Grid item xs={6}>
                         <Typography variant="body2">
-                          /t/.../s/{createdStore.slug}/scan/A01
+                          /t/{tenantSlug}/s/{createdStore.slug}/scan/A01
                         </Typography>
                       </Grid>
                     </Grid>
@@ -486,14 +492,14 @@ const CreateStore: React.FC = () => {
                 <Box mt={4}>
                   <Button
                     variant="contained"
-                    onClick={() => navigate(TENANT_ROUTES.STORES.LIST)}
+                    onClick={() => navigate(TENANT_ROUTES.STORES.LIST.replace(':tenantSlug', tenantSlug||''))}
                     sx={{ mr: 2 }}
                   >
                     查看所有店铺
                   </Button>
                   <Button
                     variant="outlined"
-                    onClick={() => navigate(TENANT_ROUTES.STORES.CREATE)}
+                    onClick={() => navigate(TENANT_ROUTES.STORES.CREATE.replace(':tenantSlug', tenantSlug||''))}
                   >
                     继续添加店铺
                   </Button>

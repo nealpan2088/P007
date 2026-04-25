@@ -50,7 +50,7 @@ export class TenantService {
       const tenant = await tx.tenant.create({
         data: {
           name,
-          displayName: name, // 使用name作为displayName
+          // displayName 字段已从 schema 移除
           subdomain,
           plan: planUpper, // 使用大写的计划值
           status: 'ACTIVE',
@@ -284,19 +284,18 @@ export class TenantService {
 
   /**
    * 获取用户的所有租户
-   * @param {string} userId 用户ID
+   * @param {string} userId 用户ID（字符串UUID）
    * @returns {Promise<Array>} 租户列表
    */
   async getUserTenants(userId) {
     try {
       console.log('获取用户租户列表，用户ID:', userId);
       
-      // 由于数据库枚举类型问题，我们使用原始查询
+      // 新数据库：userId是字符串UUID，直接使用
       const userTenants = await db.userTenant.findMany({
         where: {
-          userId,
-          // 暂时移除status过滤，避免枚举类型转换问题
-          // 我们将在应用层手动过滤
+          userId: String(userId),
+          status: 'ACTIVE'
         },
         include: {
           tenant: {
@@ -304,11 +303,10 @@ export class TenantService {
               id: true,
               name: true,
               subdomain: true,
-              plan: true,
+              description: true,
               status: true,
-              trialEndsAt: true,
-              settings: true,
               createdAt: true,
+              updatedAt: true,
             },
           },
         },
@@ -317,15 +315,17 @@ export class TenantService {
         },
       });
 
-      // 手动过滤ACTIVE状态的租户
-      const activeUserTenants = userTenants.filter(ut => ut.status === 'ACTIVE');
+      console.log(`找到 ${userTenants.length} 个用户租户关联`);
 
-      console.log(`找到 ${userTenants.length} 个用户租户关联，其中 ${activeUserTenants.length} 个是ACTIVE状态`);
-
-      return activeUserTenants.map(ut => ({
-        ...ut.tenant,
+      // 简化返回结构
+      return userTenants.map(ut => ({
+        id: ut.tenant.id,
+        name: ut.tenant.name,
+        subdomain: ut.tenant.subdomain,
+        description: ut.tenant.description,
+        status: ut.tenant.status,
         role: ut.role,
-        joinedAt: ut.joinedAt,
+        createdAt: ut.createdAt,
       }));
     } catch (error) {
       console.error('获取用户租户列表错误:', error);

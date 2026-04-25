@@ -1,0 +1,287 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// 核心模型 - 新麒麟项目设计
+// ============================================
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  username      String?
+  fullName      String?
+  passwordHash  String
+  role          String   @default("USER")
+  status        String   @default("ACTIVE")
+  lastLoginAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
+  
+  sessions      Session[]
+  userTenants   UserTenant[]
+  storeStaff    StoreStaff[]
+}
+
+model Tenant {
+  id          String   @id @default(cuid())
+  name        String
+  subdomain   String   @unique
+  description String?
+  status      String   @default("ACTIVE")
+  settings    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+  
+  sessions    Session[]
+  userTenants UserTenant[]
+  stores      Store[]
+}
+
+model UserTenant {
+  id        String   @id @default(cuid())
+  userId    String
+  tenantId  String
+  role      String   @default("USER")
+  status    String   @default("ACTIVE")
+  joinedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, tenantId])
+  @@index([userId])
+  @@index([tenantId])
+}
+
+model Session {
+  id                    String   @id @default(cuid())
+  userId                String
+  tenantId              String?
+  token                 String   @unique
+  expiresAt             DateTime
+  revoked               Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  tenant                Tenant?  @relation(fields: [tenantId], references: [id])
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+// ============================================
+// 店铺管理模型
+// ============================================
+
+enum StoreStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+  DELETED
+}
+
+enum StoreType {
+  RESTAURANT
+  CAFE
+  FAST_FOOD
+  BAKERY
+  BAR
+  FOOD_TRUCK
+  CATERING
+  OTHER
+}
+
+model Store {
+  id               String   @id @default(cuid())
+  tenantId         String
+  name             String
+  slug             String   @unique
+  description      String?
+  type             StoreType   @default(RESTAURANT)
+  status           StoreStatus @default(DRAFT)
+  
+  // 联系信息
+  contactPhone     String?
+  contactEmail     String?
+  address          String?
+  
+  // 配置
+  timezone         String?  @default("Asia/Shanghai")
+  currency         String?  @default("CNY")
+  language         String?  @default("zh-CN")
+  logoUrl          String?
+  themeColor       String?  @default("#1976d2")
+  
+  // 业务设置
+  tableCount       Int?     @default(20)
+  printerEnabled   Boolean  @default(false)
+  qrCodeEnabled    Boolean  @default(true)
+  
+  // 时间戳
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  deletedAt        DateTime?
+  
+  // 关系
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tables           Table[]
+  menuCategories   MenuCategory[]
+  orders           Order[]
+  
+  @@index([tenantId])
+  @@index([slug])
+  @@index([status])
+}
+
+model Table {
+  id          String   @id @default(cuid())
+  storeId     String
+  tableNumber String
+  name        String?
+  capacity    Int      @default(4)
+  status      String   @default("AVAILABLE")
+  qrCodeUrl   String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  orders      Order[]
+  
+  @@unique([storeId, tableNumber])
+  @@index([storeId])
+  @@index([tableNumber])
+}
+
+// ============================================
+// 菜单管理模型
+// ============================================
+
+model MenuCategory {
+  id          String   @id @default(cuid())
+  storeId     String
+  name        String
+  description String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  items       MenuItem[]
+  
+  @@unique([storeId, name])
+  @@index([storeId])
+  @@index([sortOrder])
+}
+
+model MenuItem {
+  id              String   @id @default(cuid())
+  categoryId      String
+  name            String
+  description     String?
+  price           Float
+  imageUrl        String?
+  isAvailable     Boolean  @default(true)
+  isRecommended   Boolean  @default(false)
+  preparationTime Int?     @default(15)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  category        MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  @@unique([categoryId, name])
+  @@index([categoryId])
+  @@index([isAvailable])
+  @@index([isRecommended])
+}
+
+// ============================================
+// 订单管理模型
+// ============================================
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  SERVED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model Order {
+  id                 String       @id @default(cuid())
+  storeId            String
+  tableId            String?
+  orderNumber        String       @unique
+  customerName       String?
+  customerPhone      String?
+  customerNotes      String?
+  orderType          String       @default("DINE_IN")
+  status             OrderStatus  @default(PENDING)
+  paymentStatus      PaymentStatus @default(PENDING)
+  subtotal           Float
+  totalAmount        Float
+  paymentMethod      String?
+  estimatedReadyAt   DateTime?
+  readyAt            DateTime?
+  servedAt           DateTime?
+  completedAt        DateTime?
+  cancelledAt        DateTime?
+  cancellationReason String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  
+  store              Store        @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  table              Table?       @relation(fields: [tableId], references: [id])
+  items              OrderItem[]
+  
+  @@index([storeId])
+  @@index([orderNumber])
+  @@index([status])
+  @@index([paymentStatus])
+}
+
+model OrderItem {
+  id                  String   @id @default(cuid())
+  orderId             String
+  menuItemId          String
+  quantity            Int      @default(1)
+  unitPrice           Float
+  totalPrice          Float
+  specialInstructions String?
+  status              String   @default("PENDING")
+  notes               String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  order               Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem            MenuItem @relation(fields: [menuItemId], references: [id])
+  
+  @@index([orderId])
+  @@index([menuItemId])
+  @@index([status])
+}

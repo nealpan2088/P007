@@ -9,8 +9,53 @@ import { PUBLIC_ROUTES } from '../config/routes.js';
  * 公开API路由注册
  * @param {FastifyInstance} fastify - Fastify实例
  */
+
+// 限频配置
+const rateLimits = new Map();
+const RATE_WINDOW_MS = 60 * 1000; // 1分钟窗口
+
+function checkRateLimit(key, maxCount) {
+  const now = Date.now();
+  const record = rateLimits.get(key);
+  if (!record || now - record.windowStart > RATE_WINDOW_MS) {
+    rateLimits.set(key, { windowStart: now, count: 1 });
+    return { allowed: true };
+  }
+  if (record.count >= maxCount) {
+    return { allowed: false, remainingMs: RATE_WINDOW_MS - (now - record.windowStart) };
+  }
+  record.count++;
+  return { allowed: true };
+}
+
+// 通用限频中间件：检查IP级别的访问频率
+function rateLimit(maxRequests, name = '') {
+  return (request, reply, done) => {
+    const ip = request.ip;
+    const key = name ? `ip:${name}:${ip}` : `ip:${ip}`;
+    const result = checkRateLimit(key, maxRequests);
+    if (!result.allowed) {
+      reply.code(429).send({
+        success: false,
+        error: '请求过于频繁，请稍后再试',
+        code: 'RATE_LIMITED'
+      });
+      return;
+    }
+    done();
+  };
+}
+
+// 定期清理过期记录（每5分钟）
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of rateLimits.entries()) {
+    if (now - record.windowStart > RATE_WINDOW_MS) rateLimits.delete(key);
+  }
+}, 5 * 60 * 1000);
+
 async function publicRoutes(fastify) {
-  // 健康检查（公开）
+  // 健康检查（公开，不限频）
   fastify.get(PUBLIC_ROUTES.SCAN.HEALTH, async (request, reply) => {
     return {
       status: 'ok',
@@ -20,8 +65,10 @@ async function publicRoutes(fastify) {
     };
   });
 
-  // 获取店铺信息（公开）
-  fastify.get(PUBLIC_ROUTES.SCAN.STORE.INFO, async (request, reply) => {
+  // 获取店铺信息（公开）— 限频：每分钟600次/IP
+  fastify.get(PUBLIC_ROUTES.SCAN.STORE.INFO, {
+    preHandler: rateLimit(600, 'store-info')
+  }, async (request, reply) => {
     try {
       const { storeId } = request.params;
       
@@ -36,8 +83,10 @@ async function publicRoutes(fastify) {
     }
   });
 
-  // 获取店铺菜单（公开）
-  fastify.get(PUBLIC_ROUTES.SCAN.STORE.MENU, async (request, reply) => {
+  // 获取店铺菜单（公开）— 限频：每分钟600次/IP
+  fastify.get(PUBLIC_ROUTES.SCAN.STORE.MENU, {
+    preHandler: rateLimit(600, 'store-menu')
+  }, async (request, reply) => {
     try {
       const { storeId } = request.params;
       const { tableId } = request.query;
@@ -53,8 +102,29 @@ async function publicRoutes(fastify) {
     }
   });
 
-  // 创建扫码点餐订单（公开）
+  // 创建扫码点餐订单（公开）— 限频：每分钟3次/IP，同一手机号每分钟2次
   fastify.post(PUBLIC_ROUTES.SCAN.ORDER.CREATE, {
+    preHandler: (request, reply, done) => {
+      const ipCheck = checkRateLimit('create-order:ip:' + request.ip, 3);
+      if (!ipCheck.allowed) {
+        return reply.code(429).send({
+          success: false,
+          error: '操作过于频繁，请稍后再试',
+          code: 'RATE_LIMITED'
+        });
+      }
+      if (request.body?.customerPhone) {
+        const phoneCheck = checkRateLimit('create-order:phone:' + request.body.customerPhone, 2);
+        if (!phoneCheck.allowed) {
+          return reply.code(429).send({
+            success: false,
+            error: '该手机号下单过于频繁，请稍后再试',
+            code: 'RATE_LIMITED'
+          });
+        }
+      }
+      done();
+    },
     schema: {
       body: {
         type: 'object',
@@ -109,6 +179,16 @@ async function publicRoutes(fastify) {
       }
 
       const result = await scanService.createScanOrder(request.body);
+      
+      // 异步触发打印（不阻塞下单）
+      if (result?.success && result?.order?.id) {
+        import('../services/printer/print-dispatcher.js').then(({ dispatchPrintJob }) => {
+          dispatchPrintJob(result.order, result.order.storeId || request.body.storeId);
+        }).catch(err => {
+          console.error('[打印] 调度加载失败:', err.message);
+        });
+      }
+      
       return reply.code(201).send(result);
     } catch (error) {
       return reply.code(error.statusCode || 500).send({
@@ -119,8 +199,10 @@ async function publicRoutes(fastify) {
     }
   });
 
-  // 获取订单状态（公开）
-  fastify.get(PUBLIC_ROUTES.SCAN.ORDER.STATUS, async (request, reply) => {
+  // 获取订单状态（公开）— 限频：每分钟120次/IP（前端轮询10s一次，够了）
+  fastify.get(PUBLIC_ROUTES.SCAN.ORDER.STATUS, {
+    preHandler: rateLimit(120, 'order-status')
+  }, async (request, reply) => {
     try {
       const { orderId } = request.params;
       
@@ -138,8 +220,10 @@ async function publicRoutes(fastify) {
     }
   });
 
-  // 获取餐桌信息（公开）
-  fastify.get(PUBLIC_ROUTES.SCAN.STORE.TABLE_INFO, async (request, reply) => {
+  // 获取餐桌信息（公开）— 限频：每分钟600次/IP
+  fastify.get(PUBLIC_ROUTES.SCAN.STORE.TABLE_INFO, {
+    preHandler: rateLimit(600, 'table-info')
+  }, async (request, reply) => {
     try {
       const { storeId, tableId } = request.params;
       

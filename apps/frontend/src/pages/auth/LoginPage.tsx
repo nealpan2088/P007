@@ -1,13 +1,25 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { PUBLIC_ROUTES } from '../../config/routes';
+import { PUBLIC_ROUTES, ADMIN_ROUTES } from '../../config/routes';
 import './AuthStyles.css';
 
 const LoginPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { login, isLoading, error } = useAuth();
-  
+  const { login, isLoading, error, user } = useAuth();
+
+  const getRedirectPath = () => {
+    if (!user) return ADMIN_ROUTES.ADMIN;
+    const role = user.role;
+    if (role === 'SUPER_ADMIN') return ADMIN_ROUTES.ADMIN;
+    const userData = user as any;
+    const tenants = userData.userTenants || [];
+    if (tenants.length > 0) {
+      const subdomain = tenants[0].subdomain || tenants[0].id;
+      return `/t/${subdomain}/dashboard`;
+    }
+    return PUBLIC_ROUTES.HOME;
+  };
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -45,7 +57,8 @@ const LoginPage: React.FC = () => {
     try {
       const success = await login(formData.email, formData.password);
       if (success) {
-        navigate('/dashboard'); // 登录成功后跳转到仪表板
+        // 强制刷新使导航栏等组件重新读取localStorage的token
+        window.location.href = getRedirectPath();
       }
     } catch (err) {
       // 错误由useAuth处理
@@ -84,7 +97,7 @@ const LoginPage: React.FC = () => {
     try {
       const success = await login('demo@example.com', 'Demo123!');
       if (success) {
-        navigate('/dashboard');
+        window.location.href = getRedirectPath();
       }
     } catch (err) {
       console.error('演示登录失败:', err);

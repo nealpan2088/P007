@@ -1,14 +1,13 @@
 // 麒麟项目前端 - 路由配置系统
 // 所有前端路由通过常量管理，禁止硬编码
 
-import config from './dynamic-config';
+import { buildApiUrl as buildApiUrlFromRoutes } from './api-routes';
 
 // 基础路由路径
 const BASE_PATH = '/';
 
 // 公共路由（无需认证）
 export const PUBLIC_ROUTES = {
-  // 首页
   HOME: BASE_PATH,
 
   // 认证相关
@@ -20,35 +19,7 @@ export const PUBLIC_ROUTES = {
     VERIFY_EMAIL: '/auth/verify-email/:token',
   },
 
-  // 租户相关（多店模式）
-  TENANT: {
-    // 租户级路由（自动选择默认店铺）
-    PUBLIC: '/t/:tenantSlug',
-    PUBLIC_HOME: '/t/:tenantSlug/home',
-    PUBLIC_MENU: '/t/:tenantSlug/menu',
-    PUBLIC_SCAN: '/t/:tenantSlug/scan/:tableId',
-    PUBLIC_ORDER_STATUS: '/t/:tenantSlug/order/:orderId',
-
-    // 店铺级路由（明确指定店铺）
-    STORE: {
-      PUBLIC: '/t/:tenantSlug/s/:storeSlug',
-      PUBLIC_MENU: '/t/:tenantSlug/s/:storeSlug/menu',
-      PUBLIC_SCAN: '/t/:tenantSlug/s/:storeSlug/scan/:tableId',
-      PUBLIC_ORDER_STATUS: '/t/:tenantSlug/s/:storeSlug/order/:orderId',
-    },
-  },
-
-  // 扫码点餐路由（兼容旧格式，逐步迁移）
-  SCAN: {
-    // 旧格式（逐步淘汰）
-    LEGACY: '/scan/:storeSlug/:tableId',
-
-    // 新格式（多店模式）
-    TENANT_SCAN: '/t/:tenantSlug/scan/:tableId',
-    STORE_SCAN: '/t/:tenantSlug/s/:storeSlug/scan/:tableId',
-  },
-
-  // 公开信息
+  // 公共信息页
   PUBLIC: {
     ABOUT: '/about',
     PRICING: '/pricing',
@@ -63,120 +34,49 @@ export const PUBLIC_ROUTES = {
   },
 };
 
-// 租户管理路由（需要租户上下文）
+// 租户管理路由（需要租户上下文 /t/:tenantSlug/）
 export const TENANT_ROUTES = {
-  // 租户仪表板
-  DASHBOARD: '/dashboard',
-
-  // 旧版店铺列表（兼容）
-  STORES_OLD: '/dashboard/stores-old',
-
-  // 租户管理（用户自己的租户）
-  TENANTS: {
-    LIST: '/tenants',
-    CREATE: '/tenants/create',
-    DETAIL: '/tenants/:tenantId',
-    EDIT: '/tenants/:tenantId/edit',
-    SETTINGS: '/tenants/:tenantId/settings',
-    SWITCH: '/tenants/switch/:tenantId',
-  },
-
-  // 店铺管理（多店模式）
+  // ====== 旧名称兼容别名（指向 TENANT_CTX） ======
+  DASHBOARD: '/t/:tenantSlug/dashboard',
   STORES: {
-    LIST: '/dashboard/stores',
-    CREATE: '/dashboard/stores/create',
-    DETAIL: '/dashboard/stores/:storeId',
-    EDIT: '/dashboard/stores/:storeId/edit',
-    SETTINGS: '/dashboard/stores/:storeId/settings',
-    API: {
-      CREATE: '/api/v1/stores',
-      CHECK_SLUG: '/api/v1/stores/check-slug',
+    LIST: '/t/:tenantSlug/stores',
+    CREATE: '/t/:tenantSlug/stores/create',
+    DETAIL: '/t/:tenantSlug/stores/:storeId',
+    EDIT: '/t/:tenantSlug/stores/:storeId/edit',
+  },
+  STORE_MENU: {
+    ITEMS: '/t/:tenantSlug/s/:storeSlug/menu',
+  },
+  STORE_PRINTERS: {
+    LIST: '/t/:tenantSlug/s/:storeSlug/printers',
+  },
+  TENANTS: {
+    LIST: '/admin/tenants',
+    CREATE: '/admin/tenants/create',
+    DETAIL: '/admin/tenants/:tenantId',
+    EDIT: '/admin/tenants/:tenantId/edit',
+  },
+
+  // ====== 租户上下文路由 ======
+  TENANT_CTX: {
+    DASHBOARD: '/t/:tenantSlug/dashboard',
+    STORES: {
+      LIST: '/t/:tenantSlug/stores',
+      CREATE: '/t/:tenantSlug/stores/create',
+      DETAIL: '/t/:tenantSlug/stores/:storeId',
+      EDIT: '/t/:tenantSlug/stores/:storeId/edit',
     },
-    // 多店特定功能
-    DEFAULT_SET: '/dashboard/stores/:storeId/set-default',
-    QR_GENERATE: '/dashboard/stores/:storeId/qr',
-    STATS: '/dashboard/stores/:storeId/stats',
-  },
-
-  // 菜单管理
-  MENU: {
-    CATEGORIES: '/dashboard/menu/categories',
-    CATEGORY_CREATE: '/dashboard/menu/categories/create',
-    CATEGORY_EDIT: '/dashboard/menu/categories/:categoryId/edit',
-    ITEMS: '/dashboard/menu/items',
-    ITEM_CREATE: '/dashboard/menu/items/create',
-    ITEM_EDIT: '/dashboard/menu/items/:itemId/edit',
-  },
-
-  // 订单管理
-  ORDERS: {
-    LIST: '/dashboard/orders',
-    DETAIL: '/dashboard/orders/:orderId',
-    KITCHEN: '/dashboard/orders/kitchen',
-    HISTORY: '/dashboard/orders/history',
-  },
-
-  // 餐桌管理
-  TABLES: {
-    LIST: '/dashboard/tables',
-    CREATE: '/dashboard/tables/create',
-    EDIT: '/dashboard/tables/:tableId/edit',
-    LAYOUT: '/dashboard/tables/layout',
-  },
-
-  // 打印机管理
-  PRINTERS: {
-    LIST: '/dashboard/printers',
-    CREATE: '/dashboard/printers/create',
-    EDIT: '/dashboard/printers/:printerId/edit',
-    TEST: '/dashboard/printers/:printerId/test',
-  },
-
-  // 报表和分析
-  ANALYTICS: {
-    OVERVIEW: '/dashboard/analytics',
-    SALES: '/dashboard/analytics/sales',
-    ORDERS: '/dashboard/analytics/orders',
-    CUSTOMERS: '/dashboard/analytics/customers',
-    REPORTS: '/dashboard/analytics/reports',
-  },
-
-  // 设置
-  SETTINGS: {
-    PROFILE: '/dashboard/settings/profile',
-    ACCOUNT: '/dashboard/settings/account',
-    BILLING: '/dashboard/settings/billing',
-    TEAM: '/dashboard/settings/team',
-    NOTIFICATIONS: '/dashboard/settings/notifications',
-    INTEGRATIONS: '/dashboard/settings/integrations',
-    SECURITY: '/dashboard/settings/security',
+    STORE_MENU: {
+      ITEMS: '/t/:tenantSlug/s/:storeSlug/menu',
+    },
+    STORE_PRINTERS: {
+      LIST: '/t/:tenantSlug/s/:storeSlug/printers',
+    },
   },
 };
 
-// 顾客路由（扫码点餐）
-// 注意：扫码点餐路由已迁移到专门的 scan-routes.ts 文件
-// 这里保持兼容性，但新代码应该使用 scan-routes.ts 中的常量
-export const CUSTOMER_ROUTES = {
-  // 扫码点餐（兼容旧代码，新代码请使用 SCAN_ROUTES）
-  SCAN: '/scan/:storeId/:tableId',
-  SCAN_STORE_ONLY: '/scan/:storeId',
-  SCAN_BASE: '/scan',
-  MENU: '/menu/:storeId',
-  CART: '/cart',
-  CHECKOUT: '/checkout',
-  ORDER_STATUS: '/order/:orderId',
-  ORDER_HISTORY: '/orders',
-
-  // 顾客账户
-  PROFILE: '/profile',
-  FAVORITES: '/favorites',
-  ADDRESSES: '/addresses',
-  PAYMENT_METHODS: '/payment-methods',
-};
-
-// 管理员路由（平台级管理）
+// 管理员路由（平台级管理 /admin/）
 export const ADMIN_ROUTES = {
-  // 平台管理
   ADMIN: '/admin',
 
   // 租户管理
@@ -196,6 +96,21 @@ export const ADMIN_ROUTES = {
     DETAIL: '/admin/users/:userId',
     EDIT: '/admin/users/:userId/edit',
     ROLES: '/admin/users/roles',
+  },
+
+  // 店铺管理（管理后台）
+  STORES: {
+    LIST: '/admin/stores',
+  },
+
+  // 打印机管理（管理后台）
+  PRINTERS: {
+    LIST: '/admin/printers',
+  },
+
+  // 菜单模板管理（管理后台）
+  MENU_TEMPLATES: {
+    LIST: '/admin/menu-templates',
   },
 
   // 系统管理
@@ -227,139 +142,57 @@ export const ADMIN_ROUTES = {
 
 // 工具函数
 export const RouteUtils = {
-  // 构建完整URL（包含API基础URL）
   buildApiUrl(path: string): string {
-    const apiConfig = config.api;
-    return `${apiConfig.baseUrl}${path}`;
+    return buildApiUrlFromRoutes(path);
   },
-
-  // 构建前端路由URL（支持参数替换）
   buildFrontendUrl(template: string, params: Record<string, string> = {}): string {
     let url = template;
-
     for (const [key, value] of Object.entries(params)) {
       url = url.replace(`:${key}`, encodeURIComponent(value));
     }
-
     return url;
   },
-
-  // 检查路由是否匹配模式
   matchesPattern(pattern: string, path: string): boolean {
     const patternParts = pattern.split('/');
     const pathParts = path.split('/');
-
-    if (patternParts.length !== pathParts.length) {
-      return false;
-    }
-
+    if (patternParts.length !== pathParts.length) return false;
     for (let i = 0; i < patternParts.length; i++) {
-      const patternPart = patternParts[i];
-      const pathPart = pathParts[i];
-
-      if (patternPart.startsWith(':')) {
-        // 参数部分，匹配任何非空值
-        if (!pathPart) {
-          return false;
-        }
-      } else if (patternPart !== pathPart) {
-        return false;
-      }
+      if (patternParts[i].startsWith(':')) { if (!pathParts[i]) return false; }
+      else if (patternParts[i] !== pathParts[i]) return false;
     }
-
     return true;
   },
-
-  // 从路径中提取参数
   extractParams(pattern: string, path: string): Record<string, string> {
     const params: Record<string, string> = {};
     const patternParts = pattern.split('/');
     const pathParts = path.split('/');
-
-    if (patternParts.length !== pathParts.length) {
-      return params;
-    }
-
+    if (patternParts.length !== pathParts.length) return params;
     for (let i = 0; i < patternParts.length; i++) {
-      const patternPart = patternParts[i];
-
-      if (patternPart.startsWith(':')) {
-        const paramName = patternPart.slice(1);
-        params[paramName] = decodeURIComponent(pathParts[i]);
+      if (patternParts[i].startsWith(':')) {
+        params[patternParts[i].slice(1)] = decodeURIComponent(pathParts[i]);
       }
     }
-
     return params;
   },
-
-  // 获取当前路由信息
-  getRouteInfo(path: string) {
-    const allRoutes = this.getAllRoutes();
-
-    for (const [category, routes] of Object.entries(allRoutes)) {
-      for (const [routeName, routePath] of Object.entries(this.flattenRoutes(routes))) {
-        if (this.matchesPattern(routePath, path)) {
-          return {
-            category,
-            name: routeName,
-            path: routePath,
-            params: this.extractParams(routePath, path),
-          };
-        }
-      }
-    }
-
-    return null;
-  },
-
-  // 获取所有路由
   getAllRoutes() {
-    return {
-      public: PUBLIC_ROUTES,
-      tenant: TENANT_ROUTES,
-      customer: CUSTOMER_ROUTES,
-      admin: ADMIN_ROUTES,
-    };
+    return { public: PUBLIC_ROUTES, admin: ADMIN_ROUTES, tenant: TENANT_ROUTES };
   },
-
-  // 扁平化嵌套的路由对象
   flattenRoutes(routes: any, prefix = ''): Record<string, string> {
     const flattened: Record<string, string> = {};
-
     for (const [key, value] of Object.entries(routes)) {
       const newKey = prefix ? `${prefix}.${key}` : key;
-
-      if (typeof value === 'string') {
-        flattened[newKey] = value;
-      } else if (typeof value === 'object' && value !== null) {
-        Object.assign(flattened, this.flattenRoutes(value, newKey));
-      }
+      if (typeof value === 'string') flattened[newKey] = value;
+      else if (typeof value === 'object' && value !== null) Object.assign(flattened, this.flattenRoutes(value, newKey));
     }
-
     return flattened;
   },
 };
 
-// 默认导出
 export default {
   public: PUBLIC_ROUTES,
-  tenant: TENANT_ROUTES,
-  customer: CUSTOMER_ROUTES,
   admin: ADMIN_ROUTES,
+  tenant: TENANT_ROUTES,
   utils: RouteUtils,
-
-  // 获取所有路由（用于文档生成）
-  getAllRoutes() {
-    return RouteUtils.getAllRoutes();
-  },
-
-  // 根据路径获取路由信息
-  getRouteInfo(path: string) {
-    return RouteUtils.getRouteInfo(path);
-  },
-
-  // 扁平化嵌套的路由对象
-  flattenRoutes(routes: any, prefix = '') {
-    return RouteUtils.flattenRoutes(routes, prefix);
-  },
+  getAllRoutes() { return RouteUtils.getAllRoutes(); },
+  getRouteInfo(path: string) { return null; },
 };

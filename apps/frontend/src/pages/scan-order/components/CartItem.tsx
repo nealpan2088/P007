@@ -1,5 +1,6 @@
 import React from 'react';
 import { CartItem as CartItemType } from '../types';
+import { getFoodImageUrl } from '../../../utils/image.utils';
 
 interface CartItemProps {
   item: CartItemType;
@@ -34,17 +35,12 @@ const CartItem: React.FC<CartItemProps> = ({
     <div className="flex items-center p-4 border-b border-gray-200 hover:bg-gray-50 transition-colors">
       {/* 菜品图片 */}
       <div className="flex-shrink-0 w-16 h-16 mr-4">
-        {item.imageUrl ? (
-          <img
-            src={item.imageUrl}
-            alt={item.name}
-            className="w-full h-full object-cover rounded"
-          />
-        ) : (
-          <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
-            <span className="text-gray-400 text-xs">无图</span>
-          </div>
-        )}
+        <img
+          src={getFoodImageUrl(item.imageUrl)}
+          alt={item.name}
+          className="w-full h-full object-cover rounded"
+          onError={e => { (e.target as HTMLImageElement).src = getFoodImageUrl(''); }}
+        />
       </div>
 
       {/* 菜品信息 */}

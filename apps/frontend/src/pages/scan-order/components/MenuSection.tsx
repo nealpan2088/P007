@@ -4,6 +4,7 @@ import MenuItemCard from './MenuItemCard';
 
 interface MenuSectionProps {
   categories: MenuCategory[];
+  filteredCategories: MenuCategory[];
   selectedCategory: string | null;
   onSelectCategory: (categoryId: string) => void;
   onAddToCart: (menuItemId: string) => void;
@@ -13,6 +14,7 @@ interface MenuSectionProps {
 
 const MenuSection: React.FC<MenuSectionProps> = ({
   categories,
+  filteredCategories,
   selectedCategory,
   onSelectCategory,
   onAddToCart,
@@ -74,23 +76,58 @@ const MenuSection: React.FC<MenuSectionProps> = ({
   return (
     <div className="flex h-[calc(100vh-48px)]">
       {/* 左侧分类导航 */}
-      <div ref={sidebarRef} className="w-20 shrink-0 bg-gray-50 overflow-y-auto scrollbar-hide pt-1">
-        {categories.map(category => (
+      <div ref={sidebarRef} className="w-20 shrink-0 bg-white overflow-y-auto scrollbar-hide pt-1 border-r border-gray-100">
+        {/* "全部"按钮 - 默认选中 */}
+        <button
+          onClick={() => onSelectCategory(null)}
+          className={`
+            w-full py-2.5 px-1 text-center border-l-[3px] transition-all duration-200
+            ${!selectedCategory
+              ? 'bg-orange-50 text-orange-600 border-orange-500 font-bold'
+              : 'text-gray-700 border-transparent hover:bg-orange-50'
+            }
+          `}
+        >
+          <div className="text-lg mb-0.5">🍽️</div>
+          <div className="text-[11px] leading-tight font-medium">全部</div>
+        </button>
+        {categories.map((category, idx) => {
+          // 分类图标映射
+          const iconMap: Record<string, string> = {
+            '招牌菜': '⭐',
+            '热菜': '🔥',
+            '凉菜': '🥗',
+            '主食': '🍚',
+            '饮品': '🥤',
+            '汤品': '🍲',
+            '甜品': '🍰',
+            '小吃': '🍟',
+            '早餐': '🌅',
+            '午餐': '☀️',
+            '晚餐': '🌙',
+          };
+          const name = category.name;
+          const icon = iconMap[name] || '🍽️';
+          return (
           <button
             key={category.id}
             data-cat-id={category.id}
             onClick={() => onSelectCategory(category.id)}
             className={`
-              w-full py-3 px-1 text-center border-l-[3px] transition-all duration-200
+              w-full py-2.5 px-1 text-center border-l-[3px] transition-all duration-200
               ${selectedCategory === category.id
-                ? 'bg-white text-orange-600 border-orange-500 font-medium shadow-sm'
-                : 'text-gray-500 border-transparent hover:bg-gray-100'
+                ? 'bg-orange-50 text-orange-600 border-orange-500 font-bold'
+                : 'text-gray-700 border-transparent hover:bg-orange-50'
               }
             `}
           >
-            <div className="text-base leading-tight mb-0.5">{category.name.replace(/^[^\s]+\s*/, '')}</div>
+            <div className="text-lg mb-0.5">{icon}</div>
+            <div className="text-[11px] leading-tight font-medium">
+              {name.slice(0, 4)}
+            </div>
           </button>
-        ))}
+          );
+        })}
       </div>
 
       {/* 右侧菜品列表 */}
@@ -98,24 +135,41 @@ const MenuSection: React.FC<MenuSectionProps> = ({
         <div className="px-3 py-3">
           {/* 分类标题 */}
           <div className="flex items-center justify-between mb-2.5 px-1">
-            <h2 className="text-sm font-bold text-gray-700">{currentCategory?.name}</h2>
-            <span className="text-[11px] text-gray-400">{currentCategory?.items.length || 0}道菜</span>
+            <h2 className="text-sm font-bold text-gray-700">
+              {filteredCategories.length === 1
+                ? filteredCategories[0].name
+                : '全部菜单'
+              }
+            </h2>
+            <span className="text-[11px] text-gray-400">
+              {filteredCategories.reduce((sum, cat) => sum + cat.items.length, 0)}道菜
+            </span>
           </div>
 
-          {/* 菜品列表 */}
-          {currentCategory?.items.map(item => (
-            <MenuItemCard
-              key={item.id}
-              item={item}
-              onAddToCart={onAddToCart}
-              onViewDetails={onViewDetails}
-            />
+          {/* 菜品列表 - 遍历所有显示的分类 */}
+          {filteredCategories.map(category => (
+            <div key={category.id}>
+              {/* 多分类时显示分类名 */}
+              {filteredCategories.length > 1 && (
+                <div className="text-xs font-medium text-gray-500 mt-3 mb-1.5 px-1">
+                  {category.name} <span className="text-gray-300">({category.items.length}道)</span>
+                </div>
+              )}
+              {category.items.map(item => (
+                <MenuItemCard
+                  key={item.id}
+                  item={item}
+                  onAddToCart={onAddToCart}
+                  onViewDetails={onViewDetails}
+                />
+              ))}
+            </div>
           ))}
 
           {/* 空状态 */}
-          {currentCategory && currentCategory.items.length === 0 && (
+          {filteredCategories.reduce((sum, cat) => sum + cat.items.length, 0) === 0 && (
             <div className="py-16 text-center">
-              <p className="text-gray-400 text-sm">该分类暂无菜品</p>
+              <p className="text-gray-400 text-sm">暂无菜品</p>
             </div>
           )}
         </div>

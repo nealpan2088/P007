@@ -532,65 +532,50 @@ export const authHandlers = {
 
 // 注册认证路由
 export const registerAuthRoutes = (fastify) => {
-  const routes = {
-    AUTH: {
-      REGISTER: '/api/v1/auth/register',
-      LOGIN: '/api/v1/auth/login',
-      LOGOUT: '/api/v1/auth/logout',
-      REFRESH_TOKEN: '/api/v1/auth/refresh-token',
-      VERIFY_EMAIL: '/api/v1/auth/verify-email/:token',
-      REQUEST_PASSWORD_RESET: '/api/v1/auth/request-password-reset',
-      RESET_PASSWORD: '/api/v1/auth/reset-password',
-      PROFILE: '/api/v1/auth/profile',
-      CHANGE_PASSWORD: '/api/v1/auth/change-password',
-      SESSIONS: '/api/v1/auth/sessions',
-      REVOKE_SESSION: '/api/v1/auth/revoke-session',
-      HEALTH: '/api/v1/auth/health',
-    }
-  };
+  // 路由相对路径（由 index.js 的 prefix 拼接）
   
   // 公共路由（无需认证）
-  fastify.post(routes.AUTH.REGISTER, authHandlers.register)
-  fastify.post(routes.AUTH.LOGIN, authHandlers.login)
-  fastify.post(routes.AUTH.REFRESH_TOKEN, authHandlers.refreshToken)
-  fastify.get(routes.AUTH.VERIFY_EMAIL, authHandlers.verifyEmail)
-  fastify.post(routes.AUTH.REQUEST_PASSWORD_RESET, authHandlers.requestPasswordReset)
-  fastify.post(routes.AUTH.RESET_PASSWORD, authHandlers.resetPassword)
-  fastify.get(routes.AUTH.HEALTH, authHandlers.healthCheck)
+  fastify.post('/register', authHandlers.register)
+  fastify.post('/login', authHandlers.login)
+  fastify.post('/refresh-token', authHandlers.refreshToken)
+  fastify.get('/verify-email/:token', authHandlers.verifyEmail)
+  fastify.post('/request-password-reset', authHandlers.requestPasswordReset)
+  fastify.post('/reset-password', authHandlers.resetPassword)
+  fastify.get('/health', authHandlers.healthCheck)
   
   // 受保护路由（需要认证）
   fastify.post(
-    routes.AUTH.LOGOUT,
+    '/logout',
     { preHandler: authService.authMiddleware.verifyToken },
     authHandlers.logout
   )
   
   fastify.get(
-    routes.AUTH.PROFILE,
+    '/profile',
     { preHandler: authService.authMiddleware.verifyToken },
     authHandlers.getProfile
   )
   
   fastify.put(
-    routes.AUTH.PROFILE,
+    '/profile',
     { preHandler: authService.authMiddleware.verifyToken },
     authHandlers.updateProfile
   )
   
   fastify.post(
-    routes.AUTH.CHANGE_PASSWORD,
+    '/change-password',
     { preHandler: authService.authMiddleware.verifyToken },
     authHandlers.changePassword
   )
   
   fastify.get(
-    routes.AUTH.SESSIONS,
+    '/sessions',
     { preHandler: authService.authMiddleware.verifyToken },
     authHandlers.getSessions
   )
   
   fastify.post(
-    routes.AUTH.REVOKE_SESSION,
+    '/revoke-session',
     { preHandler: authService.authMiddleware.verifyToken },
     authHandlers.revokeSession
   )

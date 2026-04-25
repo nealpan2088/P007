@@ -1,14 +1,12 @@
-// 麒麟项目 - 清洁版服务器入口
-// 完全重新创建，避免所有旧代码污染
+// 麒麟项目 - 集成夜狼模块的服务器入口
+// 版本: 0.2.5 + nightwolf-0.1.0
 
 // ==================== 强制环境变量加载 ====================
 // 确保.env文件在任何其他导入之前加载
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
-
-// 导入常量（避免硬编码）
-import { TENANT_ROLES } from './constants/auth.constants.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,11 +25,15 @@ for (const varName of requiredVars) {
     console.log(`✅ ${varName}: ${varName === 'JWT_SECRET' ? '***隐藏***' : process.env[varName]}`);
   }
 }
+
+// 夜狼模块环境变量
+console.log(`🌙 夜狼模块状态: ${process.env.NIGHTWOLF_ENABLED === 'true' ? '已启用' : '未启用'}`);
 // ==================== 环境变量加载完成 ====================
 
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import config from './config/index.js'
+import { setDevMode, formatErrorResponse } from './services/error.service.js'
 
 // 创建全新的Fastify实例
 const fastify = Fastify({
@@ -48,152 +50,430 @@ await fastify.register(cors, {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-ID', 'X-Requested-With'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 86400,
 })
 
-// 添加安全头
-fastify.addHook('onSend', async (request, reply, payload) => {
-  reply.header('X-Frame-Options', config.security.securityHeaders.xFrameOptions)
-  reply.header('X-Content-Type-Options', config.security.securityHeaders.xContentTypeOptions)
-  reply.header('X-XSS-Protection', config.security.securityHeaders.xXSSProtection)
-  reply.header('Referrer-Policy', config.security.securityHeaders.referrerPolicy)
-})
+// ==================== 夜狼模块初始化 ====================
+let nightWolfModule = null;
+let nightWolfInitialized = false;
 
-// ==================== 导入配置和路由常量 ====================
-import routes from './config/routes.js'
-const PUBLIC_ROUTES = routes.public;
-
-// ==================== 导入清洁版中间件 ====================
-import { authenticate, requireTenantAccess } from './middleware/index.js'
-
-// ==================== 导入清洁版路由模块 ====================
-
-// 导入公共路由
-import { registerPublicRoutes } from './routes/public.routes.register.js'
-
-// 导入店铺路由
-import storeRoutes from './routes/store.routes.js'
-
-// 导入租户路由
-import { registerTenantRoutes } from './routes/tenant.routes.js'
-
-// ==================== 注册路由模块 ====================
-
-// 健康检查 - 使用路由常量
-fastify.get(PUBLIC_ROUTES.HEALTH, async () => {
-  return {
-    status: 'ok',
-    service: 'qilin-backend',
-    version: '0.2.3',
-    timestamp: new Date().toISOString(),
-    mode: 'clean-architecture'
+async function initializeNightWolfModule() {
+  try {
+    console.log('🌙 开始初始化夜狼模块...');
+    
+    // 导入ES模块版本的夜狼模块
+    const nightWolf = await import('./modules/nightwolf/index-simple.mjs');
+    console.log('✅ 夜狼模块加载成功 (ES模块)');
+    
+    // 初始化夜狼模块
+    const initResult = await nightWolf.initialize(fastify, {
+      logLevel: process.env.NIGHTWOLF_LOG_LEVEL || 'info',
+    });
+    
+    if (initResult.success) {
+      nightWolfModule = nightWolf;
+      nightWolfInitialized = true;
+      console.log('🎉 夜狼模块初始化成功:', initResult.module?.name || 'nightwolf');
+      console.log('📊 夜狼模块版本:', initResult.module?.version || '0.1.0-simple');
+    } else {
+      console.warn('⚠️  夜狼模块初始化失败，但不影响核心功能:', initResult.reason || initResult.error);
+      console.log('ℹ️  核心功能将继续正常运行');
+    }
+    
+  } catch (error) {
+    console.error('❌ 夜狼模块加载失败，但不影响核心功能:', error.message);
+    console.log('ℹ️  核心功能将继续正常运行');
   }
-})
-
-// 注册公共路由（扫码点餐API）
-registerPublicRoutes(fastify)
-
-// 测试认证端点 - 临时路由，后续应移到auth模块
-fastify.get(`${config.server.apiPrefix}/test/auth`, {
-  preHandler: requireTenantAccess('header')
-}, async (request, reply) => {
-  return {
-    success: true,
-    message: '认证测试成功',
-    user: request.user,
-    timestamp: new Date().toISOString()
-  }
-})
-
-// 注册店铺路由（路由常量已包含完整路径，无需额外前缀）
-fastify.register(storeRoutes)
-
-// 注册租户路由
-registerTenantRoutes(fastify)
-
-// 404处理
-fastify.setNotFoundHandler(async (request, reply) => {
-  reply.code(404).send({
-    error: 'Not Found',
-    message: `路由 ${request.method} ${request.url} 不存在`,
-    timestamp: new Date().toISOString(),
-    version: 'clean'
-  })
-})
-
-// 错误处理
-fastify.setErrorHandler(async (error, request, reply) => {
-  console.error('清洁版服务器错误:', error)
-  
-  reply.code(500).send({
-    success: false,
-    message: '服务器内部错误',
-    code: 'INTERNAL_ERROR',
-    timestamp: new Date().toISOString()
-  })
-})
-
-// 启动服务器
-try {
-  await fastify.listen({
-    port: config.server.port,
-    host: config.server.host
-  })
-  
-  console.log('🚀 麒麟项目清洁版服务器启动成功!')
-  console.log(`🌐 地址: http://${config.server.host}:${config.server.port}`)
-  console.log(`🔧 健康检查: http://${config.server.host}:${config.server.port}/api/health`)
-  console.log('💡 此版本完全绕过旧代码污染问题')
-  
-} catch (error) {
-  console.error('❌ 清洁版服务器启动失败:', error)
-  process.exit(1)
 }
-// 临时测试端点 - 用于前端/tenants页面测试
-fastify.get(`${config.server.apiPrefix}/test/tenants`, async (request, reply) => {
-  console.log('临时测试租户端点被调用');
+
+// ==================== 核心路由注册 ====================
+// 注意：核心路由注册不受夜狼模块影响
+
+// 健康检查路由（核心）
+fastify.get(PUBLIC_ROUTES.HEALTH, async () => {
+  const coreHealth = {
+    status: 'ok',
+    service: 'qilin-optimized',
+    version: '0.2.5',
+    database: 'connected',
+    timestamp: new Date().toISOString(),
+  };
   
-  // 返回模拟数据（实际项目中应从数据库获取）
+  // 添加夜狼模块状态
+  if (nightWolfInitialized && nightWolfModule) {
+    try {
+      const nightWolfHealth = await nightWolfModule.healthCheck();
+      coreHealth.nightwolf = {
+        enabled: true,
+        healthy: nightWolfHealth.healthy,
+        version: '0.1.0',
+      };
+    } catch (error) {
+      coreHealth.nightwolf = {
+        enabled: true,
+        healthy: false,
+        error: error.message,
+      };
+    }
+  } else {
+    coreHealth.nightwolf = {
+      enabled: process.env.NIGHTWOLF_ENABLED === 'true',
+      initialized: nightWolfInitialized,
+      message: nightWolfInitialized ? '模块已初始化' : '模块未初始化',
+    };
+  }
+  
+  return coreHealth;
+})
+
+// 公共API路由 - 使用.register.js文件
+import routes, { PUBLIC_ROUTES, UPLOAD_ROUTES } from './config/routes.js'
+import { registerPublicRoutes } from './routes/public.routes.register.js'
+fastify.register(registerPublicRoutes, { prefix: '/api/public' })
+
+// 租户API路由
+import { registerTenantRoutes } from './routes/tenant.routes.js'
+fastify.register(registerTenantRoutes, { prefix: '/api/tenant' })
+
+// 店铺API路由 - 使用.register.js文件
+import { registerStoreRoutes } from './routes/store.routes.register.js'
+fastify.register(registerStoreRoutes, { prefix: '/api/store' })
+
+// 管理API路由 - 使用.register.js文件
+import { registerAdminRoutes } from './routes/admin.routes.register.js'
+fastify.register(registerAdminRoutes, { prefix: '/api/admin' })
+
+// 无独立 import，rateLimitStore 直接在此定义
+const rateLimitStore = new Map()
+
+// 定期清理过期记录（每5分钟）
+setInterval(() => {
+  const now = Date.now()
+  for (const [key, record] of rateLimitStore) {
+    if (now > record.resetTime) rateLimitStore.delete(key)
+  }
+  if (rateLimitStore.size > 10000) {
+    const entries = [...rateLimitStore.entries()]
+      .sort((a, b) => a[1].resetTime - b[1].resetTime)
+    for (const [key] of entries.slice(0, entries.length / 2)) {
+      rateLimitStore.delete(key)
+    }
+  }
+}, 300000).unref()
+
+// ==================== 管理端 API 限流 ====================
+
+/**
+ * 通用的限流检查函数
+ * @param {string} key 限流 key (scope:ip)
+ * @param {number} max 窗口内最大请求数
+ * @param {Object} reply Fastify reply
+ * @returns {boolean} true=超限被拒绝, false=通过
+ */
+function rateLimitCheck(key, max, reply) {
+  const now = Date.now()
+  const record = rateLimitStore.get(key)
+
+  if (!record || now > record.resetTime) {
+    rateLimitStore.set(key, { count: 1, resetTime: now + 60000 })
+    return false // 通过
+  }
+  if (record.count >= max) {
+    reply.code(429).send({
+      code: 429,
+      error: '请求过于频繁，请稍后再试',
+      timestamp: new Date().toISOString()
+    })
+    return true // 拒绝
+  }
+  record.count++
+  return false
+}
+
+fastify.addHook('onRequest', async (request, reply) => {
+  const url = request.url
+  const ip = request.ip
+
+  if (url.startsWith('/api/store/')) {
+    if (rateLimitCheck(`store:${ip}`, 100, reply)) return
+  }
+  if (url.startsWith('/api/admin/')) {
+    if (rateLimitCheck(`super-admin:${ip}`, 50, reply)) return
+  }
+})
+
+// 系统API路由 — TODO [2026-04-24]: 等 system.routes.js 创建后启用
+// import systemRoutes from './routes/system.routes.js'
+// fastify.register(systemRoutes, { prefix: '/api/system' })
+
+// 认证API路由
+import { registerAuthRoutes } from './routes/auth.routes.js'
+fastify.register(registerAuthRoutes, { prefix: '/api/v1/auth' })
+
+// ==================== 图片上传 ====================
+import multipart from '@fastify/multipart';
+import crypto from 'crypto';
+
+fastify.register(multipart, {
+  limits: {
+    fileSize: 2 * 1024 * 1024, // 2MB
+    files: 1,
+  },
+});
+
+// 创建上传目录
+const UPLOAD_BASE = path.join(__dirname, '../../uploads');
+const FOOD_DIR = path.join(UPLOAD_BASE, 'food');
+for (const dir of [UPLOAD_BASE, FOOD_DIR]) {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+}
+
+// 支持的文件格式
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const ALLOWED_EXTS = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+
+// 菜品图片上传接口
+fastify.post(UPLOAD_ROUTES.FOOD_IMAGE, async (request, reply) => {
+  try {
+    const data = await request.file();
+    if (!data) {
+      return reply.code(400).send({ success: false, error: '请选择要上传的图片' });
+    }
+
+    // 校验 MIME 类型
+    if (!ALLOWED_TYPES.includes(data.mimetype)) {
+      return reply.code(400).send({
+        success: false,
+        error: `不支持的图片格式: ${data.mimetype}。支持: JPG, PNG, GIF, WebP`,
+      });
+    }
+
+    // 读取文件流
+    const chunks = [];
+    for await (const chunk of data.file) {
+      chunks.push(chunk);
+    }
+    const buffer = Buffer.concat(chunks);
+
+    // 校验文件大小
+    if (buffer.length > 2 * 1024 * 1024) {
+      return reply.code(400).send({
+        success: false,
+        error: '图片大小不能超过 2MB',
+      });
+    }
+
+    // 生成唯一文件名
+    const hash = crypto.createHash('md5').update(buffer).digest('hex').slice(0, 8);
+    const ext = path.extname(data.filename).toLowerCase() || '.jpg';
+    const safeName = `${Date.now()}_${hash}${ext}`;
+    const filePath = path.join(FOOD_DIR, safeName);
+
+    // 写入文件
+    fs.writeFileSync(filePath, buffer);
+
+    const url = `/uploads/food/${safeName}`;
+    return { success: true, data: { url, filename: safeName, size: buffer.length } };
+  } catch (error) {
+    request.log.error({ msg: '图片上传失败', error: error.message });
+    return reply.code(500).send({ success: false, error: '图片上传失败: ' + error.message });
+  }
+});
+
+// 静态文件服务
+fastify.get(UPLOAD_ROUTES.STATIC, async (request, reply) => {
+  const filePath = path.join(UPLOAD_BASE, request.url.replace('/uploads', ''));
+  try {
+    if (!fs.existsSync(filePath)) {
+      return reply.code(404).send({ success: false, error: '文件不存在' });
+    }
+    const content = fs.readFileSync(filePath);
+    const ext = path.extname(filePath).toLowerCase();
+    const mimeTypes = {
+      '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
+      '.gif': 'image/gif', '.webp': 'image/webp',
+    };
+    reply.header('Content-Type', mimeTypes[ext] || 'application/octet-stream');
+    reply.header('Cache-Control', 'public, max-age=604800'); // 缓存7天
+    return reply.send(content);
+  } catch {
+    return reply.code(404).send({ success: false, error: '文件不存在' });
+  }
+});
+
+// 默认菜品占位图（内嵌 base64 SVG）
+const DEFAULT_FOOD_PLACEHOLDER = 'data:image/svg+xml,' + encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <rect fill="#f3f4f6" width="400" height="400"/>
+  <g transform="translate(140, 140)">
+    <circle cx="60" cy="60" r="60" fill="#d1d5db"/>
+    <path d="M60 80C30 80 0 95 0 140h120c0-45-30-60-60-60z" fill="#9ca3af"/>
+    <line x1="20" y1="100" x2="100" y2="100" stroke="#9ca3af" stroke-width="2" stroke-dasharray="4"/>
+    <line x1="25" y1="110" x2="95" y2="110" stroke="#9ca3af" stroke-width="2" stroke-dasharray="4"/>
+    <line x1="30" y1="120" x2="90" y2="120" stroke="#9ca3af" stroke-width="2" stroke-dasharray="4"/>
+  </g>
+  <text x="200" y="310" text-anchor="middle" fill="#9ca3af" font-size="14" font-family="sans-serif">暂无图片</text>
+</svg>`);
+
+// 获取默认占位图
+fastify.get(UPLOAD_ROUTES.DEFAULT_FOOD_IMAGE, async () => {
   return {
     success: true,
-    message: '临时测试端点 - 租户列表',
-    data: [
-      {
-        id: 'test-tenant-1',
-        name: '测试租户一',
-        subdomain: 'test-tenant-1',
-        plan: 'free',
-        status: 'ACTIVE',
-        trialEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        settings: {},
-        createdAt: new Date().toISOString(),
-        joinedAt: new Date().toISOString(),
-        role: TENANT_ROLES.OWNER
-      },
-      {
-        id: 'test-tenant-2',
-        name: '测试租户二',
-        subdomain: 'test-tenant-2',
-        plan: 'pro',
-        status: 'ACTIVE',
-        trialEndsAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-        settings: {},
-        createdAt: new Date().toISOString(),
-        joinedAt: new Date().toISOString(),
-        role: TENANT_ROLES.ADMIN
-      },
-      {
-        id: 'test-tenant-3',
-        name: '测试租户三',
-        subdomain: 'test-tenant-3',
-        plan: 'enterprise',
-        status: 'PENDING',
-        trialEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        settings: {},
-        createdAt: new Date().toISOString(),
-        joinedAt: new Date().toISOString(),
-        role: 'STAFF'
-      }
-    ]
+    data: { url: DEFAULT_FOOD_PLACEHOLDER }
   };
 });
+
+// ==================== 配置端点 ====================
+// 提供路由配置供前端消费，确保前后端路由一致
+
+fastify.get('/api/config/routes', async (request, reply) => {
+  // routes 已在文件开头导入 (routes 作为 default export)
+  return {
+    success: true,
+    data: {
+      public: routes.public,
+      tenant: routes.tenant,
+      customer: routes.customer,
+      admin: routes.admin,
+    }
+  };
+});
+
+// ==================== 安全响应头 ====================
+// 零风险安全头：防止点击劫持、MIME嗅探
+fastify.addHook('onSend', (request, reply, payload, done) => {
+  reply.header('X-Frame-Options', 'DENY')
+  reply.header('X-Content-Type-Options', 'nosniff')
+  reply.header('X-XSS-Protection', '0')  // 已退役，无害遗留
+  done()
+})
+
+// ==================== 错误处理 ====================
+// 全局统一错误处理
+// 开发模式输出调试信息，生产模式隐藏细节
+
+fastify.setErrorHandler((error, request, reply) => {
+  // 记录错误日志（生产环境也会记录完整 stack 到日志，但不返回给客户端）
+  request.log.error({
+    error: error.message,
+    stack: error.stack,
+    url: request.url,
+    method: request.method,
+    code: error.code,
+    module: error.module || 'core',
+    userId: request.user?.id
+  })
+
+  // 夜狼模块错误处理（保留原有逻辑）
+  if (error.module === 'nightwolf' || error.code?.startsWith('NIGHTWOLF')) {
+    return reply.status(error.statusCode || 500).send({
+      success: false,
+      error: {
+        code: error.code || 'NIGHTWOLF_999',
+        message: error.message,
+        module: 'nightwolf',
+        timestamp: new Date().toISOString(),
+      },
+      data: null,
+    })
+  }
+
+  // 统一格式响应（使用 formatErrorResponse 自动区分开发/生产模式）
+  const body = formatErrorResponse(error)
+  return reply.status(body.code).send(body)
+})
+
+// ==================== 启动服务器 ====================
+async function startServer() {
+  try {
+    // 0. 设置错误服务开发模式（生产模式隐藏调试信息）
+    setDevMode(config.server.isDevelopment)
+
+    // 1. 初始化夜狼模块（异步，不阻塞）
+    if (process.env.NIGHTWOLF_ENABLED === 'true') {
+      initializeNightWolfModule().catch(error => {
+        console.error('夜狼模块初始化异常（非致命）:', error);
+      });
+    }
+
+    // 2. 等待所有路由注册完成
+    await fastify.ready()
+
+    // 3. 路由规范检查（所有路由注册完成后执行）
+    const { checkRouteConsistency } = await import('./utils/route-consistency-check.js')
+    const { passed, violations } = checkRouteConsistency(fastify)
+    if (!passed) {
+      console.warn('\n⚠️ ⚠️ ⚠️  路由规范告警 ⚠️ ⚠️ ⚠️')
+      console.warn('以下路由路径未在 config/routes.js 中定义，请尽快规范化：')
+      for (const v of violations) {
+        console.warn(`  ${v.method} ${v.path}`)
+      }
+      console.warn('⚠️ ⚠️ ⚠️  建议在 config/routes.js 中添加对应常量 ⚠️ ⚠️ ⚠️\n')
+    }
+
+    // 4. 启动服务器
+    await fastify.listen({ 
+      port: process.env.PORT || 33038,
+      host: '0.0.0.0'
+    })
+    
+    console.log(`🚀 服务器运行在 http://localhost:${process.env.PORT || 33038}`)
+    console.log(`📊 健康检查: http://localhost:${process.env.PORT || 33038}/api/health`)
+    
+    if (process.env.NIGHTWOLF_ENABLED === 'true') {
+      console.log(`🌙 夜狼模块API: http://localhost:${process.env.PORT || 33038}/api/nightwolf/v1/health`)
+    }
+    
+    // 3. 初始化打印机默认品牌数据
+    try {
+      const { default: PrinterService } = await import('./services/printer/printer.service.js');
+      const printerService = new PrinterService();
+      await printerService.initDefaultBrands();
+    } catch (error) {
+      // 非致命，打印失败不影响启动
+      console.warn('⚠️ 打印机品牌初始化（非致命）:', error.message);
+    }
+
+    // 4. 优雅关闭处理
+    const signals = ['SIGINT', 'SIGTERM']
+    signals.forEach(signal => {
+      process.on(signal, async () => {
+        console.log(`\n${signal} 收到，开始优雅关闭...`)
+        
+        // 关闭夜狼模块
+        if (nightWolfModule && nightWolfInitialized) {
+          try {
+            await nightWolfModule.cleanup();
+            console.log('✅ 夜狼模块资源已清理');
+          } catch (error) {
+            console.error('❌ 夜狼模块清理失败:', error);
+          }
+        }
+        
+        // 关闭服务器
+        await fastify.close()
+        console.log('👋 服务器已关闭')
+        process.exit(0)
+      })
+    })
+    
+  } catch (err) {
+    console.error('❌ 服务器启动失败:', err)
+    
+    // 清理夜狼模块
+    if (nightWolfModule && nightWolfInitialized) {
+      try {
+        await nightWolfModule.cleanup();
+      } catch (error) {
+        console.error('夜狼模块清理失败:', error);
+      }
+    }
+    
+    process.exit(1)
+  }
+}
+
+// 启动服务器
+startServer()
+
+// 导出用于测试
+export { fastify }

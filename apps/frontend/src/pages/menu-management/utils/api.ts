@@ -1,3 +1,8 @@
+/**
+ * @deprecated 旧规范菜单管理API工具函数
+ * 上传路径使用 '/api/v1/upload/menu-image'，后端路由可能已变更
+ * 新规范请使用 src/config/api-routes.ts 中的路由常量
+ */
 import axios from 'axios';
 
 const API_BASE = '';  // 使用 Vite 代理，空字符串自动走本地

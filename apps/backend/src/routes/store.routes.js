@@ -5,6 +5,7 @@ import storeService from '../services/store.service.js';
 import { requireTenantAccess } from '../middleware/index.js';
 import { STORE_TYPES, STORE_STATUS, STORE_VALIDATION, STORE_DEFAULTS } from '../constants/store.constants.js';
 import routes from '../config/routes.js';
+import { publicDb } from '../db/index.js';
 const STORES = routes.tenant.STORES;
 
 /**
@@ -13,11 +14,12 @@ const STORES = routes.tenant.STORES;
  */
 async function storeRoutes(fastify) {
   // 使用统一的认证和租户检查中间件
-  const authWithTenant = requireTenantAccess('header');
+  const authWithTenant = requireTenantAccess('query');
+  const authWithQuery = requireTenantAccess('query');
   
   // 获取店铺列表
   fastify.get(STORES.LIST, {
-    preHandler: authWithTenant
+    preHandler: authWithQuery
   }, async (request, reply) => {
     try {
       console.log('店铺列表请求头:', request.headers);
@@ -97,6 +99,22 @@ async function storeRoutes(fastify) {
     }
   });
 
+  // 检查店铺标识符可用性
+  fastify.post(STORES.CHECK_SLUG, async (request, reply) => {
+    try {
+      const { slug } = request.body;
+      if (!slug) {
+        return reply.status(400).send({ success: false, message: '标识符是必需的' });
+      }
+      console.log(`[check-slug] 收到请求, slug="${slug}"`);
+      const existing = await publicDb.store.findUnique({ where: { slug } });
+      return { success: true, data: { available: !existing, slug } };
+    } catch (error) {
+      request.log.error({ msg: '检查标识符错误', error: error.message, stack: error.stack });
+      return reply.status(500).send({ success: false, message: error.message || '检查标识符失败' });
+    }
+  });
+
   // 创建新店铺
   fastify.post(STORES.CREATE, {
     schema: {
@@ -138,7 +156,8 @@ async function storeRoutes(fastify) {
   }, async (request, reply) => {
     try {
       const { tenantId, id: userId } = request.user;
-      const storeData = request.body;
+      // 移除只在认证阶段使用的字段，不传给 service
+      const { tenantSlug, ...storeData } = request.body;
       
       const result = await storeService.createStore(storeData, tenantId, userId);
       

@@ -160,16 +160,16 @@ export function useScanOrder(storeSlug: string, tableId: string) {
     try {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      // 准备订单数据
-      const orderData = {
-        store_id: storeSlug,
-        table_code: tableId,
+      // 准备订单数据 - 使用后端驼峰命名
+      const orderData: any = {
+        storeId: state.storeInfo?.id || storeSlug,
+        tableId: state.tableInfo?.id || tableId,
         items: state.cartItems.map(item => ({
-          menu_item_id: item.menuItemId,
+          menuItemId: item.menuItemId,
           quantity: item.quantity,
         })),
-        notes: params?.specialRequest,
-        customer_phone: params?.phone,
+        customerNotes: params?.specialRequest,
+        customerPhone: params?.phone,
       };
 
       // 提交订单
@@ -191,7 +191,11 @@ export function useScanOrder(storeSlug: string, tableId: string) {
       // 返回订单ID（如果需要）
       // return result.orderId;
     } catch (error) {
-      console.error('提交订单失败:', error);
+      // 429限频不打印错误日志（前端已做友好提示）
+      const err = error as any;
+      if (err.code !== 429) {
+        console.error('提交订单失败:', error);
+      }
       setState(prev => ({
         ...prev,
         isLoading: false,
@@ -258,12 +262,18 @@ export function useScanOrder(storeSlug: string, tableId: string) {
     cat => cat.id === state.selectedCategory,
   );
 
+  // 计算当前显示的分类列表（全部 or 选中）
+  const filteredCategories = state.selectedCategory
+    ? state.categories.filter(cat => cat.id === state.selectedCategory)
+    : state.categories;
+
   return {
     // 状态
     ...state,
     cartTotal,
     cartItemCount,
     currentCategory,
+    filteredCategories,
     
     // 操作方法
     selectCategory,

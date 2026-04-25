@@ -3,6 +3,7 @@
 
 import jwt from 'jsonwebtoken';
 import config from '../config/index.js';
+import { publicDb } from '../db/index.js';
 import { 
   AUTH_HEADERS, 
   USER_ROLES, 
@@ -206,8 +207,53 @@ export function requireTenantAccess(tenantIdSource = 'header', paramName = 'tena
         case 'both':
           tenantId = request.headers[AUTH_HEADERS.TENANT_ID] || request.params[paramName];
           break;
+        case 'user':
+          // 从JWT中的tenantId获取
+          tenantId = request.user?.tenantId;
+          break;
+        case 'body':
+          tenantId = request.body?.tenantSlug || request.body?.tenantId || request.body?.subdomain;
+          break;
+        case 'query':
+          tenantId = request.query?.tenantSlug || request.query?.tenantId || request.query?.subdomain;
+          break;
+        case 'auto':
+          // 先查 query，再查 body，最后查 header
+          tenantId = request.query?.tenantSlug || request.query?.tenantId || request.query?.subdomain
+                  || request.body?.tenantSlug || request.body?.tenantId || request.body?.subdomain
+                  || request.headers[AUTH_HEADERS.TENANT_ID]
+                  || request.params?.tenantId;
+          break;
         default:
           tenantId = request.headers[AUTH_HEADERS.TENANT_ID];
+      }
+
+      // 如果没有找到租户ID，尝试从用户关联的第一个活跃租户获取
+      if (!tenantId && request.user?.id) {
+        try {
+          const firstTenant = await publicDb.userTenant.findFirst({
+            where: {
+              userId: request.user.id,
+              status: 'ACTIVE',
+            },
+            include: {
+              tenant: true,
+            },
+          });
+          if (firstTenant) {
+            tenantId = firstTenant.tenantId;
+            request.log.info({
+              msg: '自动从用户关联租户获取tenantId',
+              userId: request.user.id,
+              tenantId,
+            });
+          }
+        } catch (dbError) {
+          request.log.warn({
+            msg: '自动获取租户ID失败',
+            error: dbError.message,
+          });
+        }
       }
       
       if (!tenantId) {
@@ -219,8 +265,34 @@ export function requireTenantAccess(tenantIdSource = 'header', paramName = 'tena
         return;
       }
 
+      // 如果 tenantId 是 slug（非 UUID 格式），解析为真实 tenantId
+      const isUUID = /^[a-z0-9]{24,26}$/.test(tenantId);
+      if (!isUUID) {
+        try {
+          const tenant = await publicDb.tenant.findFirst({ where: { subdomain: tenantId }, select: { id: true } });
+          if (tenant) {
+            tenantId = tenant.id;
+          } else {
+            reply.code(404).send({
+              success: false,
+              message: '租户不存在',
+              code: 'TENANT_NOT_FOUND'
+            });
+            return;
+          }
+        } catch (dbError) {
+          request.log.error({ msg: '解析租户slug失败', error: dbError.message });
+          reply.code(500).send({
+            success: false,
+            message: '租户访问检查失败',
+            code: 'TENANT_CHECK_ERROR'
+          });
+          return;
+        }
+      }
+
       // 检查用户是否属于该租户
-      const userTenant = await request.db.publicDb.userTenant.findFirst({
+      const userTenant = await publicDb.userTenant.findFirst({
         where: {
           tenantId,
           userId: request.user.id,
@@ -576,6 +648,205 @@ export function errorHandler(error, request, reply) {
   });
 }
 
+// ==================== 店铺访问中间件 ====================
+
+/**
+ * 店铺访问中间件
+ * 检查用户是否有权访问指定店铺
+ * @param {string} storeIdSource storeId 来源：'param'（URL路径参数）、'query'（查询参数）
+ * @param {string} paramName 参数名（默认 'storeId'）
+ */
+export function requireStoreAccess(storeIdSource = 'param', paramName = 'storeId') {
+  return async function (request, reply) {
+    try {
+      // 先进行认证
+      await authenticate(request, reply);
+      
+      // 如果认证失败，authenticate已经发送了响应
+      if (reply.sent) {
+        return;
+      }
+
+      let storeId;
+      
+      switch (storeIdSource) {
+        case 'param':
+          storeId = request.params[paramName];
+          break;
+        case 'query':
+          storeId = request.query[paramName];
+          break;
+        case 'both':
+          storeId = request.params[paramName] || request.query[paramName];
+          break;
+        default:
+          storeId = request.params[paramName] || request.query[paramName];
+      }
+      
+      if (!storeId) {
+        reply.code(400).send({
+          success: false,
+          message: '店铺ID是必需的',
+          code: 'MISSING_STORE_ID'
+        });
+        return;
+      }
+
+      // 检查店铺是否存在，并获取所属租户
+      const store = await request.db.publicDb.store.findUnique({
+        where: { id: String(storeId) },
+        select: { id: true, tenantId: true, name: true }
+      });
+
+      if (!store) {
+        reply.code(404).send({
+          success: false,
+          message: '店铺不存在',
+          code: 'STORE_NOT_FOUND'
+        });
+        return;
+      }
+
+      // 检查用户是否属于该店铺的租户
+      const userTenant = await request.db.publicDb.userTenant.findFirst({
+        where: {
+          tenantId: store.tenantId,
+          userId: request.user.id,
+          status: 'ACTIVE'
+        }
+      });
+
+      if (!userTenant) {
+        request.log.warn({
+          msg: '店铺访问被拒绝',
+          userId: request.user.id,
+          storeId: store.id,
+          storeName: store.name,
+          tenantId: store.tenantId,
+          attemptedAt: new Date().toISOString()
+        });
+        
+        reply.code(403).send({
+          success: false,
+          message: '无权访问该店铺',
+          code: 'STORE_ACCESS_DENIED'
+        });
+        return;
+      }
+
+      // 将店铺信息添加到请求对象
+      request.store = {
+        id: store.id,
+        name: store.name,
+        tenantId: store.tenantId
+      };
+
+      request.log.debug({
+        msg: '店铺访问成功',
+        userId: request.user.id,
+        storeId: store.id,
+        tenantId: store.tenantId
+      });
+    } catch (error) {
+      request.log.error({
+        msg: '店铺访问检查错误',
+        error: error.message,
+        stack: error.stack
+      });
+      
+      reply.code(500).send({
+        success: false,
+        message: '店铺访问检查失败',
+        code: 'STORE_CHECK_ERROR'
+      });
+    }
+  };
+}
+
+// ==================== 请求频率限制中间件 ====================
+
+/**
+ * 内存请求计数器（IP → 请求记录）
+ * 使用 Map 实现，重启进程即重置
+ * @type {Map<string, {count: number, resetTime: number}>}
+ */
+const rateLimitStore = new Map()
+
+/**
+ * 定期清理过期记录（每5分钟）
+ * 防止内存无限增长
+ */
+setInterval(() => {
+  const now = Date.now()
+  for (const [key, record] of rateLimitStore) {
+    if (now > record.resetTime) {
+      rateLimitStore.delete(key)
+    }
+  }
+  // 如果 store 太大（超过10000条），强制清空最旧的一半
+  if (rateLimitStore.size > 10000) {
+    const entries = [...rateLimitStore.entries()]
+      .sort((a, b) => a[1].resetTime - b[1].resetTime)
+    const toDelete = entries.slice(0, entries.length / 2)
+    for (const [key] of toDelete) {
+      rateLimitStore.delete(key)
+    }
+  }
+}, 300000).unref()
+
+/**
+ * 请求频率限制中间件
+ * 对指定路由组进行 IP 级别的访问频率限制
+ * 
+ * @param {Object} options 配置选项
+ * @param {number} options.windowMs 时间窗口（毫秒），默认 60000（1分钟）
+ * @param {number} options.max 窗口内最大请求数，默认 100
+ * @param {string} options.message 超限提示信息
+ * @returns {Function} Fastify preHandler 中间件
+ */
+export function rateLimit({
+  windowMs = 60000,
+  max = 100,
+  message = '请求过于频繁，请稍后再试',
+  scope = 'global'  // 作用域名称，不同限流器使用不同 scope 可独立计数
+} = {}) {
+  return async function (request, reply) {
+    const ip = request.ip
+    const key = `${scope}:${ip}`  // 带作用域的 key，每个限流器独立计数
+    const now = Date.now()
+    const record = rateLimitStore.get(key)
+    
+    // 无记录或已过期 → 新窗口
+    if (!record || now > record.resetTime) {
+      rateLimitStore.set(ip, { count: 1, resetTime: now + windowMs })
+      return
+    }
+    
+    // 超过限制 → 429
+    if (record.count >= max) {
+      request.log.warn({
+        msg: '请求频率超限',
+        ip,
+        count: record.count,
+        max,
+        windowMs,
+        url: request.url
+      })
+      
+      reply.code(429).send({
+        code: 429,
+        error: message,
+        traceId: `rate-${Date.now().toString(36)}`,
+        timestamp: new Date().toISOString()
+      })
+      return
+    }
+    
+    // 未超限 → 递增
+    record.count++
+  }
+}
+
 // ==================== 导出所有中间件 ====================
 
 export default {
@@ -587,6 +858,12 @@ export default {
   // 租户相关
   requireTenantAccess,
   requireTenantAdmin,
+  
+  // 店铺相关
+  requireStoreAccess,
+  
+  // 限流
+  rateLimit,
   
   // 验证相关
   validateRequest,

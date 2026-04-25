@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 扫码点餐页面 - 橙色渐变头部 (全局覆盖) */
+.scan-header-global {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 30 !important;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1) !important;
+}
+
 @layer base {
   body {
     @apply bg-gray-50 text-gray-800 antialiased;

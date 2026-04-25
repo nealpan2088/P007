@@ -128,9 +128,9 @@ prisma/migrations/
 !prisma/migrations/0_init/
 prisma/*.db
 
-# Test files
-*.test.js
-*.spec.js
+# Test files (no blanket ignore — test files should be committed)
+# Only ignore temporary test scripts
+tmp-test-*.sh
 
 # Build output
 dist/
@@ -181,7 +181,6 @@ qilin-port-check.cron
 check-*.sh
 daily-*.sh
 log-rotate-*.sh
-start-*.sh
 pm2-*.config.js
 env-config-report-*.txt
 documentation-report-*.txt
@@ -194,4 +193,5 @@ apps/backend/node_modules/@prisma/
 
 # Development logs
 /tmp/
-/logs/
+/logs/uploads/
+apps/uploads/

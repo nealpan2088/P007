@@ -31,12 +31,13 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Store } from './types';
-import * as apiUtils from './utils/api.utils';
 import * as storeUtils from './utils/store.utils';
+import { apiGet } from '../../utils/api-client';
+import { API_ENDPOINTS } from '../../config/api-routes';
 import { TENANT_ROUTES } from '../../config/routes';
 
 const StoreDetailPage: React.FC = () => {
-  const { storeId } = useParams<{ storeId: string }>();
+  const { tenantSlug, storeId } = useParams<{ tenantSlug: string; storeId: string }>();
   const navigate = useNavigate();
   
   const [loading, setLoading] = useState(false);
@@ -54,8 +55,9 @@ const StoreDetailPage: React.FC = () => {
       setLoading(true);
       
       // 调用API获取店铺详情
-      const storeData = await apiUtils.fetchStore(storeId!);
-      setStore(storeData);
+      const url = API_ENDPOINTS.TENANT.STORES.DETAIL.replace(':storeId', storeId!) + `?tenantSlug=${encodeURIComponent(tenantSlug || '')}`;
+      const res = await apiGet(url);
+      setStore(res.data);
     } catch (error) {
       console.error('加载店铺数据失败:', error);
       message.error('加载店铺数据失败，请稍后重试');

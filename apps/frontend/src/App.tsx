@@ -143,6 +143,8 @@ function AppContent() {
           <Route path={ADMIN_ROUTES.USERS.LIST} element={<TenantManagement />} />
           <Route path={ADMIN_ROUTES.SYSTEM.SETTINGS} element={<AdminDashboard />} />
           <Route path={ADMIN_ROUTES.STORES.LIST} element={<AdminStoresPage />} />
+          <Route path={ADMIN_ROUTES.PRINTERS.LIST} element={<PrinterManagement />} />
+          <Route path={ADMIN_ROUTES.MENU_TEMPLATES.LIST} element={<MenuTemplateManager />} />
 
           {/* ===== 租户管理后台（/t/:tenantSlug/*） ===== */}
           <Route path={TENANT_ROUTES.TENANT_CTX.DASHBOARD} element={<TenantDashboard />} />

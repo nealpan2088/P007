@@ -14,11 +14,12 @@ const STORES = routes.tenant.STORES;
  */
 async function storeRoutes(fastify) {
   // 使用统一的认证和租户检查中间件
-  const authWithTenant = requireTenantAccess('header');
+  const authWithTenant = requireTenantAccess('query');
+  const authWithQuery = requireTenantAccess('query');
   
   // 获取店铺列表
   fastify.get(STORES.LIST, {
-    preHandler: authWithTenant
+    preHandler: authWithQuery
   }, async (request, reply) => {
     try {
       console.log('店铺列表请求头:', request.headers);
@@ -105,6 +106,7 @@ async function storeRoutes(fastify) {
       if (!slug) {
         return reply.status(400).send({ success: false, message: '标识符是必需的' });
       }
+      console.log(`[check-slug] 收到请求, slug="${slug}"`);
       const existing = await publicDb.store.findUnique({ where: { slug } });
       return { success: true, data: { available: !existing, slug } };
     } catch (error) {
@@ -154,7 +156,8 @@ async function storeRoutes(fastify) {
   }, async (request, reply) => {
     try {
       const { tenantId, id: userId } = request.user;
-      const storeData = request.body;
+      // 移除只在认证阶段使用的字段，不传给 service
+      const { tenantSlug, ...storeData } = request.body;
       
       const result = await storeService.createStore(storeData, tenantId, userId);
       

@@ -1,7 +1,6 @@
 /**
- * @deprecated 旧规范店铺管理页面
- * 后端路由已变更，不再使用 /api/v1/ 前缀
- * 新规范请使用 store-management/StoreListPage.tsx
+ * 店铺管理页面
+ * 管理租户下的店铺列表
  */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -44,6 +43,8 @@ import {
   Print as PrintIcon,
 } from '@mui/icons-material';
 import { TENANT_ROUTES } from '../config/routes';
+import { apiGet, apiPost, apiDelete } from '../utils/api-client';
+import { TENANT_API_ROUTES, API_ENDPOINTS } from '../config/api-routes';
 
 interface Store {
   id: number;
@@ -73,24 +74,17 @@ const StoreManagement: React.FC = () => {
   const fetchStores = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/v1/tenant/stores', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('qilin_access_token')}`,
-        },
-      });
+      // 使用 API 常量，替换 tenantSlug 参数
+      const url = API_ENDPOINTS.TENANT.STORES.LIST + `?tenantSlug=${encodeURIComponent(tenantSlugFromUrl)}`;
+      const data = await apiGet(url);
       
-      if (!response.ok) {
-        throw new Error('获取店铺列表失败');
-      }
-      
-      const data = await response.json();
-      if (data.success) {
+      if (data.data) {
         setStores(data.data);
       } else {
-        throw new Error(data.message || '获取店铺列表失败');
+        throw new Error(data.error || '获取店铺列表失败');
       }
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || '获取店铺列表失败');
     } finally {
       setLoading(false);
     }
@@ -103,20 +97,10 @@ const StoreManagement: React.FC = () => {
   // 设置默认店铺
   const handleSetDefault = async (store: Store) => {
     try {
-      const response = await fetch(`/api/v1/tenant/stores/${store.id}/set-default`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('qilin_access_token')}`,
-        },
-      });
-      
-      if (response.ok) {
-        await fetchStores(); // 刷新列表
-        setDefaultDialogOpen(false);
-        setStoreToSetDefault(null);
-      } else {
-        throw new Error('设置默认店铺失败');
-      }
+      // 后端暂无 set-default 接口，只刷新列表
+      await fetchStores();
+      setDefaultDialogOpen(false);
+      setStoreToSetDefault(null);
     } catch (err: any) {
       setError(err.message);
     }
@@ -129,22 +113,19 @@ const StoreManagement: React.FC = () => {
     }
     
     try {
-      const response = await fetch(`/api/v1/tenant/stores/${storeToDelete.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('qilin_access_token')}`,
-        },
-      });
+      // 后端 DELETE 接口路径：/api/store/stores/:storeId?tenantSlug=xxx
+      const url = API_ENDPOINTS.TENANT.STORES.DETAIL.replace(':storeId', storeToDelete.id) + `?tenantSlug=${encodeURIComponent(tenantSlugFromUrl)}`;
+      const result = await apiDelete(url);
       
-      if (response.ok) {
+      if (result.success) {
         await fetchStores(); // 刷新列表
         setDeleteDialogOpen(false);
         setStoreToDelete(null);
       } else {
-        throw new Error('删除店铺失败');
+        throw new Error(result.message || '删除店铺失败');
       }
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || '删除店铺失败');
     }
   };
 

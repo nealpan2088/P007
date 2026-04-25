@@ -84,6 +84,13 @@ export const TENANT_API_ROUTES = {
   UPLOAD: {
     MENU_IMAGE: '/api/upload/menu-image',
   },
+
+  // Dashboard 数据查询
+  DASHBOARD: {
+    STORES: '/api/tenant/:tenantSlug/stores',
+    ORDERS: '/api/tenant/:tenantSlug/orders',
+    ORDERS_STATS: '/api/tenant/:tenantSlug/orders/stats',
+  },
 };
 
 // ============================================

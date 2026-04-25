@@ -15,19 +15,19 @@ export default function AdminDashboard() {
     {
       title: '📋 店铺管理',
       desc: '管理各租户下的店铺信息、配置和状态',
-      link: TENANT_ROUTES.STORES.LIST,
+      link: ADMIN_ROUTES.STORES.LIST,
       roles: ['SUPER_ADMIN'],
     },
     {
       title: '📦 菜单管理',
       desc: '管理菜品分类、菜单模板和定价',
-      link: TENANT_ROUTES.STORE_MENU.ITEMS,
+      link: ADMIN_ROUTES.MENU_TEMPLATES.LIST,
       roles: ['SUPER_ADMIN'],
     },
     {
       title: '🖨️ 设备管理',
       desc: '管理云打印机、测试连接、查看状态',
-      link: TENANT_ROUTES.STORE_PRINTERS.LIST,
+      link: ADMIN_ROUTES.PRINTERS.LIST,
       roles: ['SUPER_ADMIN'],
     },
   ];

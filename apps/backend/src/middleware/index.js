@@ -3,6 +3,7 @@
 
 import jwt from 'jsonwebtoken';
 import config from '../config/index.js';
+import { publicDb } from '../db/index.js';
 import { 
   AUTH_HEADERS, 
   USER_ROLES, 
@@ -206,8 +207,53 @@ export function requireTenantAccess(tenantIdSource = 'header', paramName = 'tena
         case 'both':
           tenantId = request.headers[AUTH_HEADERS.TENANT_ID] || request.params[paramName];
           break;
+        case 'user':
+          // 从JWT中的tenantId获取
+          tenantId = request.user?.tenantId;
+          break;
+        case 'body':
+          tenantId = request.body?.tenantSlug || request.body?.tenantId || request.body?.subdomain;
+          break;
+        case 'query':
+          tenantId = request.query?.tenantSlug || request.query?.tenantId || request.query?.subdomain;
+          break;
+        case 'auto':
+          // 先查 query，再查 body，最后查 header
+          tenantId = request.query?.tenantSlug || request.query?.tenantId || request.query?.subdomain
+                  || request.body?.tenantSlug || request.body?.tenantId || request.body?.subdomain
+                  || request.headers[AUTH_HEADERS.TENANT_ID]
+                  || request.params?.tenantId;
+          break;
         default:
           tenantId = request.headers[AUTH_HEADERS.TENANT_ID];
+      }
+
+      // 如果没有找到租户ID，尝试从用户关联的第一个活跃租户获取
+      if (!tenantId && request.user?.id) {
+        try {
+          const firstTenant = await publicDb.userTenant.findFirst({
+            where: {
+              userId: request.user.id,
+              status: 'ACTIVE',
+            },
+            include: {
+              tenant: true,
+            },
+          });
+          if (firstTenant) {
+            tenantId = firstTenant.tenantId;
+            request.log.info({
+              msg: '自动从用户关联租户获取tenantId',
+              userId: request.user.id,
+              tenantId,
+            });
+          }
+        } catch (dbError) {
+          request.log.warn({
+            msg: '自动获取租户ID失败',
+            error: dbError.message,
+          });
+        }
       }
       
       if (!tenantId) {
@@ -219,8 +265,34 @@ export function requireTenantAccess(tenantIdSource = 'header', paramName = 'tena
         return;
       }
 
+      // 如果 tenantId 是 slug（非 UUID 格式），解析为真实 tenantId
+      const isUUID = /^[a-z0-9]{24,26}$/.test(tenantId);
+      if (!isUUID) {
+        try {
+          const tenant = await publicDb.tenant.findFirst({ where: { subdomain: tenantId }, select: { id: true } });
+          if (tenant) {
+            tenantId = tenant.id;
+          } else {
+            reply.code(404).send({
+              success: false,
+              message: '租户不存在',
+              code: 'TENANT_NOT_FOUND'
+            });
+            return;
+          }
+        } catch (dbError) {
+          request.log.error({ msg: '解析租户slug失败', error: dbError.message });
+          reply.code(500).send({
+            success: false,
+            message: '租户访问检查失败',
+            code: 'TENANT_CHECK_ERROR'
+          });
+          return;
+        }
+      }
+
       // 检查用户是否属于该租户
-      const userTenant = await request.db.publicDb.userTenant.findFirst({
+      const userTenant = await publicDb.userTenant.findFirst({
         where: {
           tenantId,
           userId: request.user.id,

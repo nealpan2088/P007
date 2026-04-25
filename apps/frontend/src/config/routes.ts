@@ -103,6 +103,16 @@ export const ADMIN_ROUTES = {
     LIST: '/admin/stores',
   },
 
+  // 打印机管理（管理后台）
+  PRINTERS: {
+    LIST: '/admin/printers',
+  },
+
+  // 菜单模板管理（管理后台）
+  MENU_TEMPLATES: {
+    LIST: '/admin/menu-templates',
+  },
+
   // 系统管理
   SYSTEM: {
     SETTINGS: '/admin/system/settings',

@@ -1,10 +1,24 @@
 // 租户管理路由
 
 import tenantService from '../services/tenant.service.js';
+import storeService from '../services/store.service.js';
+import orderService from '../services/order.service.js';
 import { authenticate, requestTimer, requestLogger, requireTenantAdmin } from '../middleware/index.js';
 import { TENANT_ROUTES } from '../config/routes.js';
 import systemMode from '../utils/system-mode.js';
 import { publicDb } from '../db/index.js';
+
+/**
+ * 将租户标识符（slug 或 id）解析为数据库中的真实租户 ID
+ * @param {string} identifier - 租户 slug 或 id
+ * @returns {Promise<string|null>} 租户ID，不存在返回 null
+ */
+async function resolveTenantId(identifier) {
+  const byId = await publicDb.tenant.findUnique({ where: { id: identifier }, select: { id: true } });
+  if (byId) return byId.id;
+  const bySlug = await publicDb.tenant.findFirst({ where: { subdomain: identifier }, select: { id: true } });
+  return bySlug ? bySlug.id : null;
+}
 
 /**
  * 注册租户路由
@@ -394,6 +408,89 @@ export async function registerTenantRoutes(fastify) {
       }
     }
   );
+
+  // ──────────────────────────────────────────────
+  // Dashboard 数据接口
+  // ──────────────────────────────────────────────
+
+  // 获取租户下所有店铺列表（Dashboard 使用）
+  fastify.get(TENANT_ROUTES.TENANT.DASHBOARD.STORES, {
+    preHandler: [authenticate]
+  }, async (request, reply) => {
+    try {
+      const { tenantId } = request.params;
+      const userId = request.user.id;
+
+      const resolvedTenantId = await resolveTenantId(tenantId);
+      if (!resolvedTenantId) {
+        return reply.status(404).send({ success: false, message: '租户不存在' });
+      }
+
+      const result = await storeService.getStoresByTenant(resolvedTenantId, userId, request.query);
+
+      return {
+        success: true,
+        data: result.data || result,
+        pagination: result.pagination
+      };
+    } catch (error) {
+      request.log.error({ msg: '获取租户店铺列表失败', error: error.message, stack: error.stack, userId: request.user?.id });
+      return reply.status(error.code === 'FORBIDDEN' ? 403 : 500).send({
+        success: false,
+        message: error.message || '获取店铺列表失败',
+      });
+    }
+  });
+
+  // 获取租户下所有订单（Dashboard 使用）
+  fastify.get(TENANT_ROUTES.TENANT.DASHBOARD.ORDERS, {
+    preHandler: [authenticate]
+  }, async (request, reply) => {
+    try {
+      const { tenantId } = request.params;
+      const userId = request.user.id;
+
+      const resolvedTenantId = await resolveTenantId(tenantId);
+      if (!resolvedTenantId) {
+        return reply.status(404).send({ success: false, message: '租户不存在' });
+      }
+
+      const result = await orderService.getOrdersByTenant(resolvedTenantId, userId, request.query);
+
+      return result;
+    } catch (error) {
+      request.log.error({ msg: '获取租户订单列表失败', error: error.message, stack: error.stack, userId: request.user?.id });
+      return reply.status(error.code === 'FORBIDDEN' ? 403 : 500).send({
+        success: false,
+        message: error.message || '获取订单列表失败',
+      });
+    }
+  });
+
+  // 获取租户订单统计
+  fastify.get(TENANT_ROUTES.TENANT.DASHBOARD.ORDERS_STATS, {
+    preHandler: [authenticate]
+  }, async (request, reply) => {
+    try {
+      const { tenantId } = request.params;
+      const userId = request.user.id;
+
+      const resolvedTenantId = await resolveTenantId(tenantId);
+      if (!resolvedTenantId) {
+        return reply.status(404).send({ success: false, message: '租户不存在' });
+      }
+
+      const result = await orderService.getOrderStatsByTenant(resolvedTenantId, userId);
+
+      return result;
+    } catch (error) {
+      request.log.error({ msg: '获取租户订单统计失败', error: error.message, stack: error.stack, userId: request.user?.id });
+      return reply.status(error.code === 'FORBIDDEN' ? 403 : 500).send({
+        success: false,
+        message: error.message || '获取订单统计失败',
+      });
+    }
+  });
 
   // 租户健康检查
   fastify.get(TENANT_ROUTES.TENANT.HEALTH, async (request, reply) => {

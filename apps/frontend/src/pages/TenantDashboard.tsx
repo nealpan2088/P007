@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { TENANT_API_ROUTES } from '../config/api-routes';
 import {
   Container,
   Box,
@@ -92,7 +93,9 @@ const getStatusColor = (status: string) => {
 };
 
 const TenantDashboard: React.FC = () => {
-  const { tenantSlug } = useParams<{ tenantSlug: string }>();
+  const params = useParams<{ tenantSlug: string; tenantId: string }>();
+  const tenantSlug = params.tenantSlug || params.tenantId || '';
+  console.log('TenantDashboard params:', params, '-> tenantSlug:', tenantSlug);
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   
@@ -122,8 +125,8 @@ const TenantDashboard: React.FC = () => {
       
       // 并行获取店铺和订单数据
       const [storesRes, ordersRes] = await Promise.allSettled([
-        apiGet(`/tenant/${tenantSlug}/stores`).catch(() => null),
-        apiGet(`/tenant/${tenantSlug}/orders`).catch(() => null),
+        apiGet(TENANT_API_ROUTES.DASHBOARD.STORES.replace(':tenantSlug', tenantSlug)),
+        apiGet(TENANT_API_ROUTES.DASHBOARD.ORDERS.replace(':tenantSlug', tenantSlug)),
       ]);
       
       if (storesRes.status === 'fulfilled' && storesRes.value?.data) {
@@ -220,8 +223,8 @@ const TenantDashboard: React.FC = () => {
   }
 
   // 计算统计数据
-  const totalOrdersToday = stores.reduce((sum, store) => sum + store.ordersToday, 0);
-  const totalRevenueToday = stores.reduce((sum, store) => sum + store.revenueToday, 0);
+  const totalOrdersToday = stores.reduce((sum, store) => sum + (store.ordersToday || 0), 0);
+  const totalRevenueToday = stores.reduce((sum, store) => sum + (store.revenueToday || 0), 0);
   const activeStoresCount = stores.filter(store => store.status === 'active').length;
 
   return (
@@ -415,10 +418,11 @@ const TenantDashboard: React.FC = () => {
                     }
                     secondary={
                       <>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" component="span" color="text.secondary">
                           {order.storeName} | {formatCurrency(order.totalAmount)}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
+                        <br />
+                        <Typography variant="body2" component="span" color="text.secondary">
                           {formatDate(order.createdAt)}
                         </Typography>
                       </>

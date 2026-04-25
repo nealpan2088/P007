@@ -176,7 +176,8 @@ const CreateTenant: React.FC = () => {
   };
 
   const handleNext = () => {
-    if (validateStep(activeStep)) {
+    // activeStep=1（套餐选择）时跳过所有者验证
+    if (activeStep === 1 || validateStep(activeStep)) {
       setActiveStep((prevStep) => prevStep + 1);
     }
   };
@@ -185,18 +186,14 @@ const CreateTenant: React.FC = () => {
     setActiveStep((prevStep) => prevStep - 1);
   };
 
-  const checkSlugAvailability = async (slug: string): Promise<boolean> => {
-    try {
-      const res = await apiPost<any>('/tenant/check-subdomain', { subdomain: slug });
-      return res.success && res.data?.available === true;
-    } catch (error) {
-      console.error('检查标识符可用性错误:', error);
-      return false;
-    }
-  };
-
   const handleSubmit = async () => {
+    // 验证所有步骤（0=基本信息, 1=套餐已选）
     if (!validateStep(0)) {
+      return;
+    }
+
+    if (!user?.email) {
+      setError('无法获取当前用户信息，请重新登录');
       return;
     }
 
@@ -204,13 +201,7 @@ const CreateTenant: React.FC = () => {
     setError(null);
 
     try {
-      // 检查租户标识符可用性
-      const isTenantSlugAvailable = await checkSlugAvailability(formData.tenantSlug);
-      if (!isTenantSlugAvailable) {
-        throw new Error(`品牌标识符 "${formData.tenantSlug}" 不可用，请尝试其他标识符`);
-      }
-
-      // 创建租户（多店模式）
+      // 创建租户（使用当前登录用户作为所有者）
       const res = await apiPost<any>('/tenant/register', {
         tenant: {
             name: formData.tenantName,
@@ -219,9 +210,9 @@ const CreateTenant: React.FC = () => {
             plan: formData.plan,
           },
           owner: {
-            email: formData.ownerEmail,
-            password: formData.ownerPassword,
-            fullName: formData.ownerName || '',
+            email: user.email,
+            password: 'TempPass@2026', // 占位密码，后端查到此邮箱已存在会跳过创建
+            fullName: user.fullName || user.username || '',
           },
           // 自动创建第一个店铺
           store: {

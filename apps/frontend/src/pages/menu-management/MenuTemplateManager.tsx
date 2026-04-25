@@ -145,6 +145,13 @@ export default function MenuTemplateManager() {
     setStoreId(sid);
     setStoreName(stores.find(s => s.id === sid)?.name || '');
     localStorage.setItem('menuManagement-storeId', sid);
+    // 立即加载（React state 异步，手动触发）
+    if (sid) {
+      setTimeout(() => loadData(), 0);
+    } else {
+      setItems([]);
+      setCategories([]);
+    }
   };
 
   // 加载菜单数据

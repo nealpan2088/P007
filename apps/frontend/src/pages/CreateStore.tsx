@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { apiPost } from '../utils/api-client';
 import {
   Container,
@@ -50,6 +50,7 @@ interface StoreFormData {
 
 const CreateStore: React.FC = () => {
   const navigate = useNavigate();
+  const { tenantSlug } = useParams<{ tenantSlug: string }>();
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -208,7 +209,7 @@ const CreateStore: React.FC = () => {
 
   const checkSlugAvailability = async (slug: string): Promise<boolean> => {
     try {
-      const res = await apiPost<any>(API_ENDPOINTS.STORE.CHECK_SLUG, { slug });
+      const res = await apiPost<any>(API_ENDPOINTS.TENANT.STORES.CHECK_SLUG, { slug });
       return res.success && res.data?.available === true;
     } catch (error) {
       console.error('检查标识符可用性错误:', error);
@@ -233,12 +234,14 @@ const CreateStore: React.FC = () => {
       }
 
       // 创建店铺
-      const res = await apiPost<any>(API_ENDPOINTS.STORE.CREATE, {
+      const res = await apiPost<any>(API_ENDPOINTS.TENANT.STORES.CREATE, {
         name: formData.name,
+        type: 'RESTAURANT',
         slug: formData.slug,
+        tenantSlug: tenantSlug, // 传递租户标识符
         description: formData.description,
         address: formData.address,
-        phone: formData.phone,
+        contactPhone: formData.phone, // 前端用 phone 但后端期望 contactPhone
         status: formData.status,
       });
       if (!res.success) {
@@ -479,7 +482,7 @@ const CreateStore: React.FC = () => {
                       </Grid>
                       <Grid item xs={6}>
                         <Typography variant="body2">
-                          /t/.../s/{createdStore.slug}/scan/A01
+                          /t/{tenantSlug}/s/{createdStore.slug}/scan/A01
                         </Typography>
                       </Grid>
                     </Grid>
@@ -489,14 +492,14 @@ const CreateStore: React.FC = () => {
                 <Box mt={4}>
                   <Button
                     variant="contained"
-                    onClick={() => navigate(TENANT_ROUTES.STORES.LIST)}
+                    onClick={() => navigate(TENANT_ROUTES.STORES.LIST.replace(':tenantSlug', tenantSlug||''))}
                     sx={{ mr: 2 }}
                   >
                     查看所有店铺
                   </Button>
                   <Button
                     variant="outlined"
-                    onClick={() => navigate(TENANT_ROUTES.STORES.CREATE)}
+                    onClick={() => navigate(TENANT_ROUTES.STORES.CREATE.replace(':tenantSlug', tenantSlug||''))}
                   >
                     继续添加店铺
                   </Button>

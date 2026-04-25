@@ -86,6 +86,13 @@ export const TENANT_ROUTES = {
     BILLING: `/billing`,
     SUBSCRIPTION: `/subscription`,
     SETTINGS: `/settings`,
+    
+    // Dashboard 数据接口
+    DASHBOARD: {
+      STORES: `/:tenantId/stores`,
+      ORDERS: `/:tenantId/orders`,
+      ORDERS_STATS: `/:tenantId/orders/stats`,
+    },
   },
   
   // 店铺管理

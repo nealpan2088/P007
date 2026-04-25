@@ -28,6 +28,7 @@ import {
   TeamOutlined,
   DollarOutlined,
   StarOutlined,
+  OrderedListOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Store } from './types';
@@ -378,6 +379,15 @@ const StoreDetailPage: React.FC = () => {
                 icon={<QrcodeOutlined />}
               >
                 扫码点餐测试
+              </Button>
+
+              <Button
+                block
+                type="primary"
+                onClick={() => navigate(`/admin/stores/${store.id}/orders`)}
+                icon={<OrderedListOutlined />}
+              >
+                订单管理
               </Button>
               
               <Button

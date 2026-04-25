@@ -188,6 +188,37 @@ async function publicRoutes(fastify) {
           console.error('[打印] 调度加载失败:', err.message);
         });
       }
+
+      // 异步触发夜狼业务流程（不阻塞下单）
+      if (result?.success && result?.order) {
+        const storeId = result.order.storeId || request.body.storeId;
+        const order = result.order;
+
+        setImmediate(async () => {
+          try {
+            const nightwolf = fastify.nightwolf;
+            if (!nightwolf || !nightwolf.triggerFlow) return;
+
+            const orderItems = (order.items || request.body.items || []).map(item => ({
+              name: item.name || item.menuItem?.name || '未知菜品',
+              quantity: item.quantity || 1,
+              price: item.price || item.unitPrice || 0,
+            }));
+            const total = orderItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+            await nightwolf.triggerFlow(storeId, 'order_placed', {
+              orderId: order.orderNumber || order.id,
+              storeName: order.store?.name || '',
+              tableNo: order.table?.tableNumber || order.tableId || '',
+              items: orderItems,
+              total,
+              createdAt: order.createdAt || new Date().toISOString(),
+            });
+          } catch (e) {
+            // 夜狼异常不阻塞主流程
+          }
+        });
+      }
       
       return reply.code(201).send(result);
     } catch (error) {

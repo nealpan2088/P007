@@ -16,6 +16,7 @@ import StoreManagement from './pages/StoreManagement';
 import CreateStore from './pages/CreateStore';
 import EditStorePage from './pages/store-management/EditStorePage';
 import StoreDetailPage from './pages/store-management/StoreDetailPage';
+import StoreOrdersPage from './pages/order-management/StoreOrdersPage';
 import TestTenants from './pages/TestTenants';
 import LinkValidationTest from './pages/LinkValidationTest';
 import MenuTemplateManager from './pages/menu-management/MenuTemplateManager';
@@ -160,6 +161,8 @@ function AppContent() {
           <Route path={TENANT_ROUTES.TENANT_CTX.STORES.EDIT} element={<EditStorePage />} />
           <Route path={TENANT_ROUTES.TENANT_CTX.STORE_MENU.ITEMS} element={<MenuTemplateManager />} />
           <Route path={TENANT_ROUTES.TENANT_CTX.STORE_PRINTERS.LIST} element={<PrinterManagement />} />
+          <Route path={ADMIN_ROUTES.ORDERS.LIST} element={<StoreOrdersPage />} />
+          <Route path={ADMIN_ROUTES.ORDERS.DETAIL} element={<StoreOrdersPage />} />
 
           {/* ===== 测试页面 ===== */}
           <Route path={PUBLIC_ROUTES.PUBLIC.TEST_CONSOLE} element={<TestConsolePage />} />

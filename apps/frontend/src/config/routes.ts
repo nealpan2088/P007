@@ -103,6 +103,12 @@ export const ADMIN_ROUTES = {
     LIST: '/admin/stores',
   },
 
+  // 订单管理（店铺级）
+  ORDERS: {
+    LIST: '/admin/stores/:storeId/orders',
+    DETAIL: '/admin/stores/:storeId/orders/:orderId',
+  },
+
   // 打印机管理（管理后台）
   PRINTERS: {
     LIST: '/admin/printers',

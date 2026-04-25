@@ -30,6 +30,7 @@ const ACTION_TYPES = [
   { value: 'display', label: '🖥️ 叫号大屏' },
   { value: 'alert', label: '⚠️ 告警' },
   { value: 'notify', label: '📱 通知推送' },
+  { value: 'updateOrderStatus', label: '📋 更新订单状态' },
 ];
 
 interface Rule {
@@ -208,6 +209,79 @@ const NightwolfConfigPage: React.FC = () => {
     });
   };
 
+  // 预设方案：一键填充规则
+  const applyPreset = (preset: 'manual' | 'auto' | 'clear') => {
+    if (preset === 'clear') {
+      setEditData(prev => ({ ...prev, rules: [] }));
+      return;
+    }
+
+    if (preset === 'manual') {
+      setEditData(prev => ({
+        ...prev,
+        name: `${getTypeLabel(editing || '')}手动流转`,
+        rules: [
+          {
+            name: '下单自动打印',
+            trigger: 'order_placed',
+            conditions: { total: { gt: 0 } },
+            actions: [{ type: 'print', params: { count: 1 } }],
+            timeout: null,
+          },
+          {
+            name: '超时未出餐提醒',
+            trigger: 'order_placed',
+            conditions: {},
+            actions: [],
+            timeout: {
+              after_ms: 900000,
+              action: { type: 'print', params: { count: 1, message: '超时提醒' } },
+            },
+          },
+        ],
+      }));
+    }
+
+    if (preset === 'auto') {
+      setEditData(prev => ({
+        ...prev,
+        name: `${getTypeLabel(editing || '')}自动流转`,
+        rules: [
+          {
+            name: '下单自动制作',
+            trigger: 'order_placed',
+            conditions: { total: { gt: 0 } },
+            actions: [
+              { type: 'updateOrderStatus', params: { status: 'PREPARING' } },
+              { type: 'print', params: { count: 1 } },
+            ],
+            timeout: null,
+          },
+          {
+            name: '5分钟自动出餐',
+            trigger: 'order_placed',
+            conditions: {},
+            actions: [],
+            timeout: {
+              after_ms: 300000,
+              action: { type: 'updateOrderStatus', params: { status: 'READY' } },
+            },
+          },
+          {
+            name: '超时未出餐提醒经理',
+            trigger: 'order_placed',
+            conditions: {},
+            actions: [],
+            timeout: {
+              after_ms: 900000,
+              action: { type: 'alert', params: { target: 'manager' } },
+            },
+          },
+        ],
+      }));
+    }
+  };
+
   const getTypeLabel = (key: string) => STORE_TYPES.find(t => t.key === key)?.label || key;
   const getTypeIcon = (key: string) => STORE_TYPES.find(t => t.key === key)?.icon || '🏪';
   const getDefaultName = (key: string) => `${getTypeLabel(key)}默认流程`;
@@ -264,6 +338,26 @@ const NightwolfConfigPage: React.FC = () => {
               <option value="manager">经理</option>
               <option value="all">所有人</option>
             </select>
+          </div>
+        );
+      case 'updateOrderStatus':
+        return (
+          <div className="field-row" style={{ flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <label>订单状态:</label>
+              <select value={params.status || 'PREPARING'}
+                onChange={e => onChange('status', e.target.value)} style={{ flex: 1 }}>
+                <option value="CONFIRMED">✅ 已确认</option>
+                <option value="PREPARING">👨‍🍳 制作中</option>
+                <option value="READY">🍽️ 已出餐</option>
+                <option value="SERVED">✅ 已上菜</option>
+                <option value="COMPLETED">✔️ 已完成</option>
+              </select>
+            </div>
+            <div className="hint" style={{ fontSize: 12, color: '#888' }}>
+              自动更新订单状态，不需要人工操作。
+              可与超时功能配合：下单后5分钟自动 → 已出餐
+            </div>
           </div>
         );
       default:
@@ -348,6 +442,22 @@ const NightwolfConfigPage: React.FC = () => {
                   <label>配置名称:</label>
                   <input type="text" value={editData.name}
                     onChange={e => setEditData(prev => ({ ...prev, name: e.target.value }))} />
+                </div>
+
+                {/* 预设方案快速选择 */}
+                <div className="preset-section">
+                  <label>预设方案（一键填充规则）：</label>
+                  <div className="preset-buttons">
+                    <button className="btn btn-sm" onClick={() => applyPreset('manual')}>
+                      手动流转（仅打印）
+                    </button>
+                    <button className="btn btn-sm" onClick={() => applyPreset('auto')}>
+                      自动流转（全自动出餐）
+                    </button>
+                    <button className="btn btn-sm btn-secondary" onClick={() => applyPreset('clear')}>
+                      清空规则
+                    </button>
+                  </div>
                 </div>
 
                 <div className="edit-rules">
@@ -484,6 +594,9 @@ const NightwolfConfigPage: React.FC = () => {
 
         /* 编辑面板 */
         .edit-panel { padding: 16px; border-top: 1px solid #e3f2fd; background: #fafbff; }
+        .preset-section { margin-bottom: 12px; padding: 8px 12px; background: #f0f5ff; border-radius: 6px; border: 1px dashed #91caff; }
+        .preset-section label { display: block; font-size: 12px; color: #666; margin-bottom: 6px; }
+        .preset-buttons { display: flex; gap: 8px; }
         .field-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
         .field-row label { font-size: 13px; min-width: 70px; color: #555; }
         .field-row input[type="text"], .field-row input[type="number"], .field-row select { padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; }

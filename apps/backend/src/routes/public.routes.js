@@ -207,7 +207,8 @@ async function publicRoutes(fastify) {
             const total = orderItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
             await nightwolf.triggerFlow(storeId, 'order_placed', {
-              orderId: order.orderNumber || order.id,
+              orderId: order.id || order.orderNumber,
+              orderNumber: order.orderNumber || '',
               storeName: order.store?.name || '',
               tableNo: order.table?.tableNumber || order.tableId || '',
               items: orderItems,

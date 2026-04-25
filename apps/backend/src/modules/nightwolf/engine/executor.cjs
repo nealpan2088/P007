@@ -12,7 +12,8 @@ const actionHandlers = {
   voice: handleVoice,
   display: handleDisplay,
   alert: handleAlert,
-  notify: handleNotify
+  notify: handleNotify,
+  updateOrderStatus: handleUpdateOrderStatus
 };
 
 /**
@@ -221,6 +222,49 @@ async function handleNotify(params, eventData, storeId) {
   console.log(`[夜狼] 📱 通知:`, JSON.stringify(params));
   // TODO: 发送终端/APP推送
   return { message: '通知已发送（占位）' };
+}
+
+/**
+ * 更新订单状态动作处理器
+ * params.status — 目标状态（PREPARING, READY, COMPLETED 等）
+ * params.delay_after_ms — 可选，延迟执行（毫秒）
+ */
+async function handleUpdateOrderStatus(params, eventData, storeId) {
+  const { status } = params;
+  if (!status) {
+    return { success: false, error: '缺少 status 参数' };
+  }
+
+  const orderId = eventData.orderId || eventData.id;
+  if (!orderId) {
+    return { success: false, error: '缺少订单ID' };
+  }
+
+  try {
+    // eventData.orderId 可能是 orderNumber（字符串），也可能是数据库ID
+    // 先尝试用 id 查，失败再用 orderNumber 查
+    let order;
+    try {
+      order = await publicDb.order.update({
+        where: { id: orderId },
+        data: { status },
+        select: { id: true, orderNumber: true, status: true },
+      });
+    } catch (_e) {
+      // 用 orderNumber 再试一次
+      order = await publicDb.order.update({
+        where: { orderNumber: orderId },
+        data: { status },
+        select: { id: true, orderNumber: true, status: true },
+      });
+    }
+
+    console.log(`[夜狼] 📋 订单 ${order.orderNumber} 状态已更新为 ${order.status}`);
+    return { success: true, orderId: order.id, orderNumber: order.orderNumber, status: order.status, storeId };
+  } catch (err) {
+    console.error(`[夜狼] 📋 ❌ 订单 ${orderId} 状态更新失败:`, err.message);
+    return { success: false, error: err.message };
+  }
 }
 
 module.exports = {

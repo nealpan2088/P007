@@ -126,7 +126,7 @@ fastify.get(PUBLIC_ROUTES.HEALTH, async () => {
 })
 
 // 公共API路由 - 使用.register.js文件
-import { PUBLIC_ROUTES } from './config/routes.js'
+import routes, { PUBLIC_ROUTES, UPLOAD_ROUTES } from './config/routes.js'
 import { registerPublicRoutes } from './routes/public.routes.register.js'
 fastify.register(registerPublicRoutes, { prefix: '/api/public' })
 
@@ -212,7 +212,6 @@ fastify.register(registerAuthRoutes, { prefix: '/api/v1/auth' })
 // ==================== 图片上传 ====================
 import multipart from '@fastify/multipart';
 import crypto from 'crypto';
-import { UPLOAD_ROUTES } from './config/routes.js';
 
 fastify.register(multipart, {
   limits: {
@@ -325,9 +324,9 @@ fastify.get(UPLOAD_ROUTES.DEFAULT_FOOD_IMAGE, async () => {
 
 // ==================== 配置端点 ====================
 // 提供路由配置供前端消费，确保前后端路由一致
-import routes from './config/routes.js'
 
 fastify.get('/api/config/routes', async (request, reply) => {
+  // routes 已在文件开头导入 (routes 作为 default export)
   return {
     success: true,
     data: {

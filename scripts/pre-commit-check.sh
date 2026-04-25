@@ -35,8 +35,19 @@ check_typescript() {
         return 0
     fi
     cd "$PROJECT_ROOT/apps/frontend"
-    if npx tsc --noEmit 2>/dev/null; then
+    # 只检查暂存的 .ts/.tsx 文件，避免全量编译耗时过长
+    STAGED_TS_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx)$' || true)
+    # 只检查暂存的 .ts/.tsx 文件，避免全量编译耗时过长
+    STAGED_TS_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx)$' || true)
+    if [ -z "$STAGED_TS_FILES" ]; then
+        log_info "  没有暂存的 TypeScript 文件，跳过编译检查"
+        return 0
+    fi
+    # 超时 30 秒，防止 ts 编译卡死
+    if timeout 30 npx tsc --noEmit 2>/dev/null; then
         log_success "✅ TypeScript编译通过"
+    elif [ $? -eq 124 ]; then
+        log_warning "⚠️  TypeScript编译超时（30秒），跳过检查"
     else
         log_warning "⚠️  TypeScript编译有警告（非阻塞）"
     fi

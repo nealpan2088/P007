@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiPost } from '../utils/api-client';
-import { ADMIN_ROUTES, PUBLIC_ROUTES } from '../config/routes';
+import { ADMIN_ROUTES, PUBLIC_ROUTES, TENANT_ROUTES } from '../config/routes';
 import { CreateTenantFormData } from '../types';
 import {
   Container,

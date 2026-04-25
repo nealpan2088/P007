@@ -209,8 +209,8 @@ for (const dir of [UPLOAD_BASE, FOOD_DIR, LOGO_DIR]) {
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 const ALLOWED_EXTS = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
 
-// 菜品图片上传接口
-fastify.post(UPLOAD_ROUTES.FOOD_IMAGE, async (request, reply) => {
+// 菜品图片上传接口（需认证）
+fastify.post(UPLOAD_ROUTES.FOOD_IMAGE, { preHandler: [authenticate] }, async (request, reply) => {
   try {
     const data = await request.file();
     if (!data) {

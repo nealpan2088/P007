@@ -58,7 +58,7 @@ module.exports = {
       env: {
         NODE_ENV: 'development',
         PORT: 5177,
-        VITE_API_BASE_URL: 'http://localhost:33038/api',
+        VITE_API_BASE_URL: 'http://47.110.156.11:33038',
         VITE_APP_NAME: '麒麟云点餐',
         VITE_APP_VERSION: '0.2.1'
       },

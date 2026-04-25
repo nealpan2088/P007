@@ -34,8 +34,6 @@ import {
   ArrowBack as ArrowBackIcon,
   CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
-import { TENANT_ROUTES } from '../config/routes';
-
 const CreateTenant: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();

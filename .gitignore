@@ -181,6 +181,9 @@ qilin-port-check.cron
 check-*.sh
 daily-*.sh
 log-rotate-*.sh
+# Production config (服务器敏感信息，不上传 Git)
+.env.production
+*.ecosystem.config.cjs
 pm2-*.config.js
 env-config-report-*.txt
 documentation-report-*.txt

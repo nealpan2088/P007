@@ -52,7 +52,8 @@ interface Store {
   slug: string;
   status: string;
   is_default: boolean;
-  created_at: string;
+  createdAt: string;
+  created_at?: string; // 兼容旧格式
   item_count?: number;
   order_count?: number;
 }
@@ -304,7 +305,7 @@ const StoreManagement: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" color="text.secondary">
-                        {new Date(store.created_at).toLocaleDateString()}
+                        {new Date(store.createdAt || store.created_at).toLocaleDateString()}
                       </Typography>
                     </TableCell>
                     <TableCell align="right">

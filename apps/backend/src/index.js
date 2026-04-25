@@ -41,6 +41,13 @@ const fastify = Fastify({
     level: config.server.logLevel,
   },
   bodyLimit: config.security.bodyLimit,
+  // 性能优化
+  requestTimeout: 30000,         // 30秒超时
+  keepAliveTimeout: 5000,       // 5秒空闲keep-alive
+  connectionTimeout: 30000,     // 30秒连接超时
+  trustProxy: true,             // 信任Nginx反向代理
+  // 请求体解析优化
+  maxParamLength: 500,          // URL参数最大长度
 })
 
 // 注册 CORS

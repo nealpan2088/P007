@@ -28,7 +28,6 @@ import {
   Visibility as VisibilityIcon,
   Edit as EditIcon,
 } from '@mui/icons-material';
-import { TENANT_ROUTES } from '../config/routes';
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('zh-CN', {

@@ -17,10 +17,24 @@ interface ScanHeaderProps {
 }
 
 /**
- * 根据主题色生成渐变（浅 -> 深）
+ * 根据主题色生成淡雅渐变（比原色更浅、饱和度更低）
  */
 function buildGradient(hex: string): string {
-  return `linear-gradient(135deg, ${hex} 0%, ${adjustColor(hex, -20)} 100%)`;
+  // 把颜色混合白色，降低饱和度
+  const light1 = mixWhite(hex, 20);
+  const light2 = mixWhite(hex, 40);
+  return `linear-gradient(135deg, ${light1} 0%, ${light2} 100%)`;
+}
+
+/**
+ * 颜色混合白色，percent=0~100
+ */
+function mixWhite(hex: string, percent: number): string {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = Math.min(255, Math.round(((num >> 16) & 0xff) + (255 - ((num >> 16) & 0xff)) * percent / 100));
+  const g = Math.min(255, Math.round(((num >> 8) & 0xff) + (255 - ((num >> 8) & 0xff)) * percent / 100));
+  const b = Math.min(255, Math.round((num & 0xff) + (255 - (num & 0xff)) * percent / 100));
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
 }
 
 /**
@@ -56,7 +70,7 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
       <div style={{
         position: 'relative',
         background: 'white',
-        borderBottom: '1px solid #f0f0f0',
+        borderBottom: '1px solid #fef0e8',
       }}>
         {/* 顶部操作栏 */}
         <div style={{
@@ -69,9 +83,9 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
             <button onClick={onBack} style={{
               width: 30, height: 30,
               borderRadius: '50%',
-              background: '#f5f5f5',
-              border: 'none',
-              color: '#333',
+              background: '#fff5f0',
+              border: '1px solid #ffe8dc',
+              color: '#ff8a4c',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -86,9 +100,9 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
             position: 'relative',
             width: 30, height: 30,
             borderRadius: '50%',
-            background: '#f5f5f5',
-            border: 'none',
-            color: '#333',
+            background: '#fff5f0',
+            border: '1px solid #ffe8dc',
+            color: '#ff8a4c',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -107,7 +121,7 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: '#ff4757',
+                background: '#ff8a4c',
                 color: 'white',
                 fontSize: 9,
                 fontWeight: 700,
@@ -126,13 +140,14 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
             <div style={{
               width: 56, height: 56,
               borderRadius: 12,
-              background: '#f5f5f5',
+              background: '#fff5f0',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: 26,
               flexShrink: 0,
               overflow: 'hidden',
+              border: '1px solid #ffe8dc',
             }}>
               {logoUrl ? (
                 <img src={logoUrl} alt={storeName} style={{ width: '100%', height: '100%', objectFit: 'cover' }}
@@ -145,11 +160,11 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
               <h1 style={{
                 fontSize: 20,
                 fontWeight: 700,
-                color: '#1a1a1a',
+                color: '#2d2d2d',
                 margin: 0,
               }}>{storeName}</h1>
               {storeAddress && (
-                <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>📍 {storeAddress}</div>
+                <div style={{ fontSize: 12, color: '#c0a090', marginTop: 4 }}>📍 {storeAddress}</div>
               )}
             </div>
           </div>
@@ -315,13 +330,13 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
         borderBottom: '1px solid #f0f0f0',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 13, color: themeColor, fontWeight: 600 }}>🏠 {tableCode}号桌</span>
-          <span style={{ fontSize: 11, color: '#52c41a', background: '#f6ffed', padding: '2px 8px', borderRadius: 10 }}>
+          <span style={{ fontSize: 13, color: '#ff9a5c', fontWeight: 600 }}>🏠 {tableCode}号桌</span>
+          <span style={{ fontSize: 11, color: '#8bc7a0', background: '#f0faf4', padding: '2px 8px', borderRadius: 10 }}>
             营业中
           </span>
         </div>
         {storeDescription && (
-          <span style={{ fontSize: 11, color: '#999', maxWidth: '50%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 11, color: '#c0a090', maxWidth: '50%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {storeDescription}
           </span>
         )}

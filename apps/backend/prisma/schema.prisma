@@ -133,8 +133,8 @@ model Store {
   currency         String?  @default("CNY")
   language         String?  @default("zh-CN")
   logoUrl          String?
-  themeColor       String?  @default("#1976d2")
-  themeTemplate    String?  @default("gradient")
+  themeColor       String?  @default("#ff6b35")
+  themeTemplate    String?  @default("minimal")
 
   // 业务设置
   tableCount       Int?     @default(20)

@@ -106,6 +106,33 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* 角色入口 */}
+      <section className="home-roles-section">
+        <h2 className="home-section-title">👤 角色入口</h2>
+        <div className="home-roles-grid">
+          <Link to="/auth/admin/login" className="role-card">
+            <span className="role-icon">🔐</span>
+            <span className="role-name">超级管理员</span>
+            <span className="role-desc">平台管理 · 租户管理 · 用户管理</span>
+          </Link>
+          <Link to="/auth/tenant/login" className="role-card">
+            <span className="role-icon">🏪</span>
+            <span className="role-name">商户登录 (租户)</span>
+            <span className="role-desc">店铺管理 · 数据分析 · 经营看板</span>
+          </Link>
+          <Link to="/store-admin/login" className="role-card">
+            <span className="role-icon">👨‍🍳</span>
+            <span className="role-name">店长登录</span>
+            <span className="role-desc">菜单管理 · 订单处理 · 设备管理</span>
+          </Link>
+          <Link to="/auth/login" className="role-card">
+            <span className="role-icon">🚪</span>
+            <span className="role-name">通用登录</span>
+            <span className="role-desc">所有用户通用入口</span>
+          </Link>
+        </div>
+      </section>
+
       {/* 测试入口 */}
       <section className="home-test-section">
         <h2 className="home-section-title">🔗 快速入口（测试用）</h2>
@@ -124,6 +151,11 @@ export default function HomePage() {
             <span className="test-link-icon">🚪</span>
             <span className="test-link-label">通用登录</span>
             <span className="test-link-path">/auth/login</span>
+          </Link>
+          <Link to="/store-admin/login" className="test-link">
+            <span className="test-link-icon">📋</span>
+            <span className="test-link-label">店长登录</span>
+            <span className="test-link-path">/store-admin/login</span>
           </Link>
         </div>
       </section>

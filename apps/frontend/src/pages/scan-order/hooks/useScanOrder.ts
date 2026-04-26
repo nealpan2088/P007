@@ -60,12 +60,7 @@ export function useScanOrder(storeSlug: string, tableId: string, mode: string = 
       // 打包模式不加载餐桌信息
       let tableInfo = null;
       if (!isTakeaway) {
-        try {
-          tableInfo = await apiUtils.fetchTableInfo(storeSlug, tableId);
-        } catch {
-          // 餐桌信息加载失败不阻塞整体加载
-          tableInfo = null;
-        }
+        tableInfo = await apiUtils.fetchTableInfo(storeSlug, tableId);
       }
 
       setState(prev => ({

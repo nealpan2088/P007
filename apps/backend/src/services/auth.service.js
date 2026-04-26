@@ -221,6 +221,11 @@ export const userService = {
         where: { email },
         include: {
           userTenants: {
+            where: {
+              tenant: {
+                status: { not: 'DELETED' }
+              }
+            },
             include: {
               tenant: true,
             },

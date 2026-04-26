@@ -432,6 +432,19 @@ export const STORE_ADMIN_ROUTES = {
     DETAIL: `/stores/:storeId/orders/:orderId`,
     UPDATE_STATUS: `/stores/:storeId/orders/:orderId/status`,
   },
+  // 餐桌管理
+  TABLES: {
+    LIST: `/stores/:storeId/tables`,
+    DETAIL: `/stores/:storeId/tables/:tableId`,
+    UPDATE: `/stores/:storeId/tables/:tableId`,
+    CREATE: `/stores/:storeId/tables`,
+    DELETE: `/stores/:storeId/tables/:tableId`,
+  },
+  // 店铺设置
+  STORE: {
+    INFO: `/stores/:storeId`,
+    UPDATE: `/stores/:storeId`,
+  },
 };
 
 // 上传与文件服务（全局，无前缀）

@@ -20,9 +20,14 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/uploads': {
+        target: 'http://localhost:33038',
+        changeOrigin: true,
+      },
     },
   },
   preview: {
     port: 5177           // 构建预览与开发端口一致
-  }
+  },
+  appType: 'spa',        // SPA 模式：所有 404 回退到 index.html
 })

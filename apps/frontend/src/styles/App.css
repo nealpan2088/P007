@@ -1064,3 +1064,53 @@ h2 {
   margin-left: auto;
   font-family: monospace;
 }
+
+/* ===== 角色入口卡片 ===== */
+.home-roles-section {
+  padding: 20px 0 40px;
+}
+
+.home-roles-grid {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.role-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 28px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 14px;
+  text-decoration: none;
+  transition: all 0.2s;
+  min-width: 160px;
+}
+
+.role-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 6px 20px rgba(102,126,234,0.15);
+  transform: translateY(-3px);
+}
+
+.role-icon {
+  font-size: 32px;
+}
+
+.role-name {
+  font-weight: 700;
+  color: #333;
+  font-size: 15px;
+}
+
+.role-desc {
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+}

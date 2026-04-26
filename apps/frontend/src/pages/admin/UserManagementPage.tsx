@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Table, Button, Modal, Select, Input, Tag, message, Space, Popconfirm } from 'antd';
-import { UserAddOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
+import { Table, Button, Modal, Select, Input, Tag, message, Space, Popconfirm, Form, InputNumber } from 'antd';
+import { UserAddOutlined, PlusOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import { apiGet, apiPost } from '../../utils/api-client';
 import { API_ENDPOINTS } from '../../config/api-routes';
 
@@ -51,6 +51,11 @@ export default function UserManagementPage() {
   const [stores, setStores] = useState<StoreOption[]>([]);
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const [storeLoading, setStoreLoading] = useState(false);
+
+  // 创建用户弹窗
+  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createForm] = Form.useForm();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -127,6 +132,25 @@ export default function UserManagementPage() {
       }
     } catch (err: any) {
       message.error('移除失败: ' + (err.message || ''));
+    }
+  };
+
+  const handleCreateUser = async (values: any) => {
+    setCreateLoading(true);
+    try {
+      const json = await apiPost(API_ENDPOINTS.USERS.CREATE, values, { skipAuth: false });
+      if (json?.success) {
+        message.success('用户创建成功');
+        setCreateModalVisible(false);
+        createForm.resetFields();
+        loadUsers();
+      } else {
+        message.error(json?.error || '创建失败');
+      }
+    } catch (err: any) {
+      message.error('创建失败: ' + (err.message || ''));
+    } finally {
+      setCreateLoading(false);
     }
   };
 
@@ -225,6 +249,9 @@ export default function UserManagementPage() {
     <div className="max-w-6xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">👤 用户管理</h1>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => { createForm.resetFields(); setCreateModalVisible(true); }}>
+          创建用户
+        </Button>
       </div>
 
       <div className="mb-4">
@@ -281,6 +308,45 @@ export default function UserManagementPage() {
         <p className="mt-2 text-xs text-gray-400">
           授权后，该用户访问 /store-admin/login 即可进入店长端
         </p>
+      </Modal>
+
+      {/* 创建用户弹窗 */}
+      <Modal
+        title="创建用户"
+        open={createModalVisible}
+        onCancel={() => setCreateModalVisible(false)}
+        onOk={() => createForm.submit()}
+        confirmLoading={createLoading}
+        okText="创建"
+        cancelText="取消"
+        destroyOnClose
+      >
+        <Form form={createForm} layout="vertical" onFinish={handleCreateUser}>
+          <Form.Item name="email" label="邮箱" rules={[
+            { required: true, message: '请输入邮箱' },
+            { type: 'email', message: '邮箱格式不正确' },
+          ]}>
+            <Input placeholder="user@example.com" />
+          </Form.Item>
+          <Form.Item name="password" label="密码" rules={[
+            { required: true, message: '请输入密码' },
+            { min: 6, message: '密码至少6位' },
+          ]}>
+            <Input.Password placeholder="设置密码" />
+          </Form.Item>
+          <Form.Item name="username" label="用户名">
+            <Input placeholder="选填，默认取邮箱前缀" />
+          </Form.Item>
+          <Form.Item name="fullName" label="姓名">
+            <Input placeholder="选填，如：张三" />
+          </Form.Item>
+          <Form.Item name="role" label="角色" initialValue="USER">
+            <Select>
+              <Select.Option value="USER">普通用户</Select.Option>
+              <Select.Option value="TENANT_ADMIN">租户管理员</Select.Option>
+            </Select>
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   );

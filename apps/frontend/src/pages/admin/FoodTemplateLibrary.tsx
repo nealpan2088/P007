@@ -110,7 +110,7 @@ export default function FoodTemplateLibrary() {
       const formData = new FormData();
       formData.append('file', file);
       const token = localStorage.getItem('qilin_access_token');
-      const res = await fetch(API_ENDPOINTS.UPLOAD.FOOD_IMAGE, {
+      const res = await fetch('/api' + API_ENDPOINTS.UPLOAD.FOOD_IMAGE, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,

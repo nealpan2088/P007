@@ -130,20 +130,21 @@ export async function getMyStores(request, reply) {
     let stores;
 
     if (userRole === 'SUPER_ADMIN') {
-      // 超管：所有店铺（不分页，只取基础信息）
+      // 超管：所有未删除店铺
       stores = await publicDb.store.findMany({
+        where: { deletedAt: null },
         include: { tenant: { select: { id: true, name: true, subdomain: true } } },
         orderBy: { createdAt: 'desc' },
       });
     } else if (userRole === 'TENANT_ADMIN') {
-      // 租管：所有管理的租户下的店铺
+      // 租管：所有管理的租户下的店铺（未删除）
       const userTenants = await publicDb.userTenant.findMany({
         where: { userId, status: 'ACTIVE', role: { in: ['OWNER', 'ADMIN'] } },
         select: { tenantId: true },
       });
       const tenantIds = userTenants.map(ut => ut.tenantId);
       stores = await publicDb.store.findMany({
-        where: { tenantId: { in: tenantIds } },
+        where: { tenantId: { in: tenantIds }, deletedAt: null },
         include: { tenant: { select: { id: true, name: true, subdomain: true } } },
         orderBy: { createdAt: 'desc' },
       });
@@ -155,7 +156,7 @@ export async function getMyStores(request, reply) {
       });
       const storeIds = assignments.map(a => a.storeId);
       stores = await publicDb.store.findMany({
-        where: { id: { in: storeIds } },
+        where: { id: { in: storeIds }, deletedAt: null },
         include: { tenant: { select: { id: true, name: true, subdomain: true } } },
         orderBy: { createdAt: 'desc' },
       });

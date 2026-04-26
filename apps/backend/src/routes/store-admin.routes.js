@@ -27,11 +27,10 @@ async function storeAdminLogin(publicDb, email, password) {
     return { success: false, error: '密码错误' };
   }
 
-  // 检查是否有店铺关联（SUPER_ADMIN 和 TENANT_ADMIN 也算有资格）
-  const hasStoreAccess = user.role === 'SUPER_ADMIN' || user.role === 'TENANT_ADMIN' ||
-    await publicDb.userStore.findFirst({ where: { userId: user.id, status: 'ACTIVE' } });
-
-  if (!hasStoreAccess) {
+  // 检查是否有店铺关联
+  // SUPER_ADMIN 和 TENANT_ADMIN 请使用主后台登录，不走店长端
+  const assignment = await publicDb.userStore.findFirst({ where: { userId: user.id, status: 'ACTIVE' } });
+  if (!assignment) {
     return { success: false, error: '您没有被授权管理任何店铺' };
   }
 
@@ -136,8 +135,13 @@ export default async function storeAdminRoutes(fastify) {
   }, async (request, reply) => {
     try {
       const { storeId } = request.params;
-      const items = await publicDb.menuItem.findMany({
+      // MenuItem 没有 storeId，需要通过 category 关联
+      const categoryIds = (await publicDb.menuCategory.findMany({
         where: { storeId },
+        select: { id: true },
+      })).map(c => c.id);
+      const items = await publicDb.menuItem.findMany({
+        where: { categoryId: { in: categoryIds } },
         include: { category: true },
         orderBy: { sortOrder: 'asc' },
       });
@@ -202,18 +206,21 @@ export default async function storeAdminRoutes(fastify) {
   }, async (request, reply) => {
     try {
       const { storeId } = request.params;
-      const { name, price, categoryId, description, imageUrl, tags } = request.body || {};
+      const { name, price, categoryId, description, imageUrl, isAvailable } = request.body || {};
       if (!name || price === undefined || !categoryId) {
         return reply.status(400).send({ success: false, error: '名称、价格和分类是必填项' });
       }
+      // 确认分类属于该店铺
+      const cat = await publicDb.menuCategory.findFirst({ where: { id: categoryId, storeId } });
+      if (!cat) return reply.status(400).send({ success: false, error: '分类不存在或不属此店铺' });
+
       const item = await publicDb.menuItem.create({
         data: {
-          storeId, name, categoryId,
+          categoryId, name,
           price: parseFloat(price),
           description, imageUrl,
-          tags: tags ? JSON.stringify(tags) : null,
           sortOrder: 0,
-          isAvailable: true,
+          isAvailable: isAvailable ?? true,
         },
       });
       return reply.status(201).send({ success: true, data: item });
@@ -229,21 +236,29 @@ export default async function storeAdminRoutes(fastify) {
   }, async (request, reply) => {
     try {
       const { storeId, itemId } = request.params;
-      const { name, price, categoryId, description, imageUrl, tags, isAvailable } = request.body || {};
+      const { name, price, categoryId, description, imageUrl, isAvailable } = request.body || {};
+
+      // 先确认菜品属于该店铺（通过 category → storeId）
+      const item = await publicDb.menuItem.findUnique({ where: { id: itemId }, include: { category: true } });
+      if (!item || item.category.storeId !== storeId) {
+        return reply.status(404).send({ success: false, error: '菜品不存在' });
+      }
+      // 如果有新分类，确认新分类属于该店铺
+      if (categoryId) {
+        const cat = await publicDb.menuCategory.findFirst({ where: { id: categoryId, storeId } });
+        if (!cat) return reply.status(400).send({ success: false, error: '分类不存在或不属此店铺' });
+      }
+
       const data = {};
       if (name) data.name = name;
       if (price !== undefined) data.price = parseFloat(price);
       if (categoryId) data.categoryId = categoryId;
       if (description !== undefined) data.description = description;
       if (imageUrl !== undefined) data.imageUrl = imageUrl;
-      if (tags !== undefined) data.tags = typeof tags === 'string' ? tags : JSON.stringify(tags);
       if (isAvailable !== undefined) data.isAvailable = isAvailable;
 
-      const item = await publicDb.menuItem.update({
-        where: { id: itemId, storeId },
-        data,
-      });
-      return { success: true, data: item };
+      const updated = await publicDb.menuItem.update({ where: { id: itemId }, data });
+      return { success: true, data: updated };
     } catch (error) {
       request.log.error({ msg: '更新菜品失败', error: error.message });
       return reply.status(500).send({ success: false, error: '更新菜品失败' });
@@ -256,7 +271,12 @@ export default async function storeAdminRoutes(fastify) {
   }, async (request, reply) => {
     try {
       const { storeId, itemId } = request.params;
-      await publicDb.menuItem.delete({ where: { id: itemId, storeId } });
+      // 先确认菜品属于该店铺
+      const item = await publicDb.menuItem.findUnique({ where: { id: itemId }, include: { category: true } });
+      if (!item || item.category.storeId !== storeId) {
+        return reply.status(404).send({ success: false, error: '菜品不存在' });
+      }
+      await publicDb.menuItem.delete({ where: { id: itemId } });
       return { success: true };
     } catch (error) {
       request.log.error({ msg: '删除菜品失败', error: error.message });
@@ -274,11 +294,16 @@ export default async function storeAdminRoutes(fastify) {
       if (isAvailable === undefined) {
         return reply.status(400).send({ success: false, error: '缺少 isAvailable 参数' });
       }
-      const item = await publicDb.menuItem.update({
-        where: { id: itemId, storeId },
+      // 先确认菜品属于该店铺
+      const item = await publicDb.menuItem.findUnique({ where: { id: itemId }, include: { category: true } });
+      if (!item || item.category.storeId !== storeId) {
+        return reply.status(404).send({ success: false, error: '菜品不存在' });
+      }
+      const updated = await publicDb.menuItem.update({
+        where: { id: itemId },
         data: { isAvailable },
       });
-      return { success: true, data: item };
+      return { success: true, data: updated };
     } catch (error) {
       request.log.error({ msg: '更新菜品状态失败', error: error.message });
       return reply.status(500).send({ success: false, error: '更新菜品状态失败' });
@@ -305,7 +330,9 @@ export default async function storeAdminRoutes(fastify) {
   }, async (request, reply) => {
     try {
       const { storeId } = request.params;
-      const { status, page = 1, limit = 20 } = request.query || {};
+      const { status, pageStr = '1', limitStr = '20' } = request.query || {};
+      const page = parseInt(pageStr, 10) || 1;
+      const limit = parseInt(limitStr, 10) || 20;
       const where = { storeId };
       if (status) where.status = status;
 
@@ -358,6 +385,60 @@ export default async function storeAdminRoutes(fastify) {
     } catch (error) {
       request.log.error({ msg: '更新订单状态失败', error: error.message });
       return reply.status(500).send({ success: false, error: '更新订单状态失败' });
+    }
+  });
+
+  // ====== 餐桌管理 ======
+  fastify.get(SA.TABLES.LIST, { preHandler: [storeAdminAuth] }, async (request, reply) => {
+    try {
+      const { storeId } = request.params;
+      const tables = await publicDb.table.findMany({ where: { storeId }, orderBy: { tableNumber: 'asc' } });
+      return { success: true, data: tables };
+    } catch (error) {
+      return reply.status(500).send({ success: false, error: '获取餐桌失败' });
+    }
+  });
+
+  fastify.put(SA.TABLES.UPDATE, { preHandler: [storeAdminAuth, requireStoreAccess({ storeIdParam: 'storeId' })] }, async (request, reply) => {
+    try {
+      const { storeId, tableId } = request.params;
+      const { tableNumber, capacity, status } = request.body || {};
+      const table = await publicDb.table.update({
+        where: { id: tableId, storeId },
+        data: { ...(tableNumber !== undefined ? { tableNumber } : {}), ...(capacity !== undefined ? { capacity } : {}), ...(status !== undefined ? { status } : {}) },
+      });
+      return { success: true, data: table };
+    } catch (error) {
+      return reply.status(500).send({ success: false, error: '更新餐桌失败' });
+    }
+  });
+
+  // ====== 店铺设置 ======
+  fastify.get(SA.STORE.INFO, { preHandler: [storeAdminAuth] }, async (request, reply) => {
+    try {
+      const { storeId } = request.params;
+      const store = await publicDb.store.findUnique({
+        where: { id: storeId },
+        select: { id: true, name: true, slug: true, description: true, address: true, contactPhone: true, status: true },
+      });
+      if (!store) return reply.status(404).send({ success: false, error: '店铺不存在' });
+      return { success: true, data: store };
+    } catch (error) {
+      return reply.status(500).send({ success: false, error: '获取店铺信息失败' });
+    }
+  });
+
+  fastify.put(SA.STORE.UPDATE, { preHandler: [storeAdminAuth, requireStoreAccess({ storeIdParam: 'storeId' })] }, async (request, reply) => {
+    try {
+      const { storeId } = request.params;
+      const { name, description, address, contactPhone } = request.body || {};
+      const store = await publicDb.store.update({
+        where: { id: storeId },
+        data: { ...(name !== undefined ? { name } : {}), ...(description !== undefined ? { description } : {}), ...(address !== undefined ? { address } : {}), ...(contactPhone !== undefined ? { contactPhone } : {}) },
+      });
+      return { success: true, data: store };
+    } catch (error) {
+      return reply.status(500).send({ success: false, error: '更新店铺信息失败' });
     }
   });
 

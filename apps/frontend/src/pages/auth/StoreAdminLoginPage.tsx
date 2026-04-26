@@ -1,0 +1,80 @@
+// 店长登录页面
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Card, Form, Input, Button, Typography, message } from 'antd';
+import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import { apiPost } from '../../utils/api-client';
+
+const { Title, Text } = Typography;
+
+const STORE_ADMIN_TOKEN_KEY = 'qilin_store_admin_token';
+const STORE_ADMIN_USER_KEY = 'qilin_store_admin_user';
+
+export default function StoreAdminLoginPage() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
+  const onFinish = async (values: { email: string; password: string }) => {
+    setLoading(true);
+    try {
+      const json = await apiPost('/api/store-admin/login', values, { skipAuth: true });
+      if (json.success && json.data?.token) {
+        localStorage.setItem(STORE_ADMIN_TOKEN_KEY, json.data.token);
+        localStorage.setItem(STORE_ADMIN_USER_KEY, JSON.stringify(json.data.user));
+        message.success('登录成功');
+        navigate('/store-admin');
+      } else {
+        message.error(json.data?.error || json.error || '登录失败');
+      }
+    } catch (err: any) {
+      message.error(err.message || '登录失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      padding: 20,
+    }}>
+      <Card style={{ width: 400, borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <Title level={3} style={{ margin: 0 }}>📋 店长管理端</Title>
+          <Text type="secondary">登录后管理店铺菜单、订单、打印机</Text>
+        </div>
+        <Form
+          name="store_admin_login"
+          onFinish={onFinish}
+          layout="vertical"
+          size="large"
+        >
+          <Form.Item
+            name="email"
+            rules={[{ required: true, message: '请输入邮箱' }, { type: 'email', message: '邮箱格式不正确' }]}
+          >
+            <Input prefix={<UserOutlined />} placeholder="邮箱" />
+          </Form.Item>
+          <Form.Item
+            name="password"
+            rules={[{ required: true, message: '请输入密码' }]}
+          >
+            <Input.Password prefix={<LockOutlined />} placeholder="密码" />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" loading={loading} block>
+              登录
+            </Button>
+          </Form.Item>
+        </Form>
+        <div style={{ textAlign: 'center' }}>
+          <Link to="/auth/login" style={{ fontSize: 13 }}>返回通用登录</Link>
+        </div>
+      </Card>
+    </div>
+  );
+}

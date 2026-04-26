@@ -295,7 +295,10 @@ export class TenantService {
       const userTenants = await db.userTenant.findMany({
         where: {
           userId: String(userId),
-          status: 'ACTIVE'
+          status: 'ACTIVE',
+          tenant: {
+            status: { not: 'DELETED' }
+          }
         },
         include: {
           tenant: {
@@ -367,6 +370,14 @@ export class TenantService {
    * @param {string} tenantId 租户ID
    */
   async deleteTenant(tenantId) {
+    // 级联标记租户下所有店铺为删除
+    await db.store.updateMany({
+      where: { tenantId },
+      data: {
+        status: 'DELETED',
+        deletedAt: new Date(),
+      },
+    });
     return await db.tenant.update({
       where: { id: tenantId },
       data: {

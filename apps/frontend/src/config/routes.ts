@@ -138,7 +138,17 @@ export const ADMIN_ROUTES = {
     UPDATES: '/admin/system/updates',
   },
 
-  // 夜狼业务流程配置
+  // 店长端（STORE_ADMIN）
+  STORE_ADMIN: {
+    LOGIN: '/store-admin/login',
+    DASHBOARD: '/store-admin',
+    STORES_LIST: '/store-admin/stores',
+    MENU: '/store-admin/stores/:storeId/menu',
+    ORDERS: '/store-admin/stores/:storeId/orders',
+    PRINTERS: '/store-admin/stores/:storeId/printers',
+    TABLES: '/store-admin/stores/:storeId/tables',
+    SETTINGS: '/store-admin/stores/:storeId/settings',
+  },
   NIGHTWOLF: {
     LIST: '/admin/nightwolf',
     EDIT: '/admin/nightwolf/:storeType',

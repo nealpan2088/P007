@@ -30,6 +30,13 @@ import TableManagementPage from './pages/admin/TableManagementPage';
 import UserManagementPage from './pages/admin/UserManagementPage';
 import NightwolfConfigPage from './pages/admin/NightwolfConfigPage';
 import FoodTemplateLibrary from './pages/admin/FoodTemplateLibrary';
+import StoreAdminLoginPage from './pages/auth/StoreAdminLoginPage';
+import StoreAdminDashboard from './pages/store-admin/StoreAdminDashboard';
+import StoreAdminMenuPage from './pages/store-admin/StoreAdminMenuPage';
+import StoreAdminOrdersPage from './pages/store-admin/StoreAdminOrdersPage';
+import StoreAdminPrintersPage from './pages/store-admin/StoreAdminPrintersPage';
+import StoreAdminTablesPage from './pages/store-admin/StoreAdminTablesPage';
+import StoreAdminSettingsPage from './pages/store-admin/StoreAdminSettingsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { PUBLIC_ROUTES, ADMIN_ROUTES, TENANT_ROUTES } from './config/routes';
 import SCAN_ROUTES from './config/scan-routes';
@@ -113,6 +120,7 @@ function AppContent() {
     path === '/' ||
     path === PUBLIC_ROUTES.AUTH.LOGIN ||
     path === PUBLIC_ROUTES.AUTH.REGISTER ||
+    path.startsWith('/store-admin') ||
     path.includes('/scan');
   const showNav = !isPublicLanding && isAuthenticated();
 
@@ -146,6 +154,16 @@ function AppContent() {
           <Route path={PUBLIC_ROUTES.AUTH.ADMIN_LOGIN} element={<AdminLoginPage />} />
           <Route path={PUBLIC_ROUTES.AUTH.TENANT_LOGIN} element={<TenantLoginPage />} />
           <Route path={PUBLIC_ROUTES.AUTH.REGISTER} element={<RegisterPage />} />
+
+          {/* ===== 店长端登录 ===== */}
+          <Route path="/store-admin/login" element={<StoreAdminLoginPage />} />
+          <Route path="/store-admin" element={<StoreAdminDashboard />} />
+          <Route path="/store-admin/stores/:storeId/menu" element={<StoreAdminMenuPage />} />
+          <Route path="/store-admin/stores/:storeId/orders" element={<StoreAdminOrdersPage />} />
+          <Route path="/store-admin/stores/:storeId/printers" element={<StoreAdminPrintersPage />} />
+          <Route path="/store-admin/stores/:storeId/tables" element={<StoreAdminTablesPage />} />
+          <Route path="/store-admin/stores/:storeId/settings" element={<StoreAdminSettingsPage />} />
+          {/* 后续加订单、打印机等页面 */}
 
           {/* ===== 超级管理员后台（/admin/*，仅 SUPER_ADMIN） ===== */}
           <Route path={ADMIN_ROUTES.ADMIN} element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><AdminDashboard /></ProtectedRoute>} />

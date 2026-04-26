@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ADMIN_ROUTES } from '../config/routes';
+import { ADMIN_ROUTES } from '../../config/routes';
 import './AdminDashboard.css';
 
 interface DashboardStats {

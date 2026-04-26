@@ -128,6 +128,7 @@ const ScanOrderPage: React.FC = () => {
           onBack={handleBack}
           themeColor={storeInfo?.themeColor}
           logoUrl={storeInfo?.logoUrl}
+          themeTemplate={storeInfo?.themeTemplate}
         />
 
         <div className="container mx-auto px-4 py-8">
@@ -266,6 +267,7 @@ const ScanOrderPage: React.FC = () => {
         onBack={handleBack}
         themeColor={storeInfo?.themeColor}
         logoUrl={storeInfo?.logoUrl}
+        themeTemplate={storeInfo?.themeTemplate}
       />
 
       {/* 菜单区域 */}

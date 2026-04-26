@@ -16,6 +16,7 @@ interface Store {
   status: string;
   themeColor?: string;
   logoUrl?: string;
+  themeTemplate?: string;
   createdAt: string;
   tenant: Tenant;
 }
@@ -211,6 +212,7 @@ function ThemeEditorModal({ store, onClose, onSaved }: {
 }) {
   const [themeColor, setThemeColor] = useState(store?.themeColor || '#ff6b35');
   const [customColor, setCustomColor] = useState('');
+  const [themeTemplate, setThemeTemplate] = useState(store?.themeTemplate || 'gradient');
   const [logoUrl, setLogoUrl] = useState(store?.logoUrl || '');
   const [logoPreview, setLogoPreview] = useState(store?.logoUrl || '');
   const [uploading, setUploading] = useState(false);
@@ -221,6 +223,7 @@ function ThemeEditorModal({ store, onClose, onSaved }: {
     if (store) {
       setThemeColor(store.themeColor || '#ff6b35');
       setCustomColor('');
+      setThemeTemplate(store.themeTemplate || 'gradient');
       setLogoUrl(store.logoUrl || '');
       setLogoPreview(store.logoUrl || '');
       setMessage('');
@@ -267,7 +270,7 @@ function ThemeEditorModal({ store, onClose, onSaved }: {
       const res = await fetch(`/api/admin/stores/${store.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ themeColor, logoUrl: logoUrl }),
+        body: JSON.stringify({ themeColor, logoUrl, themeTemplate }),
       });
       const json = await res.json();
       if (json.success || res.ok) {
@@ -367,6 +370,37 @@ function ThemeEditorModal({ store, onClose, onSaved }: {
                   </button>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* 装修模板 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">装修模板</label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setThemeTemplate('gradient')}
+                className={`flex-1 px-3 py-2 text-sm rounded-lg border-2 transition-all ${
+                  themeTemplate === 'gradient' ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded" style={{ background: 'linear-gradient(135deg, #ff6b35, #d84315)' }} />
+                  <span className="font-medium">渐变风</span>
+                </div>
+                <div className="text-xs text-gray-400 mt-1">彩色渐变头部，带装饰元素</div>
+              </button>
+              <button
+                onClick={() => setThemeTemplate('minimal')}
+                className={`flex-1 px-3 py-2 text-sm rounded-lg border-2 transition-all ${
+                  themeTemplate === 'minimal' ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded bg-gray-100 border border-gray-200" />
+                  <span className="font-medium">极简白</span>
+                </div>
+                <div className="text-xs text-gray-400 mt-1">纯白干净设计，简洁清爽</div>
+              </button>
             </div>
           </div>
 

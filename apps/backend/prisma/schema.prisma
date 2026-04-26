@@ -134,6 +134,7 @@ model Store {
   language         String?  @default("zh-CN")
   logoUrl          String?
   themeColor       String?  @default("#1976d2")
+  themeTemplate    String?  @default("gradient")
 
   // 业务设置
   tableCount       Int?     @default(20)

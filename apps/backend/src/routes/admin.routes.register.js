@@ -98,10 +98,11 @@ export function registerAdminRoutes(fastify) {
     const prisma = new PrismaClient();
     try {
       const { storeId } = request.params;
-      const { themeColor, logoUrl, name, description, address, contactPhone } = request.body;
+      const { themeColor, logoUrl, themeTemplate, name, description, address, contactPhone } = request.body;
       const updateData = {};
       if (themeColor !== undefined) updateData.themeColor = themeColor;
       if (logoUrl !== undefined) updateData.logoUrl = logoUrl;
+      if (themeTemplate !== undefined) updateData.themeTemplate = themeTemplate;
       if (name !== undefined) updateData.name = name;
       if (description !== undefined) updateData.description = description;
       if (address !== undefined) updateData.address = address;

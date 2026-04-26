@@ -124,17 +124,17 @@ export default function StoreAdminDashboard() {
     <div style={{ minHeight: '100vh', background: '#f5f5f5' }}>
       {/* 顶部导航 */}
       <div style={{
-        background: '#fff', padding: '12px 24px', display: 'flex',
+        background: '#fff', padding: '8px 12px', display: 'flex',
         justifyContent: 'space-between', alignItems: 'center',
         boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-        position: 'sticky', top: 0, zIndex: 100,
+        position: 'sticky', top: 0, zIndex: 100, flexWrap: 'wrap', gap: 8,
       }}>
         <Space>
           <AppstoreOutlined style={{ fontSize: 22, color: '#667eea' }} />
-          <Title level={4} style={{ margin: 0 }}>店长管理端</Title>
+          <Title level={4} style={{ margin: 0, fontSize: window.innerWidth < 576 ? 16 : 24 }}>店长管理端</Title>
         </Space>
-        <Space>
-          <Text type="secondary">
+        <Space style={{ flexShrink: 0 }}>
+          <Text type="secondary" style={{ fontSize: window.innerWidth < 576 ? 12 : 14 }}>
             {user?.fullName || user?.email || ''}
           </Text>
           <Button icon={<LogoutOutlined />} onClick={handleLogout} size="small">
@@ -143,7 +143,7 @@ export default function StoreAdminDashboard() {
         </Space>
       </div>
 
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '24px 32px' }}>
         <Space style={{ marginBottom: 16 }}>
           <Title level={3} style={{ margin: 0 }}>
             <ShopOutlined /> 我的店铺

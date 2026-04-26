@@ -33,7 +33,7 @@ const TenantLoginPage: React.FC = () => {
           const tenants = parsed.userTenants || [];
           if (tenants.length > 0) {
             const slug = tenants[0].subdomain || tenants[0].id;
-            window.location.href = `/t/${slug}/dashboard`;
+            window.location.href = `/t/${slug}/stores`;
             return;
           }
         } catch (e) {

@@ -205,7 +205,7 @@ const StoreManagement: React.FC = () => {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => navigate(TENANT_ROUTES.STORES.CREATE)}
+          onClick={() => navigate(`/t/${tenantSlugFromUrl}/stores/create`)}
         >
           添加新店铺
         </Button>
@@ -395,7 +395,7 @@ const StoreManagement: React.FC = () => {
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
-                onClick={() => navigate(TENANT_ROUTES.STORES.CREATE)}
+                onClick={() => navigate(`/t/${tenantSlugFromUrl}/stores/create`)}
               >
                 添加第一个店铺
               </Button>

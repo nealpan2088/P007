@@ -13,4 +13,10 @@ echo "✅ 硬编码检查通过"
 
 cd ../frontend
 
+# 前端语法检查（括号匹配、引号等）
+bash ../../scripts/check-syntax.sh 2>&1 || {
+    echo "❌ 前端语法检查失败"
+    exit 1
+}
+
 echo "🎉 提交前检查通过！"

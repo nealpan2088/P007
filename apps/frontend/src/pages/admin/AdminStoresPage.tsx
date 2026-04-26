@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { message } from 'antd';
 import { API_ENDPOINTS } from '../../config/api-routes';
+import { apiPut } from '../../utils/api-client';
 
 interface Tenant {
   id: string;

@@ -180,15 +180,10 @@ async function publicRoutes(fastify) {
 
       const result = await scanService.createScanOrder(request.body);
       
-      // 异步触发打印（不阻塞下单）
-      if (result?.success && result?.order?.id) {
-        import('../services/printer/print-dispatcher.js').then(({ dispatchPrintJob }) => {
-          dispatchPrintJob(result.order, result.order.storeId || request.body.storeId);
-        }).catch(err => {
-          console.error('[打印] 调度加载失败:', err.message);
-        });
-      }
-
+      // ⚠️ 打印已统一由夜狼规则引擎处理（storeFlowConfig 配置）
+      // 不再在此处直接调用 dispatchPrintJob，避免与夜狼重复打印
+      // 夜狼 handlePrint 会调用 printerService.printStoreOrder 处理
+      
       // 异步触发夜狼业务流程（不阻塞下单）
       if (result?.success && result?.order) {
         const storeId = result.order.storeId || request.body.storeId;

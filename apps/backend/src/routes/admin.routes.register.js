@@ -8,6 +8,7 @@ import { authenticate, requireStoreAccess } from '../middleware/index.js';
 import { ADMIN_ROUTES } from '../config/routes.js';
 
 const STORES = ADMIN_ROUTES.STORES;
+const DASHBOARD = ADMIN_ROUTES.DASHBOARD;
 const PRINTERS = ADMIN_ROUTES.PRINTERS;
 const USERS = ADMIN_ROUTES.USERS;
 
@@ -24,6 +25,47 @@ const printerService = new PrinterService();
  * - 内层不要再加 prefix
  */
 export function registerAdminRoutes(fastify) {
+  // ====== Dashboard 概览统计（需认证）======
+
+  // 管理后台首页统计：租户总数、店铺统计、用户总数
+  fastify.get(DASHBOARD.STATS, {
+    preHandler: [authenticate]
+  }, async (request, reply) => {
+    const { PrismaClient } = await import('@prisma/client');
+    const prisma = new PrismaClient();
+    try {
+      const [totalTenants, totalStores, activeStores, totalUsers, recentStores] = await Promise.all([
+        prisma.tenant.count({ where: { deletedAt: null } }),
+        prisma.store.count({ where: { deletedAt: null } }),
+        prisma.store.count({ where: { status: 'ACTIVE', deletedAt: null } }),
+        prisma.user.count({ where: { deletedAt: null } }),
+        prisma.store.findMany({
+          select: { id: true, name: true, slug: true, status: true, createdAt: true,
+            tenant: { select: { id: true, name: true, subdomain: true } }
+          },
+          where: { deletedAt: null },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+        }),
+      ]);
+
+      return {
+        success: true,
+        data: {
+          tenants: { total: totalTenants },
+          stores: { total: totalStores, active: activeStores },
+          users: { total: totalUsers },
+          recentStores,
+        }
+      };
+    } catch (error) {
+      request.log.error({ msg: '获取概览统计失败', error: error.message });
+      return reply.code(500).send({ success: false, error: '获取概览统计失败' });
+    } finally {
+      await prisma.$disconnect();
+    }
+  });
+
   // ====== 公开接口（无需认证）======
 
   // 获取店铺列表（供选择使用）

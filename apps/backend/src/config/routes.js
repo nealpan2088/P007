@@ -338,6 +338,11 @@ export const CUSTOMER_ROUTES = {
 
 // 管理API路由（需要管理员权限）
 export const ADMIN_ROUTES = {
+  // 管理后台 Dashboard 概览统计
+  DASHBOARD: {
+    STATS: '/dashboard/stats',
+  },
+
   // 店铺管理（路径相对 /api/admin 前缀）
   STORES: {
     SELECT: '/stores/select',

@@ -1,0 +1,269 @@
+/* AdminDashboard 样式 */
+.admin-dashboard {
+  padding: 32px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  margin-bottom: 28px;
+}
+
+.dashboard-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 4px 0;
+}
+
+.dashboard-subtitle {
+  color: #666;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* 加载 */
+.dashboard-loading,
+.dashboard-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: #666;
+}
+
+.loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #ff6b35;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.dashboard-error p {
+  color: #ef4444;
+  font-size: 14px;
+}
+
+/* 统计卡片 */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  border: 1px solid #f0f0f0;
+  position: relative;
+}
+
+.stat-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.stat-icon.tenants { background: #eef2ff; }
+.stat-icon.stores { background: #fff5ed; }
+.stat-icon.users { background: #f0fdf4; }
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a2e;
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #888;
+}
+
+.stat-badge {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #f0fdf4;
+  color: #16a34a;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+/* 快捷操作 */
+.dashboard-section {
+  margin-bottom: 32px;
+}
+
+.dashboard-section h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0 0 16px 0;
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.quick-action-btn:hover {
+  border-color: var(--accent, #ff6b35);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transform: translateY(-1px);
+}
+
+.action-icon {
+  font-size: 22px;
+}
+
+.action-label {
+  font-weight: 500;
+  color: #333;
+}
+
+/* 最近店铺表格 */
+.recent-stores {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.stores-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.stores-table th {
+  background: #fafafa;
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #555;
+  font-size: 13px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.stores-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f5f5f5;
+  color: #333;
+}
+
+.stores-table tr:last-child td {
+  border-bottom: none;
+}
+
+.store-name {
+  font-weight: 500;
+  display: block;
+}
+
+.store-slug {
+  font-size: 12px;
+  color: #999;
+}
+
+.status-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-tag.ACTIVE {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.status-tag.DRAFT,
+.status-tag.INACTIVE {
+  background: #f5f5f5;
+  color: #999;
+}
+
+.status-tag.MAINTENANCE {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.time-cell {
+  color: #888;
+  font-size: 13px;
+}
+
+.table-action-btn {
+  padding: 4px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+  color: #555;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.table-action-btn:hover {
+  border-color: #ff6b35;
+  color: #ff6b35;
+}
+
+.empty-hint {
+  padding: 40px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .admin-dashboard { padding: 20px; }
+  .dashboard-stats { grid-template-columns: 1fr; }
+  .quick-actions { grid-template-columns: 1fr 1fr; }
+}

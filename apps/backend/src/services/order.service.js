@@ -29,7 +29,9 @@ class OrderService {
         sortOrder = 'desc'
       } = options;
 
-      const skip = (page - 1) * limit;
+      const pageNum = Math.max(1, parseInt(page, 10) || 1);
+      const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+      const skip = (pageNum - 1) * limitNum;
 
       // 检查用户权限
       const userTenant = await this.db.userTenant.findFirst({
@@ -56,7 +58,7 @@ class OrderService {
         return {
           success: true,
           data: [],
-          pagination: { page, limit, total: 0, totalPages: 0 }
+          pagination: { page: pageNum, limit: limitNum, total: 0, totalPages: 0 }
         };
       }
 
@@ -84,22 +86,29 @@ class OrderService {
             table: {
               select: {
                 id: true,
-                label: true
+                name: true
               }
             },
             items: {
               select: {
                 id: true,
-                name: true,
                 quantity: true,
-                price: true,
-                notes: true
+                unitPrice: true,
+                totalPrice: true,
+                specialInstructions: true,
+                notes: true,
+                menuItem: {
+                  select: {
+                    id: true,
+                    name: true
+                  }
+                }
               }
             }
           },
           orderBy: { [sortBy]: sortOrder },
           skip,
-          take: limit
+          take: limitNum
         }),
         this.db.order.count({ where })
       ]);
@@ -108,10 +117,10 @@ class OrderService {
         success: true,
         data: orders,
         pagination: {
-          page,
-          limit,
+          page: pageNum,
+          limit: limitNum,
           total,
-          totalPages: Math.ceil(total / limit)
+          totalPages: Math.ceil(total / limitNum)
         }
       };
     } catch (error) {

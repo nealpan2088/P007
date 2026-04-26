@@ -79,6 +79,20 @@ export default function AdminStoresPage() {
     );
   };
 
+  // 状态切换：ACTIVE ↔ DRAFT 互切
+  const toggleStatus = async (storeId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'ACTIVE' ? 'DRAFT' : 'ACTIVE';
+    try {
+      const json = await apiPut(`${API_ENDPOINTS.ADMIN.STORES.UPDATE}/${storeId}`, { status: newStatus });
+      if (json.success) {
+        setStores(prev => prev.map(s => s.id === storeId ? { ...s, status: newStatus } : s));
+        message.success(`已切换到 ${newStatus === 'ACTIVE' ? '营业中' : '草稿'}`);
+      }
+    } catch (err: any) {
+      message.error('状态切换失败: ' + (err.message || ''));
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
@@ -125,7 +139,15 @@ export default function AdminStoresPage() {
                       {store.tenant?.name || '—'}
                       <div className="text-xs text-gray-400">{store.tenant?.subdomain || ''}</div>
                     </td>
-                    <td className="px-4 py-3">{statusBadge(store.status)}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => toggleStatus(store.id, store.status)}
+                        title={store.status === 'ACTIVE' ? '点击设为草稿' : '点击设为营业中'}
+                        className="cursor-pointer hover:opacity-80 transition-opacity"
+                      >
+                        {statusBadge(store.status)}
+                      </button>
+                    </td>
                     <td className="px-4 py-3 text-sm text-gray-500">
                       {new Date(store.createdAt).toLocaleDateString('zh-CN')}
                     </td>

@@ -318,9 +318,20 @@ export default function FoodTemplateLibrary() {
     },
     {
       title: '标签', dataIndex: 'tags', key: 'tags', width: 160,
-      render: (tags: string | null) => tags ? (
-        <Space size={4} wrap>{(JSON.parse(tags) as string[]).map(t => <Tag key={t}>{t}</Tag>)}</Space>
-      ) : null,
+      render: (tags: string | null) => {
+        let tagArr: string[] = [];
+        if (tags) {
+          try {
+            const parsed = JSON.parse(tags);
+            tagArr = Array.isArray(parsed) ? parsed : [tags];
+          } catch {
+            tagArr = [tags];
+          }
+        }
+        return tagArr.length > 0 ? (
+          <Space size={4} wrap>{tagArr.map(t => <Tag key={t}>{t}</Tag>)}</Space>
+        ) : null;
+      },
     },
     {
       title: '操作', key: 'action', width: 160,

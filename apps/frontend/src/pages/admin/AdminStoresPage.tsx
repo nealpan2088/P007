@@ -163,12 +163,6 @@ export default function AdminStoresPage() {
                           📦 菜单
                         </button>
                         <button
-                          onClick={() => navigate(`/t/${store.tenant?.subdomain}/s/${store.slug}/printers`)}
-                          className="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
-                        >
-                          🖨️ 打印机
-                        </button>
-                        <button
                           onClick={() => {
                             const subdomain = store.tenant?.subdomain || store.tenant?.slug || store.tenant?.id;
                             window.open(`/t/${subdomain}/s/${store.slug}/scan/A01`, '_blank');
@@ -447,7 +441,7 @@ function ThemeEditorModal({ store, onClose, onSaved }: {
 
         <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
           <button
-            onClick={() => window.open(`/t/${store.tenant?.subdomain || store.tenant?.slug}/s/${store.slug}/printers`, '_blank')}
+            onClick={() => window.open('/admin/printers', '_blank')}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
           >
             🖨️ 打印机管理 →

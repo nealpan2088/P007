@@ -24,6 +24,12 @@ export default function AdminDashboard() {
       link: ADMIN_ROUTES.MENU_TEMPLATES.LIST,
       roles: ['SUPER_ADMIN'],
     },
+    {
+      title: '🖨️ 设备管理',
+      desc: '统一管理云打印机、测试连接、查看状态',
+      link: ADMIN_ROUTES.PRINTERS.LIST,
+      roles: ['SUPER_ADMIN'],
+    },
   ];
 
   const userData = user as any;

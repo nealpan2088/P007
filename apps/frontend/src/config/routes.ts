@@ -114,6 +114,11 @@ export const ADMIN_ROUTES = {
     LIST: '/admin/menu-templates',
   },
 
+  // 打印机管理（管理员统一管理）
+  PRINTERS: {
+    LIST: '/admin/printers',
+  },
+
   // 系统管理
   SYSTEM: {
     SETTINGS: '/admin/system/settings',

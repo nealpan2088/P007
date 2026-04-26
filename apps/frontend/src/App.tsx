@@ -150,6 +150,7 @@ function AppContent() {
           <Route path={ADMIN_ROUTES.NIGHTWOLF.EDIT} element={<NightwolfConfigPage />} />
           <Route path={ADMIN_ROUTES.SYSTEM.SETTINGS} element={<AdminDashboard />} />
           <Route path={ADMIN_ROUTES.STORES.LIST} element={<AdminStoresPage />} />
+          <Route path="/admin/printers" element={<PrinterManagement />} />
           <Route path={ADMIN_ROUTES.MENU_TEMPLATES.LIST} element={<FoodTemplateLibrary />} />
 
           {/* ===== 租户管理后台（/t/:tenantSlug/*） ===== */}

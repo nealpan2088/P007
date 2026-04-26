@@ -140,7 +140,8 @@ function AppContent() {
           <Route path={PUBLIC_ROUTES.AUTH.REGISTER} element={<RegisterPage />} />
 
           {/* ===== 超级管理员后台（/admin/*） ===== */}
-          <Route path={ADMIN_ROUTES.ADMIN} element={<AdminDashboard />} />
+          {/* 工作台直接指向系统管理页面 */}
+          <Route path={ADMIN_ROUTES.ADMIN} element={<Navigate to={ADMIN_ROUTES.SYSTEM.SETTINGS} replace />} />
           {/* 尾部斜杠 /admin/ → 重定向到 /admin */}
           <Route path={`${ADMIN_ROUTES.ADMIN}/`} element={<Navigate to={ADMIN_ROUTES.ADMIN} replace />} />
           <Route path={ADMIN_ROUTES.TENANTS.LIST} element={<TenantManagement />} />

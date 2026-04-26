@@ -141,6 +141,8 @@ function AppContent() {
 
           {/* ===== 超级管理员后台（/admin/*） ===== */}
           <Route path={ADMIN_ROUTES.ADMIN} element={<AdminDashboard />} />
+          {/* 尾部斜杠 /admin/ → 重定向到 /admin */}
+          <Route path={`${ADMIN_ROUTES.ADMIN}/`} element={<Navigate to={ADMIN_ROUTES.ADMIN} replace />} />
           <Route path={ADMIN_ROUTES.TENANTS.LIST} element={<TenantManagement />} />
           <Route path={ADMIN_ROUTES.TENANTS.CREATE} element={<CreateTenant />} />
           <Route path={ADMIN_ROUTES.TENANTS.EDIT} element={<EditTenant />} />

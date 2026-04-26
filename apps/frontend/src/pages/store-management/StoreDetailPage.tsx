@@ -62,7 +62,7 @@ const StoreDetailPage: React.FC = () => {
     } catch (error) {
       console.error('加载店铺数据失败:', error);
       message.error('加载店铺数据失败，请稍后重试');
-      navigate(TENANT_ROUTES.STORES.LIST);
+      navigate(TENANT_ROUTES.STORES.LIST.replace(':tenantSlug', tenantSlug || ''));
     } finally {
       setLoading(false);
     }
@@ -77,7 +77,7 @@ const StoreDetailPage: React.FC = () => {
 
   // 处理返回
   const handleBack = () => {
-    navigate(TENANT_ROUTES.STORES.LIST);
+    navigate(TENANT_ROUTES.STORES.LIST.replace(':tenantSlug', tenantSlug || ''));
   };
 
   // 生成二维码

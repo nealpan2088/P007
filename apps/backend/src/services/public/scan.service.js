@@ -62,6 +62,7 @@ class ScanService {
           address: true,
           logoUrl: true,
           themeColor: true,
+          themeTemplate: true,
           createdAt: true,
           updatedAt: true
         }

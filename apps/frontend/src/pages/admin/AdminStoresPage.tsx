@@ -144,6 +144,15 @@ export default function AdminStoresPage() {
                           🖨️ 打印机
                         </button>
                         <button
+                          onClick={() => {
+                            const subdomain = store.tenant?.subdomain || store.tenant?.slug || store.tenant?.id;
+                            window.open(`/t/${subdomain}/s/${store.slug}/scan/A01`, '_blank');
+                          }}
+                          className="px-3 py-1.5 text-xs bg-green-50 text-green-600 border border-green-200 rounded-md hover:bg-green-100 transition-colors"
+                        >
+                          👁️ 预览
+                        </button>
+                        <button
                           onClick={() => openThemeEditor(store)}
                           className="px-3 py-1.5 text-xs bg-purple-50 text-purple-600 border border-purple-200 rounded-md hover:bg-purple-100 transition-colors"
                         >

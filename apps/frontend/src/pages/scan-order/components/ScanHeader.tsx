@@ -14,6 +14,8 @@ interface ScanHeaderProps {
   logoUrl?: string;
   /** 装修模板: gradient | minimal */
   themeTemplate?: string;
+  /** 店头背景图 URL */
+  headerImageUrl?: string;
 }
 
 /**
@@ -59,9 +61,11 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
   themeColor = '#ff6b35',
   logoUrl,
   themeTemplate = 'gradient',
+  headerImageUrl,
 }) => {
   const isMinimal = themeTemplate === 'minimal';
   const bannerGradient = buildGradient(themeColor);
+  const hasHeaderImage = !!headerImageUrl;
 
   let headerContent;
   if (isMinimal) {
@@ -178,12 +182,12 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
         style={{
           position: 'relative',
           height: 160,
-          background: bannerGradient,
+          background: hasHeaderImage ? `center/cover no-repeat url(${headerImageUrl})` : bannerGradient,
           overflow: 'hidden',
         }}
       >
-        {/* 装饰圆 */}
-        <div style={{
+        {/* 装饰圆 — 有背景图时不显示 */}
+        {!hasHeaderImage && (<div style={{
           position: 'absolute',
           top: -50,
           right: -30,
@@ -191,8 +195,9 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
           height: 160,
           borderRadius: '50%',
           background: 'rgba(255,255,255,0.1)',
-        }} />
-        <div style={{
+        }} />)}
+        {/* 装饰圆 2 — 有背景图时不显示 */}
+        {!hasHeaderImage && (<div style={{
           position: 'absolute',
           bottom: -60,
           left: -20,
@@ -200,7 +205,7 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
           height: 140,
           borderRadius: '50%',
           background: 'rgba(255,255,255,0.07)',
-        }} />
+        }} />)}
 
         {/* 顶部操作栏 */}
         <div style={{

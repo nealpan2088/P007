@@ -50,6 +50,9 @@ export const TENANT_ROUTES = {
   STORE_PRINTERS: {
     LIST: '/t/:tenantSlug/s/:storeSlug/printers',
   },
+  STORE_TABLES: {
+    LIST: '/t/:tenantSlug/s/:storeSlug/tables',
+  },
   TENANTS: {
     LIST: '/admin/tenants',
     CREATE: '/admin/tenants/create',
@@ -77,7 +80,7 @@ export const TENANT_ROUTES = {
 
 // 管理员路由（平台级管理 /admin/）
 export const ADMIN_ROUTES = {
-  ADMIN: '/admin',
+  ADMIN: '/admin/dashboard',
 
   // 租户管理
   TENANTS: {
@@ -101,6 +104,11 @@ export const ADMIN_ROUTES = {
   // 店铺管理（管理后台）
   STORES: {
     LIST: '/admin/stores',
+  },
+
+  // 餐桌管理（管理后台）
+  TABLES: {
+    LIST: '/admin/stores/:storeId/tables',
   },
 
   // 订单管理（店铺级）

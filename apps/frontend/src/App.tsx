@@ -23,6 +23,8 @@ import MenuTemplateManager from './pages/menu-management/MenuTemplateManager';
 import PrinterManagement from './pages/printer/PrinterManagement';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminStoresPage from './pages/admin/AdminStoresPage';
+import SystemSettingsPage from './pages/admin/SystemSettingsPage';
+import TableManagementPage from './pages/admin/TableManagementPage';
 import UserManagementPage from './pages/admin/UserManagementPage';
 import NightwolfConfigPage from './pages/admin/NightwolfConfigPage';
 import FoodTemplateLibrary from './pages/admin/FoodTemplateLibrary';
@@ -141,8 +143,7 @@ function AppContent() {
 
           {/* ===== 超级管理员后台（/admin/*） ===== */}
           <Route path={ADMIN_ROUTES.ADMIN} element={<AdminDashboard />} />
-          {/* 尾部斜杠 /admin/ → 重定向到 /admin */}
-          <Route path={`${ADMIN_ROUTES.ADMIN}/`} element={<Navigate to={ADMIN_ROUTES.ADMIN} replace />} />
+          <Route path="/admin" element={<Navigate to={ADMIN_ROUTES.ADMIN} replace state={{ fromLegacyAdmin: true }} />} />
           <Route path={ADMIN_ROUTES.TENANTS.LIST} element={<TenantManagement />} />
           <Route path={ADMIN_ROUTES.TENANTS.CREATE} element={<CreateTenant />} />
           <Route path={ADMIN_ROUTES.TENANTS.EDIT} element={<EditTenant />} />
@@ -150,9 +151,10 @@ function AppContent() {
           <Route path={ADMIN_ROUTES.USERS.LIST} element={<UserManagementPage />} />
           <Route path={ADMIN_ROUTES.NIGHTWOLF.LIST} element={<NightwolfConfigPage />} />
           <Route path={ADMIN_ROUTES.NIGHTWOLF.EDIT} element={<NightwolfConfigPage />} />
-          <Route path={ADMIN_ROUTES.SYSTEM.SETTINGS} element={<AdminDashboard />} />
+          <Route path={ADMIN_ROUTES.SYSTEM.SETTINGS} element={<SystemSettingsPage />} />
           <Route path={ADMIN_ROUTES.STORES.LIST} element={<AdminStoresPage />} />
-          <Route path="/admin/printers" element={<PrinterManagement />} />
+          <Route path={ADMIN_ROUTES.TABLES.LIST} element={<TableManagementPage />} />
+          <Route path={ADMIN_ROUTES.PRINTERS.LIST} element={<PrinterManagement />} />
           <Route path={ADMIN_ROUTES.MENU_TEMPLATES.LIST} element={<FoodTemplateLibrary />} />
 
           {/* ===== 租户管理后台（/t/:tenantSlug/*） ===== */}

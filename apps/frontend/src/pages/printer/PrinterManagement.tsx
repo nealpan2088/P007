@@ -11,6 +11,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Select, message } from 'antd';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/api-client';
+import { API_ENDPOINTS } from '../../config/api-routes';
 
 // 类型定义
 interface PrinterBrand {
@@ -104,7 +105,7 @@ export default function PrinterManagement() {
 
   async function resolveStoreBySlug(slug: string) {
     try {
-      const json = await apiGet('/api/admin/stores/select?limit=100');
+      const json = await apiGet(API_ENDPOINTS.STORES_SELECT + '?limit=100');
       if (json.success && Array.isArray(json.data)) {
         setStores(json.data);
         const match = json.data.find((s: StoreOption) => s.slug === slug);
@@ -122,7 +123,7 @@ export default function PrinterManagement() {
 
   async function fetchStores() {
     try {
-      const json = await apiGet('/api/admin/stores/select?limit=20');
+      const json = await apiGet(API_ENDPOINTS.STORES_SELECT + '?limit=20');
       if (json.success && Array.isArray(json.data)) {
         setStores(json.data);
       }
@@ -133,7 +134,7 @@ export default function PrinterManagement() {
 
   async function fetchBrands() {
     try {
-      const json = await apiGet('/api/admin/printers/brands');
+      const json = await apiGet(API_ENDPOINTS.PRINTER.BRANDS);
       if (json.success) {
         setBrands(json.data.filter((b: PrinterBrand) => b.isActive));
       }
@@ -171,8 +172,8 @@ export default function PrinterManagement() {
       if (!body.secretKey?.trim()) delete (body as any).secretKey;
 
       const json = editingId
-        ? await apiPut(`/api/admin/printers/${editingId}`, body)
-        : await apiPost('/api/admin/printers', body);
+        ? await apiPut(API_ENDPOINTS.PRINTER.UPDATE.replace(':id', editingId), body)
+        : await apiPost(API_ENDPOINTS.PRINTER.CREATE, body);
 
       if (json.success) {
         message.success(editingId ? '打印机已更新' : '打印机已添加');

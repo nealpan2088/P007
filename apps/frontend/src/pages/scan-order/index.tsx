@@ -117,7 +117,7 @@ const ScanOrderPage: React.FC = () => {
   // 如果正在加载订单状态，显示订单状态页面
   if (orderStatus) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50" style={{ margin: 0, padding: 0 }}>
         <ScanHeader
           storeName={storeInfo?.name || '加载中...'}
           storeDescription={storeInfo?.description}
@@ -129,6 +129,7 @@ const ScanOrderPage: React.FC = () => {
           themeColor={storeInfo?.themeColor}
           logoUrl={storeInfo?.logoUrl}
           themeTemplate={storeInfo?.themeTemplate}
+          headerImageUrl={storeInfo?.headerImageUrl}
         />
 
         <div className="container mx-auto px-4 py-8">
@@ -254,7 +255,7 @@ const ScanOrderPage: React.FC = () => {
 
   // 主点餐页面
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col overflow-hidden" style={{ margin: 0, padding: 0 }}>
 
       {/* 店铺页头 */}
       <ScanHeader
@@ -268,6 +269,7 @@ const ScanOrderPage: React.FC = () => {
         themeColor={storeInfo?.themeColor}
         logoUrl={storeInfo?.logoUrl}
         themeTemplate={storeInfo?.themeTemplate}
+        headerImageUrl={storeInfo?.headerImageUrl}
       />
 
       {/* 菜单区域 */}

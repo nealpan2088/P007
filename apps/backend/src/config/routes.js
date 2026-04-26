@@ -50,6 +50,7 @@ export const PUBLIC_ROUTES = {
     FEATURES: `/features`,
     PRICING: `/pricing`,
     HELLO: `/hello`,  // API示例端点
+    ROUTES: `/config/routes`,  // 路由配置查看（调试用）
   },
   
   // 扫码点餐公共API（无需认证）
@@ -90,6 +91,7 @@ export const TENANT_ROUTES = {
     LIST: `/list`,
     DETAIL: `/:tenantId`,
     UPDATE: `/:tenantId`,
+    DELETE: `/:tenantId`,
     STATS: `/:tenantId/stats`,
     HEALTH: `/health`,
     
@@ -139,11 +141,13 @@ export const TENANT_ROUTES = {
   TABLES: {
     LIST: `/stores/:storeId/tables`,
     CREATE: `/stores/:storeId/tables`,
+    BATCH_CREATE: `/stores/:storeId/tables/batch`,
     DETAIL: `/stores/:storeId/tables/:tableId`,
     UPDATE: `/stores/:storeId/tables/:tableId`,
     DELETE: `/stores/:storeId/tables/:tableId`,
     QR_CODE: `/stores/:storeId/tables/:tableId/qr-code`,
     STATUS: `/stores/:storeId/tables/:tableId/status`,
+    BATCH_STATUS: `/stores/:storeId/tables/batch-status`,
   },
   
   // 菜单管理
@@ -431,6 +435,7 @@ export const STORE_ADMIN_ROUTES = {
 export const UPLOAD_ROUTES = {
   FOOD_IMAGE: '/api/upload/food-image',
   STORE_LOGO: '/api/upload/store-logo',
+  STORE_HEADER: '/api/upload/store-header',
   DEFAULT_FOOD_IMAGE: '/api/default-food-image',
   STATIC: '/uploads/*',
 };
@@ -517,6 +522,8 @@ export default {
   tenant: TENANT_ROUTES,
   customer: CUSTOMER_ROUTES,
   admin: ADMIN_ROUTES,
+  storeAdmin: STORE_ADMIN_ROUTES,
+  upload: UPLOAD_ROUTES,
   utils: RouteUtils,
   
   // 获取所有路由（用于文档生成）

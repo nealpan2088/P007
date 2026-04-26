@@ -3,6 +3,7 @@
 import tenantService from '../services/tenant.service.js';
 import storeService from '../services/store.service.js';
 import orderService from '../services/order.service.js';
+import tableService from '../services/table.service.js';
 import { authenticate, requireTenantAdmin } from '../middleware/index.js';
 import { TENANT_ROUTES } from '../config/routes.js';
 import systemMode from '../utils/system-mode.js';
@@ -367,6 +368,41 @@ export async function registerTenantRoutes(fastify) {
     }
   );
 
+  // 删除租户（需管理员权限）
+  fastify.delete(TENANT_ROUTES.TENANT.DELETE, 
+    { preHandler: [ authenticate ] },
+    async (request, reply) => {
+      try {
+        const { tenantId } = request.params;
+        const userId = request.user.id;
+
+        // 验证管理员权限
+        const userTenant = await publicDb.userTenant.findFirst({
+          where: { tenantId, userId, role: 'ADMIN' },
+        });
+        if (!userTenant) {
+          return reply.status(403).send({
+            success: false,
+            message: '仅管理员可删除租户',
+          });
+        }
+
+        await tenantService.deleteTenant(tenantId);
+
+        return {
+          success: true,
+          message: '租户已删除',
+        };
+      } catch (error) {
+        request.log.error({ msg: '删除租户错误', error: error.message, stack: error.stack, userId: request.user?.id });
+        return reply.status(400).send({
+          success: false,
+          message: error.message || '删除租户失败',
+        });
+      }
+    }
+  );
+
   // 更新用户在租户中的角色（需要认证，且用户必须是OWNER）
   fastify.put(TENANT_ROUTES.TENANT.UPDATE_USER_ROLE, 
     { preHandler: [ authenticate ] },
@@ -500,6 +536,111 @@ export async function registerTenantRoutes(fastify) {
       timestamp: new Date().toISOString(),
       version: '0.2.3',
     };
+  });
+
+  // ========= 餐桌管理 =========
+  // 获取店铺下的所有餐桌
+  fastify.get(TENANT_ROUTES.TABLES.LIST, { preHandler: [authenticate] }, async (request, reply) => {
+    try {
+      const { storeId } = request.params;
+      const tables = await tableService.getTables(storeId);
+      return { success: true, data: tables };
+    } catch (error) {
+      request.log.error({ msg: '获取餐桌列表失败', error: error.message, storeId: request.params.storeId });
+      return reply.status(500).send({ success: false, message: '获取餐桌列表失败' });
+    }
+  });
+
+  // 创建餐桌
+  fastify.post(TENANT_ROUTES.TABLES.CREATE, { preHandler: [authenticate] }, async (request, reply) => {
+    try {
+      const { storeId } = request.params;
+      const table = await tableService.createTable(storeId, request.body);
+      return reply.status(201).send({ success: true, data: table });
+    } catch (error) {
+      if (error.code === 'P2002') {
+        return reply.status(409).send({ success: false, message: '该桌号已存在' });
+      }
+      request.log.error({ msg: '创建餐桌失败', error: error.message });
+      return reply.status(500).send({ success: false, message: '创建餐桌失败' });
+    }
+  });
+
+  // 批量创建餐桌
+  fastify.post(TENANT_ROUTES.TABLES.BATCH_CREATE, { preHandler: [authenticate] }, async (request, reply) => {
+    try {
+      const { storeId } = request.params;
+      const { tables } = request.body;
+      if (!Array.isArray(tables) || tables.length === 0) {
+        return reply.status(400).send({ success: false, message: '请提供餐桌列表' });
+      }
+      const result = await tableService.batchCreateTables(storeId, tables);
+      return reply.status(201).send({ success: true, data: result, count: result.length });
+    } catch (error) {
+      if (error.code === 'P2002') {
+        return reply.status(409).send({ success: false, message: '部分桌号已存在' });
+      }
+      request.log.error({ msg: '批量创建餐桌失败', error: error.message });
+      return reply.status(500).send({ success: false, message: '批量创建餐桌失败' });
+    }
+  });
+
+  // 更新餐桌
+  fastify.put(TENANT_ROUTES.TABLES.UPDATE, { preHandler: [authenticate] }, async (request, reply) => {
+    try {
+      const { tableId } = request.params;
+      const table = await tableService.updateTable(tableId, request.body);
+      return { success: true, data: table };
+    } catch (error) {
+      request.log.error({ msg: '更新餐桌失败', error: error.message });
+      return reply.status(500).send({ success: false, message: '更新餐桌失败' });
+    }
+  });
+
+  // 批量更新餐桌状态
+  fastify.patch(TENANT_ROUTES.TABLES.BATCH_STATUS, { preHandler: [authenticate] }, async (request, reply) => {
+    try {
+      const { storeId } = request.params;
+      const { tableIds, status } = request.body;
+      if (!Array.isArray(tableIds) || tableIds.length === 0) {
+        return reply.status(400).send({ success: false, message: '请选择要更新的餐桌' });
+      }
+      const result = await tableService.batchUpdateStatus(storeId, tableIds, status);
+      return { success: true, data: result, count: result.count };
+    } catch (error) {
+      request.log.error({ msg: '批量更新餐桌状态失败', error: error.message });
+      return reply.status(500).send({ success: false, message: '批量更新状态失败' });
+    }
+  });
+
+  // 删除餐桌
+  fastify.delete(TENANT_ROUTES.TABLES.DELETE, { preHandler: [authenticate] }, async (request, reply) => {
+    try {
+      const { tableId } = request.params;
+      await tableService.deleteTable(tableId);
+      return { success: true, message: '餐桌已删除' };
+    } catch (error) {
+      request.log.error({ msg: '删除餐桌失败', error: error.message });
+      return reply.status(500).send({ success: false, message: '删除餐桌失败' });
+    }
+  });
+
+  // 获取餐桌的二维码链接
+  fastify.get(TENANT_ROUTES.TABLES.QR_CODE, { preHandler: [authenticate] }, async (request, reply) => {
+    try {
+      const { storeId, tableId } = request.params;
+      const table = await tableService.getTableById(tableId);
+      if (!table) {
+        return reply.status(404).send({ success: false, message: '餐桌不存在' });
+      }
+      // 获取店铺 slug
+      const store = await storeService.getStoreById(storeId);
+      const qrUrl = tableService.getQrCodeUrl(store.slug, tableId, table.tableNumber);
+      return { success: true, data: { qrCodeUrl: qrUrl } };
+    } catch (error) {
+      request.log.error({ msg: '获取餐桌二维码失败', error: error.message });
+      return reply.status(500).send({ success: false, message: '获取二维码失败' });
+    }
   });
 
   console.log('✅ 租户路由注册完成');

@@ -12,24 +12,27 @@ check_file() {
     local file=$1
     echo "检查: $file"
     
-    # 检查API路径硬编码
-    if grep -q "'/api/\|'/v1/\|'/stores/\|'/auth/" "$file" 2>/dev/null; then
+    # 检查API路径硬编码（排除 Fastify register prefix 和 rate limiter middlelware）
+    local api_hits=$(grep -n "'/api/\|'/v1/\|'/stores/\|'/auth/" "$file" 2>/dev/null | grep -v "prefix: '/api" | grep -v "url.startsWith('/api")
+    if [ -n "$api_hits" ]; then
         echo "  ⚠️  发现API路径硬编码:"
-        grep -n "'/api/\|'/v1/\|'/stores/\|'/auth/" "$file" | head -5
+        echo "$api_hits" | head -5
         ((ERRORS++))
     fi
     
     # 检查角色硬编码
-    if grep -q "'ADMIN'\|'OWNER'\|'USER'" "$file" 2>/dev/null; then
+    local role_hits=$(grep -n "'ADMIN'\|'OWNER'\|'USER'" "$file" 2>/dev/null)
+    if [ -n "$role_hits" ]; then
         echo "  ⚠️  发现角色硬编码:"
-        grep -n "'ADMIN'\|'OWNER'\|'USER'" "$file" | head -5
+        echo "$role_hits" | head -5
         ((ERRORS++))
     fi
     
-    # 检查端口硬编码
-    if grep -q "33037\|5177\|5432" "$file" 2>/dev/null; then
+    # 检查端口硬编码（排除常量定义和配置文件中的引用）
+    local port_hits=$(grep -n "33037\|5177\|5432" "$file" 2>/dev/null)
+    if [ -n "$port_hits" ]; then
         echo "  ⚠️  发现端口硬编码:"
-        grep -n "33037\|5177\|5432" "$file" | head -5
+        echo "$port_hits" | head -5
         ((ERRORS++))
     fi
 }

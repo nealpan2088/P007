@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { ADMIN_ROUTES } from '../config/routes';
-import { apiGet } from '../utils/api-client';
+import { apiGet, apiDelete } from '../utils/api-client';
 import { API_ENDPOINTS } from '../config/api-routes';
 import { ApiResponse } from '../types';
 
@@ -129,11 +129,14 @@ const TenantManagement: React.FC = () => {
     alert(`切换到租户 ${tenantId}（功能待实现）`);
   };
 
-  const handleDeleteTenant = (tenantId: string) => {
-    if (window.confirm('确定要删除这个租户吗？此操作不可撤销。')) {
-      console.log('删除租户:', tenantId);
-      // 这里应该调用删除租户的API
-      alert(`删除租户 ${tenantId}（功能待实现）`);
+  const handleDeleteTenant = async (tenantId: string) => {
+    if (!window.confirm('确定要删除这个租户吗？此操作不可撤销。')) return;
+    try {
+      await apiDelete(API_ENDPOINTS.TENANT.DELETE.replace(':tenantId', tenantId));
+      setTenants(prev => prev.filter(t => t.id !== tenantId));
+      alert('✅ 租户已删除');
+    } catch (err: any) {
+      alert('❌ 删除失败: ' + (err.message || '未知错误'));
     }
   };
 

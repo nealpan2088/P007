@@ -177,6 +177,12 @@ export default function AdminStoresPage() {
                         >
                           🎨 装修
                         </button>
+                        <button
+                          onClick={() => navigate(`/admin/stores/${store.id}/tables`)}
+                          className="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
+                        >
+                          🪑 餐桌
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -243,7 +249,10 @@ function ThemeEditorModal({ store, onClose, onSaved }: {
   const [themeTemplate, setThemeTemplate] = useState(store?.themeTemplate || 'gradient');
   const [logoUrl, setLogoUrl] = useState(store?.logoUrl || '');
   const [logoPreview, setLogoPreview] = useState(store?.logoUrl || '');
+  const [headerImageUrl, setHeaderImageUrl] = useState(store?.headerImageUrl || '');
+  const [headerPreview, setHeaderPreview] = useState(store?.headerImageUrl || '');
   const [uploading, setUploading] = useState(false);
+  const [uploadingHeader, setUploadingHeader] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -254,6 +263,8 @@ function ThemeEditorModal({ store, onClose, onSaved }: {
       setThemeTemplate(store.themeTemplate || 'gradient');
       setLogoUrl(store.logoUrl || '');
       setLogoPreview(store.logoUrl || '');
+      setHeaderImageUrl(store.headerImageUrl || '');
+      setHeaderPreview(store.headerImageUrl || '');
       setMessage('');
     }
   }, [store]);
@@ -289,6 +300,36 @@ function ThemeEditorModal({ store, onClose, onSaved }: {
     }
   };
 
+  const handleHeaderUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setHeaderPreview(URL.createObjectURL(file));
+    setUploadingHeader(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const token = localStorage.getItem('qilin_access_token');
+      const res = await fetch('/api/upload/store-header', {
+        method: 'POST',
+        body: formData,
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
+      const json = await res.json();
+      if (json.success) {
+        setHeaderImageUrl(json.data.url);
+        setMessage('✅ 背景图上传成功，请点击保存');
+      } else {
+        setMessage('❌ 上传失败: ' + (json.error || ''));
+        setHeaderPreview(store?.headerImageUrl || '');
+      }
+    } catch (err: any) {
+      setMessage('❌ 上传失败: ' + err.message);
+      setHeaderPreview(store?.headerImageUrl || '');
+    } finally {
+      setUploadingHeader(false);
+    }
+  };
+
   if (!store) return null;
 
   const handleSave = async () => {
@@ -298,7 +339,7 @@ function ThemeEditorModal({ store, onClose, onSaved }: {
       const res = await fetch(`/api/admin/stores/${store.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ themeColor, logoUrl, themeTemplate }),
+        body: JSON.stringify({ themeColor, logoUrl, themeTemplate, headerImageUrl }),
       });
       const json = await res.json();
       if (json.success || res.ok) {
@@ -395,6 +436,30 @@ function ThemeEditorModal({ store, onClose, onSaved }: {
                 {logoUrl && (
                   <button onClick={() => { setLogoUrl(''); setLogoPreview(''); }} className="text-xs text-red-500 mt-1 hover:underline">
                     清除 Logo
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 店头背景图 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">店头背景图</label>
+            <div className="flex items-center gap-4">
+              <div className="w-24 h-16 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 flex-shrink-0"
+                style={headerPreview ? { backgroundImage: `url(${headerPreview})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}>
+                {!headerPreview && <span className="text-2xl text-gray-300">🖼️</span>}
+              </div>
+              <div className="flex-1">
+                <label className="inline-block px-4 py-2 text-sm text-purple-600 border border-purple-300 rounded-lg cursor-pointer hover:bg-purple-50 transition-colors">
+                  {uploadingHeader ? '上传中...' : '选择图片'}
+                  <input type="file" accept="image/*" onChange={handleHeaderUpload} className="hidden" disabled={uploadingHeader} />
+                </label>
+                <p className="text-xs text-gray-400 mt-1">支持 JPG/PNG/GIF/WebP，最大 1MB</p>
+                <p className="text-xs text-gray-400">建议宽高比 3:1，用于店头背景展示</p>
+                {headerImageUrl && (
+                  <button onClick={() => { setHeaderImageUrl(''); setHeaderPreview(''); }} className="text-xs text-red-500 mt-1 hover:underline">
+                    清除背景图
                   </button>
                 )}
               </div>

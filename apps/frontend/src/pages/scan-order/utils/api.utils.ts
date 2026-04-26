@@ -5,7 +5,7 @@ import SCAN_ROUTES from '../../../config/scan-routes';
 
 // 创建axios实例（baseURL为空，URL用完整路径）
 const apiClient = axios.create({
-  baseURL: '',
+  baseURL: '/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

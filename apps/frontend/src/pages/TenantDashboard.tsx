@@ -242,7 +242,7 @@ const TenantDashboard: React.FC = () => {
               <Card>
                 <CardContent>
                   <Typography color="text.secondary" gutterBottom>待处理订单</Typography>
-                  <Typography variant="h4">{stats ? stats.pending + stats.preparing : 0}</Typography>
+                  <Typography variant="h4">{(stats?.pending || 0) + (stats?.preparing || 0)}</Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                     <ShoppingCartIcon color="warning" sx={{ mr: 1 }} />
                     <Typography variant="body2" color="warning.main">

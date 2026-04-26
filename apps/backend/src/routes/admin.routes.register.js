@@ -82,7 +82,7 @@ export function registerAdminRoutes(fastify) {
         ];
       }
       const stores = await prisma.store.findMany({
-        select: { id: true, name: true, slug: true },
+        select: { id: true, name: true, slug: true, status: true },
         where,
         orderBy: { name: 'asc' },
         take: Math.min(parseInt(limit) || 20, 100),

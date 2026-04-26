@@ -57,25 +57,30 @@ export default class BaseAdapter {
     if (order.tableName) {
       lines.push('桌号: ' + order.tableName);
     }
+    lines.push('订单类型: ' + (order.printType === 'timeout_reminder' ? '催单' : '新单'));
     lines.push('时间: ' + (order.createdAt ? new Date(order.createdAt).toLocaleString('zh-CN') : ''));
     lines.push('[C]==============================');
-    lines.push('[C]<B>菜品明细</B>');
-    lines.push('');
+    lines.push('[L]<B>菜品                   金额</B>');
+    lines.push('[C]------------------------------');
 
     items.forEach(item => {
       const name = item.name || item.menuItem?.name || '未知菜品';
       const qty = item.quantity || 1;
       const price = item.price || item.unitPrice || 0;
-      lines.push(name + ' x' + qty);
-      lines.push('    ¥' + Number(price).toFixed(2));
+      const total = Number(price * qty).toFixed(2);
+      const displayName = qty > 1 ? name + ' x' + qty : name;
+      // 左对齐菜名，右对齐金额（58mm纸约32个中文字符宽）
+      const padWidth = 28;
+      const namePart = displayName.length > padWidth ? displayName.substring(0, padWidth - 2) + '..' : displayName;
+      const dots = '.'.repeat(Math.max(2, padWidth - namePart.length - total.length));
+      lines.push(namePart + dots + '¥' + total);
       if (item.specialInstructions) {
-        lines.push('    * ' + item.specialInstructions);
+        lines.push('  ※ ' + item.specialInstructions);
       }
     });
 
-    lines.push('');
-    lines.push('[C]==============================');
-    lines.push('[C]<B>合计: ¥' + Number(order.totalAmount || 0).toFixed(2) + '</B>');
+    lines.push('[C]------------------------------');
+    lines.push('[L]<B>合计:                        ¥' + Number(order.totalAmount || 0).toFixed(2) + '</B>');
     lines.push('[C]==============================');
     lines.push('[C]感谢您的光临！');
     lines.push('[C]祝您用餐愉快！');

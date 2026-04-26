@@ -116,6 +116,8 @@ export interface Store {
   phone?: string;
   email?: string;
   logo?: string;
+  logoUrl?: string;
+  headerImageUrl?: string;
   coverImage?: string;
   openingHours?: Record<string, any>;
   averagePrice?: number;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../config/api-routes';
+import { apiGet } from '../../utils/api-client';
 import {
   fetchMenuItems,
   createMenuItem,
@@ -45,15 +46,6 @@ interface MenuItem {
 }
 
 type TabType = 'items' | 'categories';
-
-/** 构建带参数URL */
-function buildUrl(template: string, params: Record<string, string>): string {
-  let url = template;
-  for (const [key, value] of Object.entries(params)) {
-    url = url.replace(`:${key}`, encodeURIComponent(value));
-  }
-  return url;
-}
 
 /** 获取token */
 function getToken(): string | null {
@@ -110,9 +102,7 @@ export default function MenuTemplateManager() {
     async function loadStores() {
       setStoresLoading(true);
       try {
-        const url = buildUrl(API_ENDPOINTS.STORES_SELECT, {}) + '?limit=20';
-        const res = await fetch(url);
-        const json = await res.json();
+        const json = await apiGet(API_ENDPOINTS.STORES_SELECT + '?limit=20');
         const list: Store[] = json?.data || [];
         setStores(list);
 
@@ -266,7 +256,7 @@ export default function MenuTemplateManager() {
           <option value="">-- 请选择店铺 --</option>
           {stores.map(s => (
             <option key={s.id} value={s.id}>
-              {s.name} {s.status !== 'ACTIVE' ? `(${s.status})` : ''}
+              {s.name} ({s.slug}) {s.status !== 'ACTIVE' ? `[${s.status}]` : ''}
             </option>
           ))}
         </select>

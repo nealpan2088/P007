@@ -133,6 +133,7 @@ model Store {
   currency         String?  @default("CNY")
   language         String?  @default("zh-CN")
   logoUrl          String?
+  headerImageUrl   String?
   themeColor       String?  @default("#ff6b35")
   themeTemplate    String?  @default("minimal")
 

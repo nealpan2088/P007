@@ -36,7 +36,7 @@ const MenuSection: React.FC<MenuSectionProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex h-[calc(100vh-48px)]">
+      <div className="flex flex-1 min-h-0">
         <div className="w-20 shrink-0 bg-gray-50 p-2">
           {[1, 2, 3, 4].map(i => (
             <div key={i} className="h-10 bg-gray-200 rounded-lg mb-2 animate-pulse" />
@@ -60,7 +60,7 @@ const MenuSection: React.FC<MenuSectionProps> = ({
 
   if (categories.length === 0) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-48px)]">
+      <div className="flex items-center justify-center flex-1 min-h-0">
         <div className="text-center">
           <div className="w-14 h-14 mx-auto mb-3 text-gray-300">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,7 +74,7 @@ const MenuSection: React.FC<MenuSectionProps> = ({
   }
 
   return (
-    <div className="flex h-[calc(100vh-48px)]">
+    <div className="flex flex-1 min-h-0">
       {/* 左侧分类导航 */}
       <div ref={sidebarRef} className="w-20 shrink-0 bg-white overflow-y-auto scrollbar-hide pt-1 border-r border-gray-100">
         {/* "全部"按钮 - 默认选中 */}

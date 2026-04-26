@@ -32,6 +32,7 @@ console.log(`🌙 夜狼模块: 已内置（配置路由 + 执行引擎）`);
 
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
+import sharp from 'sharp'
 import config from './config/index.js'
 import { setDevMode, formatErrorResponse } from './services/error.service.js'
 
@@ -201,7 +202,8 @@ fastify.register(multipart, {
 const UPLOAD_BASE = path.join(__dirname, '../../uploads');
 const FOOD_DIR = path.join(UPLOAD_BASE, 'food');
 const LOGO_DIR = path.join(UPLOAD_BASE, 'logos');
-for (const dir of [UPLOAD_BASE, FOOD_DIR, LOGO_DIR]) {
+const HEADER_DIR = path.join(UPLOAD_BASE, 'headers');
+for (const dir of [UPLOAD_BASE, FOOD_DIR, LOGO_DIR, HEADER_DIR]) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
 
@@ -294,14 +296,80 @@ fastify.post(UPLOAD_ROUTES.STORE_LOGO, { preHandler: [authenticate] }, async (re
     const safeName = `logo_${Date.now()}_${hash}${ext}`;
     const filePath = path.join(LOGO_DIR, safeName);
 
-    // 写入文件
+    // 先写原图，再用 sharp 压缩覆盖
     fs.writeFileSync(filePath, buffer);
+    try {
+      const compressed = await sharp(buffer)
+        .resize(200, 200, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 80 })
+        .toBuffer();
+      if (compressed.length < buffer.length) {
+        fs.writeFileSync(filePath, compressed);
+      }
+    } catch (sharpErr) {
+      // sharp 失败就用原图
+      request.log.warn({ msg: 'Logo 压缩失败，使用原图', error: sharpErr.message });
+    }
 
     const url = `/uploads/logos/${safeName}`;
     return { success: true, data: { url, filename: safeName, size: buffer.length } };
   } catch (error) {
     request.log.error({ msg: 'Logo 上传失败', error: error.message });
     return reply.code(500).send({ success: false, error: 'Logo 上传失败: ' + error.message });
+  }
+});
+
+// 店铺 Head Image 上传接口（需认证）
+fastify.post(UPLOAD_ROUTES.STORE_HEADER, { preHandler: [authenticate] }, async (request, reply) => {
+  try {
+    const data = await request.file();
+    if (!data) {
+      return reply.code(400).send({ success: false, error: '请选择要上传的图片' });
+    }
+
+    if (!ALLOWED_TYPES.includes(data.mimetype)) {
+      return reply.code(400).send({
+        success: false,
+        error: `不支持的图片格式: ${data.mimetype}。支持: JPG, PNG, GIF, WebP`,
+      });
+    }
+
+    const chunks = [];
+    for await (const chunk of data.file) {
+      chunks.push(chunk);
+    }
+    const buffer = Buffer.concat(chunks);
+
+    if (buffer.length > 2 * 1024 * 1024) {
+      return reply.code(400).send({
+        success: false,
+        error: '背景图片大小不能超过 2MB',
+      });
+    }
+
+    const hash = crypto.createHash('md5').update(buffer).digest('hex').slice(0, 8);
+    const ext = path.extname(data.filename).toLowerCase() || '.png';
+    const isLossy = ['.jpg', '.jpeg'].includes(ext);
+    let safeName = `header_${Date.now()}_${hash}${isLossy ? ext : '.jpg'}`;
+    const filePath = path.join(HEADER_DIR, safeName);
+
+    // 用 sharp 压缩（最长边 1200px，quality 80，统一转 JPEG）
+    try {
+      const processed = await sharp(buffer)
+        .resize(1200, null, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 80 })
+        .toBuffer();
+      fs.writeFileSync(filePath, processed);
+    } catch (sharpErr) {
+      request.log.warn({ msg: '背景图处理失败，使用原图', error: sharpErr.message });
+      fs.writeFileSync(filePath, buffer);
+    }
+
+    const url = `/uploads/headers/${safeName}`;
+    return { success: true, data: { url, filename: safeName, size: buffer.length } };
+  } catch (error) {
+    request.log.error({ msg: '背景图片上传失败', error: error.message });
+    return reply.code(500).send({ success: false, error: '背景图片上传失败: ' + error.message });
   }
 });
 
@@ -351,7 +419,7 @@ fastify.get(UPLOAD_ROUTES.DEFAULT_FOOD_IMAGE, async () => {
 // ==================== 配置端点 ====================
 // 提供路由配置供前端消费，确保前后端路由一致
 
-fastify.get('/api/config/routes', async (request, reply) => {
+fastify.get(PUBLIC_ROUTES.PUBLIC.ROUTES, async (request, reply) => {
   // routes 已在文件开头导入 (routes 作为 default export)
   return {
     success: true,
@@ -488,7 +556,7 @@ async function startServer() {
     // 清理夜狼模块（安全引用，如果夜狼引擎已注册则尝试清理）
     try {
       // 检查夜狼路由是否已注册
-      if (fastify.hasRoute?.({ method: 'GET', url: '/api/nightwolf/health' })) {
+      if (fastify.hasRoute?.({ method: 'GET', url: `/api${routes.customer.NIGHTWOLF.HEALTH}` })) {
         const { registerNightwolf } = await import('./modules/nightwolf/index.mjs');
         if (typeof registerNightwolf.cleanup === 'function') {
           await registerNightwolf.cleanup();

@@ -93,12 +93,17 @@ const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, onClose, onAddT
       <div className="fixed bottom-0 left-0 right-0 z-50 animate-slide-up">
         <div className="bg-white rounded-t-2xl overflow-hidden shadow-xl max-h-[80vh] flex flex-col">
           {/* 图片 */}
-          <div className={`relative h-52 shrink-0 bg-gradient-to-br ${getGradientClass(item.name)}`}>
+          <div className={`relative h-64 shrink-0 bg-gradient-to-br ${getGradientClass(item.name)} flex items-center justify-center overflow-hidden`}>
             <img
               src={getFoodImageUrl(item.imageUrl)}
               alt={item.name}
               className="w-full h-full object-cover"
-              onError={e => { (e.target as HTMLImageElement).src = getFoodImageUrl(''); }}
+              onError={e => { 
+                const img = e.target as HTMLImageElement;
+                img.style.objectFit = 'contain';
+                img.style.padding = '30px';
+                img.src = getFoodImageUrl(''); 
+              }}
             />
             <button onClick={onClose} className="absolute top-3 right-3 w-7 h-7 bg-black bg-opacity-40 rounded-full flex items-center justify-center text-white active:scale-90 transition-transform">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -112,7 +117,7 @@ const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, onClose, onAddT
           </div>
 
           {/* 内容 */}
-          <div className="p-5 overflow-y-auto">
+          <div className="p-5 overflow-y-auto flex-1 min-h-0">
             <h2 className="text-lg font-bold text-gray-800 mb-2">{item.name}</h2>
             
             {item.description && (

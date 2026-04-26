@@ -61,6 +61,7 @@ class ScanService {
           contactEmail: true,
           address: true,
           logoUrl: true,
+          headerImageUrl: true,
           themeColor: true,
           themeTemplate: true,
           createdAt: true,

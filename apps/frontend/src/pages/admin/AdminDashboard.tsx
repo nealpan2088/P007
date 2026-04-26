@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ADMIN_ROUTES } from '../../config/routes';
 import './AdminDashboard.css';
 
@@ -38,6 +38,8 @@ const STATUS_LABELS: Record<string, string> = {
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromLegacy = location.state?.fromLegacyAdmin;
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -87,6 +89,21 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="admin-dashboard">
+      {/* 旧链接重定向提示 */}
+      {fromLegacy && (
+        <div className="redirect-notice" style={{
+          backgroundColor: '#fef3c7',
+          border: '1px solid #f59e0b',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          marginBottom: '16px',
+          fontSize: '14px',
+          color: '#92400e',
+        }}>
+          🔄 <strong>/admin</strong> 已迁移至 <strong>/admin/dashboard</strong>，当前已自动跳转。
+        </div>
+      )}
+
       {/* 页头 */}
       <div className="dashboard-header">
         <h1>管理后台</h1>

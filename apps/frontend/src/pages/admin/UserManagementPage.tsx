@@ -87,8 +87,8 @@ export default function UserManagementPage() {
     setStoreLoading(true);
     try {
       const json = await apiGet(API_ENDPOINTS.USERS.LIST.replace('/users', '/stores/select'));
-      // 尝试 /api/admin/stores/select
-      const res = await apiGet('/api/admin/stores/select?limit=100');
+      // 尝试 stores/select 端点
+      const res = await apiGet(API_ENDPOINTS.STORES_SELECT + '?limit=100');
       setStores(res?.data || []);
     } catch {
       setStores([]);

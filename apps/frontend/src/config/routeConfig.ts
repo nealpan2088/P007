@@ -2,10 +2,6 @@
 // 从后端 /api/config/routes 获取路由定义，确保前后端一致
 // 这是唯一的路由源头，所有API路径必须从这里获取
 
-import config from './dynamic-config';
-
-const API_BASE_URL = config.api.baseUrl;
-
 // 运行时缓存
 let cachedRoutes: RouteData | null = null;
 let fetchPromise: Promise<RouteData> | null = null;
@@ -31,20 +27,18 @@ const API_ROUTE_PREFIXES: [string, string][] = [
   ['/register', '/api/v1/auth'],
 ];
 
-// 确保API路径有完整的baseUrl和API前缀
+// 确保API路径有完整的API前缀
+// 后端使用相对路径（如 /stores/check-slug），注册时加 prefix（如 /api/store）
+// 此处补上对应的 API 前缀，前端请求时再由 Vite proxy 转发到后端
 function resolveUrl(path: string): string {
   if (!path) return '';
-  if (path.startsWith('http')) {
+  if (path.startsWith('http') || path.startsWith('/api')) {
     return path;
-  }
-  // 已经以 /api 开头，直接返回
-  if (path.startsWith('/api')) {
-    return `${API_BASE_URL}${path}`;
   }
   // 匹配后端相对路径，补上对应的 API 前缀
   for (const [prefix, apiPrefix] of API_ROUTE_PREFIXES) {
     if (path.startsWith(prefix)) {
-      return `${API_BASE_URL}${apiPrefix}${path}`;
+      return `${apiPrefix}${path}`;
     }
   }
   // 其他相对路径 → 前端路由，不需要baseUrl
@@ -83,7 +77,7 @@ export async function fetchRouteConfig(): Promise<RouteData> {
 
   fetchPromise = (async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/config/routes`);
+      const res = await fetch('/api/config/routes');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       if (!json.success || !json.data) throw new Error('Invalid route config response');
@@ -134,13 +128,10 @@ export const buildApiUrl = (template: string, params: Record<string, string | nu
   return url;
 };
 
-// 兼容旧的 getApiUrl
+// 兼容旧的 getApiUrl（仅做参数替换，不再拼接 API_BASE_URL）
+// 前缀 /api 由 api-client.ts 统一添加
 export const getApiUrl = (route: string, params: Record<string, string | number> = {}): string => {
-  const url = buildApiUrl(route, params);
-  if (!url.startsWith('http') && !url.startsWith('/api')) {
-    return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
-  }
-  return url;
+  return buildApiUrl(route, params);
 };
 
 // 默认导出（兼容旧引用）

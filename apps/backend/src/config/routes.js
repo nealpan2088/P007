@@ -25,6 +25,8 @@ export const PUBLIC_ROUTES = {
   // 认证路由（相对路径，供 /api/v1/auth 前缀使用）
   AUTH_RELATIVE: {
     REGISTER: '/register',
+    ADMIN_LOGIN: '/admin/login',
+    TENANT_LOGIN: '/tenant/login',
     LOGIN: '/login',
     REFRESH_TOKEN: '/refresh-token',
     VERIFY_EMAIL: '/verify-email/:token',
@@ -120,6 +122,7 @@ export const TENANT_ROUTES = {
     DETAIL: `/stores/:storeId`,
     UPDATE: `/stores/:storeId`,
     DELETE: `/stores/:storeId`,
+    UPDATE_STATUS: `/stores/:storeId/status`,
     HEALTH: `/stores/health`,
     STATS: `/stores/:storeId/stats`,
     CHECK_SLUG: `/stores/check-slug`,

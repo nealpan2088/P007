@@ -177,6 +177,8 @@ async function handlePrint(params, eventData, storeId) {
       orderNumber: eventData.orderId || 'N/A',
       storeName: eventData.storeName || '',
       tableName: eventData.tableNo || eventData.tableName || '',
+      orderType: eventData.orderType || 'DINE_IN',
+      customerNotes: eventData.customerNotes || '',
       items: (eventData.items || []).map(item => ({
         name: typeof item === 'string' ? item : (item.name || '未知菜品'),
         quantity: item.quantity || 1,

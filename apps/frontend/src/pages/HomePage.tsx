@@ -1,18 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { PUBLIC_ROUTES, ADMIN_ROUTES } from '../config/routes';
+import { PUBLIC_ROUTES } from '../config/routes';
 import SCAN_ROUTES from '../config/scan-routes';
-import { useAuth } from '../hooks/useAuth';
 
 export default function HomePage() {
-  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const handleGoToAdmin = () => {
-    if (isAuthenticated()) {
-      navigate(ADMIN_ROUTES.ADMIN);
-    } else {
-      navigate(PUBLIC_ROUTES.AUTH.LOGIN);
-    }
+    navigate(PUBLIC_ROUTES.AUTH.ADMIN_LOGIN);
   };
 
   return (
@@ -109,6 +103,28 @@ export default function HomePage() {
               立即体验 →
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* 测试入口 */}
+      <section className="home-test-section">
+        <h2 className="home-section-title">🔗 快速入口（测试用）</h2>
+        <div className="home-test-links">
+          <Link to="/auth/admin/login" className="test-link">
+            <span className="test-link-icon">🔐</span>
+            <span className="test-link-label">超管登录</span>
+            <span className="test-link-path">/auth/admin/login</span>
+          </Link>
+          <Link to="/auth/tenant/login" className="test-link">
+            <span className="test-link-icon">👥</span>
+            <span className="test-link-label">租户登录</span>
+            <span className="test-link-path">/auth/tenant/login</span>
+          </Link>
+          <Link to="/auth/login" className="test-link">
+            <span className="test-link-icon">🚪</span>
+            <span className="test-link-label">通用登录</span>
+            <span className="test-link-path">/auth/login</span>
+          </Link>
         </div>
       </section>
 

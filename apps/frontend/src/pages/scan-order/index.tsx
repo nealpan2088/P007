@@ -7,7 +7,11 @@ import ItemDetailModal from './components/ItemDetailModal';
 import { useScanOrder } from './hooks/useScanOrder';
 import { MenuItem } from './types';
 
-const ScanOrderPage: React.FC = () => {
+interface ScanOrderPageProps {
+  mode?: 'dine-in' | 'takeaway';
+}
+
+const ScanOrderPage: React.FC<ScanOrderPageProps> = ({ mode = 'dine-in' }) => {
   // 同时支持新旧规范两种参数名
   const params = useParams<{
     storeSlug?: string;
@@ -65,7 +69,7 @@ const ScanOrderPage: React.FC = () => {
 
     // 工具函数
     formatPrice,
-  } = useScanOrder(storeIdentifier, effectiveTableId);
+  } = useScanOrder(storeIdentifier, effectiveTableId, mode);
 
   // 菜品详情弹窗
   const [detailItem, setDetailItem] = useState<MenuItem | null>(null);
@@ -262,7 +266,7 @@ const ScanOrderPage: React.FC = () => {
         storeName={storeInfo?.name || '加载中...'}
         storeDescription={storeInfo?.description}
           storeAddress={storeInfo?.address}
-        tableCode={tableInfo?.code || effectiveTableId}
+        tableCode={mode === 'takeaway' ? '打包' : (tableInfo?.code || effectiveTableId)}
         cartItemCount={cartItemCount}
         onCartClick={toggleCart}
         onBack={handleBack}
@@ -270,6 +274,7 @@ const ScanOrderPage: React.FC = () => {
         logoUrl={storeInfo?.logoUrl}
         themeTemplate={storeInfo?.themeTemplate}
         headerImageUrl={storeInfo?.headerImageUrl}
+        mode={mode}
       />
 
       {/* 菜单区域 */}
@@ -294,6 +299,7 @@ const ScanOrderPage: React.FC = () => {
         onRemoveItem={removeFromCart}
         onSubmitOrder={submitOrder}
         formatPrice={formatPrice}
+        mode={mode}
       />
 
       {/* 底部浮动购物车栏 */}

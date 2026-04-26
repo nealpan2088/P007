@@ -4,7 +4,7 @@ import { ScanOrderState } from '../types';
 import * as apiUtils from '../utils/api.utils';
 import * as cartUtils from '../utils/cart.utils';
 
-export function useScanOrder(storeSlug: string, tableId: string) {
+export function useScanOrder(storeSlug: string, tableId: string, mode: string = 'dine-in') {
   // 初始状态
   const initialState: ScanOrderState = {
     storeSlug,
@@ -51,11 +51,22 @@ export function useScanOrder(storeSlug: string, tableId: string) {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
 
       // 并行加载数据
-      const [storeInfo, tableInfo, categories] = await Promise.all([
+      const isTakeaway = mode === 'takeaway';
+      const [storeInfo, categories] = await Promise.all([
         apiUtils.fetchStoreInfo(storeSlug),
-        apiUtils.fetchTableInfo(storeSlug, tableId),
         apiUtils.fetchStoreMenu(storeSlug),
       ]);
+
+      // 打包模式不加载餐桌信息
+      let tableInfo = null;
+      if (!isTakeaway) {
+        try {
+          tableInfo = await apiUtils.fetchTableInfo(storeSlug, tableId);
+        } catch {
+          // 餐桌信息加载失败不阻塞整体加载
+          tableInfo = null;
+        }
+      }
 
       setState(prev => ({
         ...prev,
@@ -161,9 +172,12 @@ export function useScanOrder(storeSlug: string, tableId: string) {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
 
       // 准备订单数据 - 使用后端驼峰命名
+      const isTakeaway = mode === 'takeaway';
+      const orderType = isTakeaway ? 'TAKEAWAY' : 'DINE_IN';
       const orderData: any = {
         storeId: state.storeInfo?.id || storeSlug,
-        tableId: state.tableInfo?.id || tableId,
+        tableId: isTakeaway ? undefined : (state.tableInfo?.id || tableId),
+        orderType,
         items: state.cartItems.map(item => ({
           menuItemId: item.menuItemId,
           quantity: item.quantity,

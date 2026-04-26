@@ -16,6 +16,8 @@ interface ScanHeaderProps {
   themeTemplate?: string;
   /** 店头背景图 URL */
   headerImageUrl?: string;
+  /** 就餐模式: dine-in | takeaway */
+  mode?: 'dine-in' | 'takeaway';
 }
 
 /**
@@ -62,6 +64,7 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
   logoUrl,
   themeTemplate = 'gradient',
   headerImageUrl,
+  mode = 'dine-in',
 }) => {
   const isMinimal = themeTemplate === 'minimal';
   const bannerGradient = buildGradient(themeColor);
@@ -335,7 +338,11 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
         borderBottom: '1px solid #f0f0f0',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 13, color: '#ff9a5c', fontWeight: 600 }}>🏠 {tableCode}号桌</span>
+          {mode === 'takeaway' ? (
+            <span style={{ fontSize: 13, color: '#ff9a5c', fontWeight: 600 }}>📦 外卖/打包</span>
+          ) : (
+            <span style={{ fontSize: 13, color: '#ff9a5c', fontWeight: 600 }}>🏠 {tableCode}号桌</span>
+          )}
           <span style={{ fontSize: 11, color: '#8bc7a0', background: '#f0faf4', padding: '2px 8px', borderRadius: 10 }}>
             营业中
           </span>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../config/api-routes';
 import { apiGet } from '../../utils/api-client';
+import { getFoodImageUrl } from '../../utils/image.utils';
 import {
   fetchMenuItems,
   createMenuItem,
@@ -315,20 +316,23 @@ export default function MenuTemplateManager() {
                         <div className="grid gap-3">
                           {cat.items.map(item => (
                             <div key={item.id} className={`flex items-center gap-4 bg-white rounded-lg p-3 border transition-shadow hover:shadow-sm ${item.isAvailable ? 'border-gray-200' : 'border-gray-100 bg-gray-50'}`}>
-                              <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center text-2xl text-gray-300">🍽</div>
+                              <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center">
+                                <img src={getFoodImageUrl(item.imageUrl)} alt={item.name}
+                                  className="w-full h-full object-cover"
+                                  onError={e => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.innerHTML = '<span style=\"font-size:24px\">🍽</span>'; }} />
+                              </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
                                   <h4 className={`font-medium truncate ${item.isAvailable ? 'text-gray-900' : 'text-gray-400'}`}>{item.name}</h4>
                                   <span className="text-sm font-bold text-orange-600">¥{item.price}</span>
                                   {item.isRecommended && <span className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded">推荐</span>}
-                                  {!item.isAvailable && <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded">已下架</span>}
                                 </div>
                                 {item.description && <p className="text-sm text-gray-500 truncate mt-0.5">{item.description}</p>}
                               </div>
                               <div className="flex gap-2 flex-shrink-0">
                                 <button onClick={() => handleToggleAvailability(item.id, item.isAvailable)}
-                                  className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${item.isAvailable ? 'text-gray-600 border-gray-300 hover:bg-gray-50' : 'bg-green-50 text-green-600 border-green-200 hover:bg-green-100'}`}>
-                                  {item.isAvailable ? '下架' : '上架'}
+                                  className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${item.isAvailable ? 'bg-green-50 text-green-600 border-green-200 cursor-default' : 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'}`}>
+                                  {item.isAvailable ? '已上架' : '已下架'}
                                 </button>
                                 <button onClick={() => openEditForm(item)} className="px-3 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50">编辑</button>
                                 <button onClick={() => handleDelete(item.id)} className="px-3 py-1.5 text-sm text-red-600 border border-red-200 rounded-md hover:bg-red-50">删除</button>

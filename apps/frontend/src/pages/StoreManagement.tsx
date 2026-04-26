@@ -43,7 +43,7 @@ import {
   Print as PrintIcon,
 } from '@mui/icons-material';
 import { TENANT_ROUTES } from '../config/routes';
-import { apiGet, apiPost, apiDelete } from '../utils/api-client';
+import { apiGet, apiPost, apiDelete, apiPut } from '../utils/api-client';
 import { TENANT_API_ROUTES, API_ENDPOINTS } from '../config/api-routes';
 
 interface Store {
@@ -132,8 +132,21 @@ const StoreManagement: React.FC = () => {
 
   // 生成二维码
   const handleGenerateQR = (store: Store) => {
-    // 这里可以打开二维码生成对话框
-    alert(`为店铺 "${store.name}" 生成二维码\nURL: /t/tenant-slug/s/${store.slug}/scan/A01`);
+    const qrUrl = `${window.location.origin}/t/${tenantSlugFromUrl}/s/${store.slug}/scan/A01`;
+    navigator.clipboard?.writeText(qrUrl);
+    alert(`扫码点餐链接已复制到剪贴板：\n${qrUrl}`);
+  };
+
+  const handleToggleStatus = async (store: Store) => {
+    const newStatus = store.status === 'ACTIVE' ? 'DRAFT' : 'ACTIVE';
+    try {
+      await apiPut(`/api/tenant/stores/${store.id}/status?tenantSlug=${encodeURIComponent(tenantSlugFromUrl)}`, { status: newStatus });
+      setStores(prev => prev.map(s =>
+        s.id === store.id ? { ...s, status: newStatus } : s
+      ));
+    } catch (error) {
+      console.error('更新店铺状态失败:', error);
+    }
   };
 
   // 获取状态颜色
@@ -285,6 +298,8 @@ const StoreManagement: React.FC = () => {
                         label={getStatusText(store.status)}
                         color={getStatusColor(store.status) as any}
                         size="small"
+                        clickable
+                        onClick={() => handleToggleStatus(store)}
                       />
                     </TableCell>
                     <TableCell>

@@ -95,6 +95,54 @@ export const useAuth = () => {
     }
   }, [saveAuthData]);
 
+  // 超管登录
+  const adminLogin = useCallback(async (email: string, password: string): Promise<boolean> => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await authApi.adminLogin({ email, password });
+      if (response.success && response.user && response.tokens && response.sessionId) {
+        saveAuthData({ user: response.user, accessToken: response.tokens.accessToken, refreshToken: response.tokens.refreshToken, sessionId: response.sessionId });
+        return true;
+      } else {
+        setError(response.message || '登录失败');
+        return false;
+      }
+    } catch (err: any) {
+      console.error('超管登录错误:', err);
+      if (err.response?.status === 403) setError('该账号无管理员权限');
+      else if (err.response?.status === 401) setError('邮箱或密码错误');
+      else setError(err.message || '登录失败');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [saveAuthData]);
+
+  // 租户登录
+  const tenantLogin = useCallback(async (email: string, password: string): Promise<boolean> => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await authApi.tenantLogin({ email, password });
+      if (response.success && response.user && response.tokens && response.sessionId) {
+        saveAuthData({ user: response.user, accessToken: response.tokens.accessToken, refreshToken: response.tokens.refreshToken, sessionId: response.sessionId });
+        return true;
+      } else {
+        setError(response.message || '登录失败');
+        return false;
+      }
+    } catch (err: any) {
+      console.error('租户登录错误:', err);
+      if (err.response?.status === 403) setError('该账号未关联任何租户');
+      else if (err.response?.status === 401) setError('邮箱或密码错误');
+      else setError(err.message || '登录失败');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [saveAuthData]);
+
   // 用户注册
   const register = useCallback(async (userData: RegisterData): Promise<boolean> => {
     setIsLoading(true);
@@ -334,6 +382,8 @@ export const useAuth = () => {
     
     // 操作方法
     login,
+    adminLogin,
+    tenantLogin,
     register,
     logout,
     refreshToken,

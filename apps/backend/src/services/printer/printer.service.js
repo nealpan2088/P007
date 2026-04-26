@@ -263,6 +263,8 @@ export default class PrinterService {
       orderNumber: orderData.orderNumber,
       storeName: orderData.storeName || '',
       tableName: orderData.tableName || '',
+      orderType: orderData.orderType || 'DINE_IN',
+      customerNotes: orderData.customerNotes || '',
       items: orderData.items || [],
       totalAmount: orderData.totalAmount || 0,
       createdAt: orderData.createdAt || new Date().toISOString(),

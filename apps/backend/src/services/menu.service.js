@@ -17,6 +17,13 @@ class MenuService {
     });
     if (!store) throw createError('NOT_FOUND', '店铺不存在');
 
+    // 检查是否超管（超管通吃所有店铺）
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+    if (user?.role === 'SUPER_ADMIN') return store;
+
     // 验证用户属于该租户
     const userTenant = await prisma.userTenant.findFirst({
       where: { tenantId: store.tenantId, userId }

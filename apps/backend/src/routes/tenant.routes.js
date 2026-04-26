@@ -478,6 +478,37 @@ export async function registerTenantRoutes(fastify) {
     }
   });
 
+  // 更新店铺状态
+  fastify.put(TENANT_ROUTES.STORES.UPDATE_STATUS, {
+    preHandler: [authenticate]
+  }, async (request, reply) => {
+    try {
+      const { storeId } = request.params;
+      const { tenantSlug } = request.query;
+      const userId = request.user.id;
+      const { status } = request.body;
+
+      if (!tenantSlug) {
+        return reply.status(400).send({ success: false, message: '缺少参数 tenantSlug' });
+      }
+
+      const resolvedTenantId = await resolveTenantId(tenantSlug);
+      if (!resolvedTenantId) {
+        return reply.status(404).send({ success: false, message: '租户不存在' });
+      }
+
+      const result = await storeService.updateStore(storeId, { status }, userId);
+
+      return { success: true, data: result };
+    } catch (error) {
+      request.log.error({ msg: '更新店铺状态失败', error: error.message });
+      return reply.status(error.code === 'FORBIDDEN' ? 403 : 500).send({
+        success: false,
+        message: error.message || '更新店铺状态失败',
+      });
+    }
+  });
+
   // 获取租户下所有订单（Dashboard 使用）
   fastify.get(TENANT_ROUTES.TENANT.DASHBOARD.ORDERS, {
     preHandler: [authenticate]

@@ -54,8 +54,15 @@ export default class BaseAdapter {
     lines.push('[C]<B>' + (order.storeName || '订单') + '</B>');
     lines.push('[C]==============================');
     lines.push('订单号: ' + order.orderNumber);
-    if (order.tableName) {
+    // 显示就餐桌号或打包标识
+    if (order.orderType === 'TAKEAWAY') {
+      lines.push('就餐方式: 📦 打包带走');
+    } else if (order.tableName) {
       lines.push('桌号: ' + order.tableName);
+    }
+    // 显示备注信息
+    if (order.customerNotes) {
+      lines.push('备注: ' + order.customerNotes);
     }
     lines.push('订单类型: ' + (order.printType === 'timeout_reminder' ? '催单' : '新单'));
     lines.push('时间: ' + (order.createdAt ? new Date(order.createdAt).toLocaleString('zh-CN') : ''));

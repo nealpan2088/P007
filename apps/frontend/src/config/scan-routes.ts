@@ -17,6 +17,9 @@ export const SCAN_ROUTES = {
   // 完整扫码点餐路径 (新规范 - 推荐使用)
   SCAN_ORDER: '/t/:tenantSlug/s/:storeSlug/scan/:tableId',
   
+  // 打包/外卖路径 (新规范)
+  TAKEAWAY: '/t/:tenantSlug/s/:storeSlug/takeaway',
+  
   // 仅租户+店铺路径 (新规范 - 可选)
   TENANT_STORE: '/t/:tenantSlug/s/:storeSlug',
   
@@ -37,16 +40,16 @@ export const SCAN_ROUTES = {
   // 测试用的标准租户、店铺和餐桌
   TEST: {
     TENANT: {
-      SLUG: 'qilin-test',
-      NAME: '麒麟测试租户',
+      SLUG: 'sdsd',
+      NAME: '大杀四方',
     },
     STORE: {
-      SLUG: 'qilin-test-restaurant',
-      NAME: '麒麟测试餐厅',
+      SLUG: 'panhaiping',
+      NAME: 'panhaiping',
     },
     TABLE: {
       CODE: 'A01',
-      NAME: '测试餐桌A01',
+      NAME: '餐桌A01',
     },
   },
   

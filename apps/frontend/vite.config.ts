@@ -16,11 +16,11 @@ export default defineConfig({
     allowedHosts: ['saas.openyun.xin', 'localhost', '127.0.0.1', '172.26.30.77', '47.110.156.11'],
     proxy: {
       '/api': {
-        target: 'http://localhost:33038',  // 开发环境代理到 33038（生产端口）
+        target: 'http://localhost:33038',
         changeOrigin: true,
         secure: false,
-      }
-    }
+      },
+    },
   },
   preview: {
     port: 5177           // 构建预览与开发端口一致

@@ -126,10 +126,8 @@ const CreateTenant: React.FC = () => {
         errors.tenantName = '品牌名称至少2个字符';
       }
 
-      // 租户标识符验证（URL路径）
-      if (!formData.tenantSlug.trim()) {
-        errors.tenantSlug = '品牌标识符不能为空';
-      } else if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(formData.tenantSlug)) {
+      // 租户标识符验证（可选）
+      if (formData.tenantSlug.trim() && !/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(formData.tenantSlug)) {
         errors.tenantSlug = '标识符只能包含小写字母、数字和连字符，且不能以连字符开头或结尾';
       } else if (formData.tenantSlug.length < 3) {
         errors.tenantSlug = '标识符至少3个字符';
@@ -199,7 +197,7 @@ const CreateTenant: React.FC = () => {
     setError(null);
 
     try {
-      // 创建租户（使用当前登录用户作为所有者）
+      // 创建租户（使用表单填写的管理员信息）
       const res = await apiPost<any>('/tenant/register', {
         tenant: {
             name: formData.tenantName,
@@ -208,9 +206,9 @@ const CreateTenant: React.FC = () => {
             plan: formData.plan,
           },
           owner: {
-            email: user.email,
-            password: 'TempPass@2026', // 占位密码，后端查到此邮箱已存在会跳过创建
-            fullName: user.fullName || user.username || '',
+            email: formData.ownerEmail || user.email,
+            password: formData.ownerPassword || 'TempPass@2026',
+            fullName: formData.ownerName || user.fullName || user.username || '',
           },
           // 自动创建第一个店铺
           store: {
@@ -226,7 +224,7 @@ const CreateTenant: React.FC = () => {
 
       setCreatedTenant(res.data);
       setSuccess(true);
-      setActiveStep(3); // 跳转到成功步骤
+      setActiveStep(4); // 跳转到成功步骤
     } catch (err) {
       console.error('创建租户错误:', err);
       setError(err instanceof Error ? err.message : '创建租户失败，请重试');
@@ -319,13 +317,13 @@ const CreateTenant: React.FC = () => {
                   <Grid item xs={12}>
                     <TextField
                       fullWidth
-                      label="子域名"
+                      label="品牌标识符（可选）"
                       name="tenantSlug"
                       value={formData.tenantSlug}
                       onChange={handleInputChange}
                       error={!!validationErrors.tenantSlug}
-                      helperText={validationErrors.tenantSlug || '例如: phoenix、meiwei 等，将用于访问您的餐厅页面'}
-                      placeholder="请输入子域名"
+                      helperText={validationErrors.tenantSlug || '小写字母、数字和连字符，不填则自动生成'}
+                      placeholder="留空自动生成"
                       disabled={loading}
                       InputProps={{
                         endAdornment: (
@@ -392,7 +390,61 @@ const CreateTenant: React.FC = () => {
               </StepContent>
             </Step>
 
-            {/* 步骤3: 确认创建 */}
+            {/* 步骤3: 设置管理员账号 */}
+            <Step>
+              <StepLabel>设置管理员账号</StepLabel>
+              <StepContent>
+                <Grid container spacing={3}>
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      创建租户后，该管理员将获得租户管理权限，可登录后台管理店铺。
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="管理员邮箱"
+                      name="ownerEmail"
+                      type="email"
+                      value={formData.ownerEmail}
+                      onChange={handleInputChange}
+                      error={!!validationErrors.ownerEmail}
+                      helperText={validationErrors.ownerEmail || '租户管理员的登录邮箱'}
+                      placeholder="admin@example.com"
+                      disabled={loading}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="管理员密码"
+                      name="ownerPassword"
+                      type="password"
+                      value={formData.ownerPassword}
+                      onChange={handleInputChange}
+                      error={!!validationErrors.ownerPassword}
+                      helperText={validationErrors.ownerPassword || '至少6个字符'}
+                      placeholder="设置管理员密码"
+                      disabled={loading}
+                    />
+                  </Grid>
+                </Grid>
+                <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+                  <Button onClick={handleBack} disabled={loading}>
+                    上一步
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={handleNext}
+                    disabled={loading}
+                  >
+                    下一步：确认创建
+                  </Button>
+                </Box>
+              </StepContent>
+            </Step>
+
+            {/* 步骤4: 确认创建 */}
             <Step>
               <StepLabel>确认创建</StepLabel>
               <StepContent>
@@ -409,10 +461,10 @@ const CreateTenant: React.FC = () => {
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="body2" color="text.secondary">
-                        子域名:
+                        访问地址:
                       </Typography>
                       <Typography variant="body1">
-                        {formData.tenantSlug}.qilin.com
+                        saas.openyun.xin/t/{formData.tenantSlug || '自动生成'}
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
@@ -427,7 +479,7 @@ const CreateTenant: React.FC = () => {
                       <Typography variant="body2" color="text.secondary">
                         所有者:
                       </Typography>
-                      <Typography variant="body1">{user?.fullName || user?.username}</Typography>
+                      <Typography variant="body1">{formData.ownerEmail}</Typography>
                     </Grid>
                   </Grid>
                 </Paper>

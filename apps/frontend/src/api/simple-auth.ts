@@ -115,9 +115,25 @@ export interface AuthResponse {
 
 // 认证API接口
 export const authApi = {
-  // 用户登录
+  // 用户登录（通用）
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     return request<AuthResponse>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+  },
+  
+  // 超管登录（仅 SUPER_ADMIN）
+  async adminLogin(credentials: LoginCredentials): Promise<AuthResponse> {
+    return request<AuthResponse>('/auth/admin/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+  },
+  
+  // 租户登录（必须有 UserTenant）
+  async tenantLogin(credentials: LoginCredentials): Promise<AuthResponse> {
+    return request<AuthResponse>('/auth/tenant/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });

@@ -1014,3 +1014,53 @@ h2 {
   margin: 0 !important;
   padding: 0 !important;
 }
+
+/* ===== 快速入口（测试用） ===== */
+.home-test-section {
+  padding: 20px 0 40px;
+}
+
+.home-test-links {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.test-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.2s;
+  min-width: 200px;
+}
+
+.test-link:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 15px rgba(102,126,234,0.1);
+  transform: translateY(-2px);
+}
+
+.test-link-icon {
+  font-size: 24px;
+}
+
+.test-link-label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.test-link-path {
+  font-size: 11px;
+  color: #999;
+  margin-left: auto;
+  font-family: monospace;
+}

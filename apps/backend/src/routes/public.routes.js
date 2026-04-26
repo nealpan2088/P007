@@ -206,6 +206,8 @@ async function publicRoutes(fastify) {
               orderNumber: order.orderNumber || '',
               storeName: order.store?.name || '',
               tableNo: order.table?.tableNumber || order.tableId || '',
+              orderType: order.orderType || 'DINE_IN',
+              customerNotes: order.customerNotes || '',
               items: orderItems,
               total,
               createdAt: order.createdAt || new Date().toISOString(),

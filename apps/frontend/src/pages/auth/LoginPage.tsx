@@ -57,8 +57,25 @@ const LoginPage: React.FC = () => {
     try {
       const success = await login(formData.email, formData.password);
       if (success) {
-        // 强制刷新使导航栏等组件重新读取localStorage的token
-        window.location.href = getRedirectPath();
+        // 从 localStorage 读取刚保存的用户信息来判断跳转路径
+        const storedUser = localStorage.getItem('qilin_user');
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          const role = parsedUser.role;
+          if (role === 'SUPER_ADMIN') {
+            window.location.href = ADMIN_ROUTES.ADMIN;
+          } else {
+            const tenants = parsedUser.userTenants || [];
+            if (tenants.length > 0) {
+              const subdomain = tenants[0].subdomain || tenants[0].id;
+              window.location.href = `/t/${subdomain}/dashboard`;
+            } else {
+              window.location.href = PUBLIC_ROUTES.HOME;
+            }
+          }
+        } else {
+          window.location.href = getRedirectPath();
+        }
       }
     } catch (err) {
       // 错误由useAuth处理

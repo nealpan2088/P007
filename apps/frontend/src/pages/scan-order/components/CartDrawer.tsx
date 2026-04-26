@@ -13,6 +13,7 @@ interface CartDrawerProps {
   onRemoveItem: (menuItemId: string) => void;
   onSubmitOrder: (data: { specialRequest?: string; phone?: string }) => Promise<void>;
   formatPrice: (price: number) => string;
+  mode?: 'dine-in' | 'takeaway';
 }
 
 const CartDrawer: React.FC<CartDrawerProps> = ({
@@ -25,6 +26,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
   onRemoveItem,
   onSubmitOrder,
   formatPrice,
+  mode = 'dine-in',
 }) => {
   const [specialRequest, setSpecialRequest] = useState('');
   const [phone, setPhone] = useState('');
@@ -262,9 +264,20 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
               )}
             </button>
 
+            {/* 就餐方式提示 */}
+            <div className="flex items-center justify-center gap-4 mb-2 text-xs">
+              <span className={mode === 'dine-in' ? 'text-orange-600 font-medium' : 'text-gray-400'}>
+                🏠 堂食
+              </span>
+              <span className="text-gray-300">|</span>
+              <span className={mode === 'takeaway' ? 'text-orange-600 font-medium' : 'text-gray-400'}>
+                📦 打包
+              </span>
+            </div>
+
             {/* 提示信息 */}
             <p className="text-xs text-gray-500 text-center mt-3">
-              提交订单后，后厨将开始制作您的菜品
+              {mode === 'takeaway' ? '提交订单后，请等候叫号取餐' : '提交订单后，后厨将开始制作您的菜品'}
             </p>
           </div>
         )}

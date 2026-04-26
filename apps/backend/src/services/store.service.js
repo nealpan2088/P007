@@ -393,11 +393,18 @@ class StoreService {
         throw createError('NOT_FOUND', '店铺不存在或已删除');
       }
 
-      // 检查用户权限（storeStaff 模型未定义，暂不检查）
-      // const staff = await this.db.storeStaff.findFirst({
-      //   where: {
-      //     storeId,
-      //     userId,
+      // 检查用户权限（userTenants 中是否有该店铺租户的 ADMIN 角色）
+      const userTenant = await this.db.userTenant.findFirst({
+        where: {
+          tenantId: store.tenantId,
+          userId,
+          role: 'ADMIN',
+        }
+      });
+
+      if (!userTenant) {
+        throw createError('FORBIDDEN', '没有权限更新店铺信息');
+      }
       //     isActive: true,
       //     role: { in: ['OWNER', 'MANAGER'] }
       //   }

@@ -106,6 +106,60 @@ export const authHandlers = {
     }
   },
 
+  // 超管登录（仅 SUPER_ADMIN 可登录）
+  adminLogin: async (request, reply) => {
+    try {
+      const { email, password } = request.body
+      if (!email || !password) {
+        return reply.code(400).send({ error: 'Bad Request', message: '邮箱和密码是必填项', code: 'VALIDATION_ERROR' })
+      }
+      const requestInfo = {
+        userAgent: request.headers['user-agent'],
+        ipAddress: request.ip,
+        deviceType: request.headers['device-type'] || 'web',
+        deviceId: request.headers['device-id'],
+      }
+      const result = await authService.userService.login({ email, password }, requestInfo)
+      if (!result.success) {
+        return reply.code(401).send({ error: 'Authentication Failed', message: result.error, code: 'AUTHENTICATION_FAILED' })
+      }
+      if (result.user.role !== 'SUPER_ADMIN') {
+        return reply.code(403).send({ error: 'Forbidden', message: '该账号无管理员权限', code: 'NOT_SUPER_ADMIN' })
+      }
+      return reply.send({ success: true, user: result.user, tokens: result.tokens, sessionId: result.sessionId })
+    } catch (error) {
+      console.error('超管登录错误:', error)
+      return reply.code(500).send({ error: 'Internal Server Error', message: '登录过程中发生错误', code: 'INTERNAL_ERROR' })
+    }
+  },
+
+  // 租户登录（必须有 UserTenant 关联）
+  tenantLogin: async (request, reply) => {
+    try {
+      const { email, password } = request.body
+      if (!email || !password) {
+        return reply.code(400).send({ error: 'Bad Request', message: '邮箱和密码是必填项', code: 'VALIDATION_ERROR' })
+      }
+      const requestInfo = {
+        userAgent: request.headers['user-agent'],
+        ipAddress: request.ip,
+        deviceType: request.headers['device-type'] || 'web',
+        deviceId: request.headers['device-id'],
+      }
+      const result = await authService.userService.login({ email, password }, requestInfo)
+      if (!result.success) {
+        return reply.code(401).send({ error: 'Authentication Failed', message: result.error, code: 'AUTHENTICATION_FAILED' })
+      }
+      if (!result.user.userTenants || result.user.userTenants.length === 0) {
+        return reply.code(403).send({ error: 'Forbidden', message: '该账号未关联任何租户', code: 'NO_TENANT_ACCESS' })
+      }
+      return reply.send({ success: true, user: result.user, tokens: result.tokens, sessionId: result.sessionId })
+    } catch (error) {
+      console.error('租户登录错误:', error)
+      return reply.code(500).send({ error: 'Internal Server Error', message: '登录过程中发生错误', code: 'INTERNAL_ERROR' })
+    }
+  },
+
   // 刷新Token
   refreshToken: async (request, reply) => {
     try {
@@ -536,6 +590,8 @@ export const authHandlers = {
 export const registerAuthRoutes = (fastify) => {
   // 公共路由（无需认证）
   fastify.post(AUTH.REGISTER, authHandlers.register)
+  fastify.post(AUTH.ADMIN_LOGIN, authHandlers.adminLogin)
+  fastify.post(AUTH.TENANT_LOGIN, authHandlers.tenantLogin)
   fastify.post(AUTH.LOGIN, authHandlers.login)
   fastify.post(AUTH.REFRESH_TOKEN, authHandlers.refreshToken)
   fastify.get(AUTH.VERIFY_EMAIL, authHandlers.verifyEmail)

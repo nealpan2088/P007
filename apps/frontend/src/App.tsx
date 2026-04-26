@@ -5,6 +5,8 @@ import { CustomRouter } from './components/CustomRouter';
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
 import LoginPage from './pages/auth/LoginPage';
+import AdminLoginPage from './pages/auth/AdminLoginPage';
+import TenantLoginPage from './pages/auth/TenantLoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import TenantManagement from './pages/TenantManagement';
 import CreateTenant from './pages/CreateTenant';
@@ -28,6 +30,7 @@ import TableManagementPage from './pages/admin/TableManagementPage';
 import UserManagementPage from './pages/admin/UserManagementPage';
 import NightwolfConfigPage from './pages/admin/NightwolfConfigPage';
 import FoodTemplateLibrary from './pages/admin/FoodTemplateLibrary';
+import ProtectedRoute from './components/ProtectedRoute';
 import { PUBLIC_ROUTES, ADMIN_ROUTES, TENANT_ROUTES } from './config/routes';
 import SCAN_ROUTES from './config/scan-routes';
 import './styles/App.css';
@@ -39,7 +42,7 @@ function NavUserStatus() {
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
     await logout();
-    window.location.href = PUBLIC_ROUTES.AUTH.LOGIN;
+    window.location.href = PUBLIC_ROUTES.HOME;
   };
 
   if (isAuthenticated()) {
@@ -128,6 +131,7 @@ function AppContent() {
         <Routes>
           {/* ===== 扫码点餐页面 ===== */}
           <Route path={SCAN_ROUTES.routes.SCAN_ORDER} element={<div className="scan-layout"><ScanOrderPage /></div>} />
+          <Route path={SCAN_ROUTES.routes.TAKEAWAY} element={<div className="scan-layout"><ScanOrderPage mode="takeaway" /></div>} />
           <Route path={SCAN_ROUTES.routes.TENANT_STORE} element={<div className="scan-layout"><ScanOrderPage /></div>} />
           <Route path={SCAN_ROUTES.routes.LEGACY.SCAN_ORDER} element={<div className="scan-layout"><ScanOrderPage /></div>} />
           <Route path={SCAN_ROUTES.routes.LEGACY.STORE_ONLY} element={<div className="scan-layout"><ScanOrderPage /></div>} />
@@ -139,33 +143,35 @@ function AppContent() {
 
           {/* ===== 认证路由 ===== */}
           <Route path={PUBLIC_ROUTES.AUTH.LOGIN} element={<LoginPage />} />
+          <Route path={PUBLIC_ROUTES.AUTH.ADMIN_LOGIN} element={<AdminLoginPage />} />
+          <Route path={PUBLIC_ROUTES.AUTH.TENANT_LOGIN} element={<TenantLoginPage />} />
           <Route path={PUBLIC_ROUTES.AUTH.REGISTER} element={<RegisterPage />} />
 
-          {/* ===== 超级管理员后台（/admin/*） ===== */}
-          <Route path={ADMIN_ROUTES.ADMIN} element={<AdminDashboard />} />
+          {/* ===== 超级管理员后台（/admin/*，仅 SUPER_ADMIN） ===== */}
+          <Route path={ADMIN_ROUTES.ADMIN} element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><AdminDashboard /></ProtectedRoute>} />
           <Route path="/admin" element={<Navigate to={ADMIN_ROUTES.ADMIN} replace state={{ fromLegacyAdmin: true }} />} />
-          <Route path={ADMIN_ROUTES.TENANTS.LIST} element={<TenantManagement />} />
-          <Route path={ADMIN_ROUTES.TENANTS.CREATE} element={<CreateTenant />} />
-          <Route path={ADMIN_ROUTES.TENANTS.EDIT} element={<EditTenant />} />
-          <Route path={ADMIN_ROUTES.TENANTS.DETAIL} element={<TenantDashboard />} />
-          <Route path={ADMIN_ROUTES.USERS.LIST} element={<UserManagementPage />} />
-          <Route path={ADMIN_ROUTES.NIGHTWOLF.LIST} element={<NightwolfConfigPage />} />
-          <Route path={ADMIN_ROUTES.NIGHTWOLF.EDIT} element={<NightwolfConfigPage />} />
-          <Route path={ADMIN_ROUTES.SYSTEM.SETTINGS} element={<SystemSettingsPage />} />
-          <Route path={ADMIN_ROUTES.STORES.LIST} element={<AdminStoresPage />} />
-          <Route path={ADMIN_ROUTES.TABLES.LIST} element={<TableManagementPage />} />
-          <Route path={ADMIN_ROUTES.PRINTERS.LIST} element={<PrinterManagement />} />
-          <Route path={ADMIN_ROUTES.MENU_TEMPLATES.LIST} element={<FoodTemplateLibrary />} />
+          <Route path={ADMIN_ROUTES.TENANTS.LIST} element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><TenantManagement /></ProtectedRoute>} />
+          <Route path={ADMIN_ROUTES.TENANTS.CREATE} element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><CreateTenant /></ProtectedRoute>} />
+          <Route path={ADMIN_ROUTES.TENANTS.EDIT} element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><EditTenant /></ProtectedRoute>} />
+          <Route path={ADMIN_ROUTES.TENANTS.DETAIL} element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><TenantDashboard /></ProtectedRoute>} />
+          <Route path={ADMIN_ROUTES.USERS.LIST} element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><UserManagementPage /></ProtectedRoute>} />
+          <Route path={ADMIN_ROUTES.NIGHTWOLF.LIST} element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><NightwolfConfigPage /></ProtectedRoute>} />
+          <Route path={ADMIN_ROUTES.NIGHTWOLF.EDIT} element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><NightwolfConfigPage /></ProtectedRoute>} />
+          <Route path={ADMIN_ROUTES.SYSTEM.SETTINGS} element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SystemSettingsPage /></ProtectedRoute>} />
+          <Route path={ADMIN_ROUTES.STORES.LIST} element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><AdminStoresPage /></ProtectedRoute>} />
+          <Route path={ADMIN_ROUTES.TABLES.LIST} element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><TableManagementPage /></ProtectedRoute>} />
+          <Route path={ADMIN_ROUTES.PRINTERS.LIST} element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><PrinterManagement /></ProtectedRoute>} />
+          <Route path={ADMIN_ROUTES.MENU_TEMPLATES.LIST} element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><FoodTemplateLibrary /></ProtectedRoute>} />
 
-          {/* ===== 租户管理后台（/t/:tenantSlug/*） ===== */}
-          <Route path={TENANT_ROUTES.TENANT_CTX.DASHBOARD} element={<TenantDashboard />} />
-          <Route path={TENANT_ROUTES.TENANT_CTX.STORES.LIST} element={<StoreManagement />} />
-          <Route path={TENANT_ROUTES.TENANT_CTX.STORES.CREATE} element={<CreateStore />} />
-          <Route path={TENANT_ROUTES.TENANT_CTX.STORES.DETAIL} element={<StoreDetailPage />} />
-          <Route path={TENANT_ROUTES.TENANT_CTX.STORES.EDIT} element={<EditStorePage />} />
-          <Route path={TENANT_ROUTES.TENANT_CTX.STORE_MENU.ITEMS} element={<MenuTemplateManager />} />
-          <Route path={TENANT_ROUTES.TENANT_CTX.STORE_PRINTERS.LIST} element={<PrinterManagement />} />
-          <Route path={ADMIN_ROUTES.ORDERS.LIST} element={<StoreOrdersPage />} />
+          {/* ===== 租户管理后台（/t/:tenantSlug/*，需登录 + 租户归属） ===== */}
+          <Route path={TENANT_ROUTES.TENANT_CTX.DASHBOARD} element={<ProtectedRoute checkTenant><TenantDashboard /></ProtectedRoute>} />
+          <Route path={TENANT_ROUTES.TENANT_CTX.STORES.LIST} element={<ProtectedRoute checkTenant><StoreManagement /></ProtectedRoute>} />
+          <Route path={TENANT_ROUTES.TENANT_CTX.STORES.CREATE} element={<ProtectedRoute checkTenant><CreateStore /></ProtectedRoute>} />
+          <Route path={TENANT_ROUTES.TENANT_CTX.STORES.DETAIL} element={<ProtectedRoute checkTenant><StoreDetailPage /></ProtectedRoute>} />
+          <Route path={TENANT_ROUTES.TENANT_CTX.STORES.EDIT} element={<ProtectedRoute checkTenant><EditStorePage /></ProtectedRoute>} />
+          <Route path={TENANT_ROUTES.TENANT_CTX.STORE_MENU.ITEMS} element={<ProtectedRoute checkTenant><MenuTemplateManager /></ProtectedRoute>} />
+          <Route path={TENANT_ROUTES.TENANT_CTX.STORE_PRINTERS.LIST} element={<ProtectedRoute checkTenant><PrinterManagement /></ProtectedRoute>} />
+          <Route path={ADMIN_ROUTES.ORDERS.LIST} element={<ProtectedRoute checkTenant><StoreOrdersPage /></ProtectedRoute>} />
           <Route path={ADMIN_ROUTES.ORDERS.DETAIL} element={<StoreOrdersPage />} />
 
           {/* ===== 测试页面 ===== */}

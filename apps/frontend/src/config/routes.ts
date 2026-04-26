@@ -13,6 +13,8 @@ export const PUBLIC_ROUTES = {
   // 认证相关
   AUTH: {
     LOGIN: '/auth/login',
+    ADMIN_LOGIN: '/auth/admin/login',
+    TENANT_LOGIN: '/auth/tenant/login',
     REGISTER: '/auth/register',
     FORGOT_PASSWORD: '/auth/forgot-password',
     RESET_PASSWORD: '/auth/reset-password/:token',

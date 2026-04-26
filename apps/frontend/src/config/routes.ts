@@ -109,11 +109,6 @@ export const ADMIN_ROUTES = {
     DETAIL: '/admin/stores/:storeId/orders/:orderId',
   },
 
-  // 打印机管理（管理后台）
-  PRINTERS: {
-    LIST: '/admin/printers',
-  },
-
   // 菜单模板管理（管理后台）
   MENU_TEMPLATES: {
     LIST: '/admin/menu-templates',

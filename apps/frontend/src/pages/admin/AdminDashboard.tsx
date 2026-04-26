@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { TENANT_ROUTES, ADMIN_ROUTES } from '../../config/routes';
+import { ADMIN_ROUTES } from '../../config/routes';
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -14,20 +14,14 @@ export default function AdminDashboard() {
     },
     {
       title: '📋 店铺管理',
-      desc: '管理各租户下的店铺信息、配置和状态',
+      desc: '管理各租户下的店铺信息、装修和打印机',
       link: ADMIN_ROUTES.STORES.LIST,
       roles: ['SUPER_ADMIN'],
     },
     {
-      title: '📦 菜单管理',
+      title: '📦 菜单模板',
       desc: '管理菜品分类、菜单模板和定价',
       link: ADMIN_ROUTES.MENU_TEMPLATES.LIST,
-      roles: ['SUPER_ADMIN'],
-    },
-    {
-      title: '🖨️ 设备管理',
-      desc: '管理云打印机、测试连接、查看状态',
-      link: ADMIN_ROUTES.PRINTERS.LIST,
       roles: ['SUPER_ADMIN'],
     },
   ];

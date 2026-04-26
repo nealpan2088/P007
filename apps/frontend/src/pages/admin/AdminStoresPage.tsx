@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
-import { API_ENDPOINTS } from '../../config/api-routes';
 import { apiPut } from '../../utils/api-client';
+
+const API_BASE = '/api/admin/stores';
 
 interface Tenant {
   id: string;
@@ -52,7 +53,7 @@ export default function AdminStoresPage() {
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(pageSize) });
       if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim());
-      const res = await fetch(`${API_ENDPOINTS.STORES_LIST}?${params}`);
+      const res = await fetch(`${API_BASE}/list?${params}`);
       const json = await res.json();
       setStores(json?.data || []);
       setTotal(json?.total || 0);
@@ -85,7 +86,7 @@ export default function AdminStoresPage() {
   const toggleStatus = async (storeId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'ACTIVE' ? 'DRAFT' : 'ACTIVE';
     try {
-      const json = await apiPut(`${API_ENDPOINTS.ADMIN.STORES.UPDATE}/${storeId}`, { status: newStatus });
+      const json = await apiPut(`${API_BASE}/${storeId}`, { status: newStatus });
       if (json.success) {
         setStores(prev => prev.map(s => s.id === storeId ? { ...s, status: newStatus } : s));
         message.success(`已切换到 ${newStatus === 'ACTIVE' ? '营业中' : '草稿'}`);
@@ -444,18 +445,26 @@ function ThemeEditorModal({ store, onClose, onSaved }: {
           )}
         </div>
 
-        <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50">
-            取消
-          </button>
+        <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
           <button
-            onClick={handleSave}
-            disabled={saving}
-            className="px-4 py-2 text-sm text-white rounded-lg"
-            style={{ background: saving ? '#999' : themeColor }}
+            onClick={() => window.open(`/t/${store.tenant?.subdomain || store.tenant?.slug}/s/${store.slug}/printers`, '_blank')}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
           >
-            {saving ? '保存中...' : '保存'}
+            🖨️ 打印机管理 →
           </button>
+          <div className="flex gap-2">
+            <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50">
+              取消
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-4 py-2 text-sm text-white rounded-lg"
+              style={{ background: saving ? '#999' : themeColor }}
+            >
+              {saving ? '保存中...' : '保存'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

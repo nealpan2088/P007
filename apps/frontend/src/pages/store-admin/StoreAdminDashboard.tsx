@@ -1,22 +1,24 @@
 // 店长管理后台 — 运营看板（店长视角）
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Card, Row, Col, Typography, Button, Space, Tag, Spin, Empty, message,
-  Statistic, Timeline, List, Badge, Switch, Divider,
+  Statistic, List, Badge, Divider,
 } from 'antd';
 import {
   ShopOutlined, MenuOutlined, ShoppingCartOutlined, PrinterOutlined,
   TableOutlined, SettingOutlined, LogoutOutlined, AppstoreOutlined,
-  RiseOutlined, ClockCircleOutlined, CheckCircleOutlined, DollarOutlined,
-  FireOutlined, OrderedListOutlined, ReloadOutlined,
+  ClockCircleOutlined, DollarOutlined,
+  OrderedListOutlined, ReloadOutlined,
 } from '@ant-design/icons';
+import {
+  STORE_ADMIN_CONFIG,
+  getStoreAdminToken,
+  getStoreAdminUser,
+  clearStoreAdminAuth,
+} from '../../config/store-admin';
 
 const { Title, Text } = Typography;
-
-const STORE_ADMIN_TOKEN_KEY = 'qilin_store_admin_token';
-const STORE_ADMIN_USER_KEY = 'qilin_store_admin_user';
-const API_BASE = '/api/store-admin';
 
 interface Store {
   id: string;
@@ -57,24 +59,9 @@ interface StoreStats {
   activeTables: number;
 }
 
-function getToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(STORE_ADMIN_TOKEN_KEY);
-}
+function getToken() { return getStoreAdminToken(); }
+function getStoredUser() { return getStoreAdminUser(); }
 
-function getStoredUser(): any | null {
-  try {
-    const raw = localStorage.getItem(STORE_ADMIN_USER_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
-}
-
-function clearAuth() {
-  localStorage.removeItem(STORE_ADMIN_TOKEN_KEY);
-  localStorage.removeItem(STORE_ADMIN_USER_KEY);
-}
-
-// 状态映射
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   PENDING: { label: '待确认', color: 'orange' },
   CONFIRMED: { label: '已确认', color: 'blue' },
@@ -84,6 +71,11 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   CANCELLED: { label: '已取消', color: 'default' },
 };
 
+function clearAuth() {
+  clearStoreAdminAuth();
+}
+
+// 状态映射
 export default function StoreAdminDashboard() {
   const navigate = useNavigate();
   const [stores, setStores] = useState<Store[]>([]);
@@ -119,7 +111,7 @@ export default function StoreAdminDashboard() {
     setLoading(true);
     try {
       const token = getToken();
-      const res = await fetch(API_BASE + '/my-stores', {
+      const res = await fetch(STORE_ADMIN_CONFIG.API_BASE + '/my-stores', {
         headers: { Authorization: `Bearer ${token}` },
       });
       const json = await res.json();
@@ -151,11 +143,11 @@ export default function StoreAdminDashboard() {
       // 并发请求：今日订单 + 待处理订单 + 在用桌台
       const [ordersRes, tablesRes] = await Promise.all([
         fetch(
-          `${API_BASE}/stores/${store.id}/orders?page=1&limit=10&dateFrom=${today}&dateTo=${today}`,
+          `${STORE_ADMIN_CONFIG.API_BASE}/stores/${store.id}/orders?page=1&limit=10&dateFrom=${today}&dateTo=${today}`,
           { headers: { Authorization: `Bearer ${token}` } }
         ),
         fetch(
-          `${API_BASE}/stores/${store.id}/tables`,
+          `${STORE_ADMIN_CONFIG.API_BASE}/stores/${store.id}/tables`,
           { headers: { Authorization: `Bearer ${token}` } }
         ),
       ]);

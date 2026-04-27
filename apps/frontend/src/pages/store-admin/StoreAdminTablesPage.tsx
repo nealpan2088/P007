@@ -5,10 +5,9 @@ import {
   Card, Table, Button, Tag, Typography, message, Empty, Space, Modal, Form, Input, InputNumber, Select,
 } from 'antd';
 import { ArrowLeftOutlined, ReloadOutlined, EditOutlined, QrcodeOutlined } from '@ant-design/icons';
+import { STORE_ADMIN_CONFIG, storeAdminFetch } from '../../config/store-admin';
 
 const { Title } = Typography;
-const API = '/api/store-admin';
-const TOKEN_KEY = 'qilin_store_admin_token';
 
 interface TableItem {
   id: string;
@@ -18,19 +17,6 @@ interface TableItem {
   shortCode?: string | null;
 }
 
-async function storeAdminFetch(path: string, options: RequestInit = {}) {
-  const token = localStorage.getItem(TOKEN_KEY);
-  const res = await fetch(path, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers as Record<string, string> || {}),
-    },
-  });
-  if (!res.ok) throw { status: res.status, message: await res.text() };
-  return res.json();
-}
 
 export default function StoreAdminTablesPage() {
   const { storeId } = useParams();
@@ -48,7 +34,7 @@ export default function StoreAdminTablesPage() {
   async function loadTables() {
     setLoading(true);
     try {
-      const json = await storeAdminFetch(`${API}/stores/${storeId}/tables`);
+      const json = await storeAdminFetch(`${STORE_ADMIN_CONFIG.API_BASE}/stores/${storeId}/tables`);
       setTables(json.data || []);
     } catch (err: any) {
       if (err.status === 401) { navigate('/store-admin/login'); return; }
@@ -65,7 +51,7 @@ export default function StoreAdminTablesPage() {
   async function handleSave(values: any) {
     if (!editingTable) return;
     try {
-      const json = await storeAdminFetch(`${API}/stores/${storeId}/tables/${editingTable.id}`, {
+      const json = await storeAdminFetch(`${STORE_ADMIN_CONFIG.API_BASE}/stores/${storeId}/tables/${editingTable.id}`, {
         method: 'PUT', body: JSON.stringify(values),
       });
       if (json.success) { message.success('已更新'); setEditModal(false); loadTables(); }

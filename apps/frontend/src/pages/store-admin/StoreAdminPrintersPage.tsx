@@ -4,13 +4,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Card, Table, Button, Tag, Typography, message, Empty, Space, Modal, Form, Input, Select, Popconfirm,
 } from 'antd';
+import { STORE_ADMIN_CONFIG, storeAdminFetch } from '../../config/store-admin';
 import {
   ArrowLeftOutlined, ReloadOutlined, PlusOutlined, DeleteOutlined, ThunderboltOutlined,
 } from '@ant-design/icons';
 
 const { Title } = Typography;
-const API = '/api/store-admin';
-const TOKEN_KEY = 'qilin_store_admin_token';
 
 interface Printer {
   id: string;
@@ -21,19 +20,6 @@ interface Printer {
   brand?: { name: string } | null;
 }
 
-async function storeAdminFetch(path: string, options: RequestInit = {}) {
-  const token = localStorage.getItem(TOKEN_KEY);
-  const res = await fetch(path, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers as Record<string, string> || {}),
-    },
-  });
-  if (!res.ok) throw { status: res.status, message: await res.text() };
-  return res.json();
-}
 
 export default function StoreAdminPrintersPage() {
   const { storeId } = useParams();
@@ -49,7 +35,7 @@ export default function StoreAdminPrintersPage() {
   async function loadPrinters() {
     setLoading(true);
     try {
-      const json = await storeAdminFetch(`${API}/stores/${storeId}/printers`);
+      const json = await storeAdminFetch(`${STORE_ADMIN_CONFIG.API_BASE}/stores/${storeId}/printers`);
       setPrinters(json.data || []);
     } catch (err: any) {
       if (err.status === 401) { navigate('/store-admin/login'); return; }
@@ -60,7 +46,7 @@ export default function StoreAdminPrintersPage() {
   async function handleAdd(values: any) {
     setAdding(true);
     try {
-      const json = await storeAdminFetch(`${API}/stores/${storeId}/printers`, {
+      const json = await storeAdminFetch(`${STORE_ADMIN_CONFIG.API_BASE}/stores/${storeId}/printers`, {
         method: 'POST',
         body: JSON.stringify(values),
       });
@@ -79,7 +65,7 @@ export default function StoreAdminPrintersPage() {
 
   async function handleDelete(printerId: string) {
     try {
-      const json = await storeAdminFetch(`${API}/stores/${storeId}/printers/${printerId}`, {
+      const json = await storeAdminFetch(`${STORE_ADMIN_CONFIG.API_BASE}/stores/${storeId}/printers/${printerId}`, {
         method: 'DELETE',
       });
       if (json.success) {
@@ -95,7 +81,7 @@ export default function StoreAdminPrintersPage() {
 
   async function handleTest(printerId: string) {
     try {
-      const json = await storeAdminFetch(`${API}/stores/${storeId}/printers/${printerId}/test`, {
+      const json = await storeAdminFetch(`${STORE_ADMIN_CONFIG.API_BASE}/stores/${storeId}/printers/${printerId}/test`, {
         method: 'POST',
       });
       if (json.success) {

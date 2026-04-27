@@ -7,10 +7,9 @@ import {
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { getFoodImageUrl, DEFAULT_FOOD_IMAGE } from '../../utils/image.utils';
+import { STORE_ADMIN_CONFIG, storeAdminFetch } from '../../config/store-admin';
 
 const { Title } = Typography;
-const API = '/api/store-admin';
-const TOKEN_KEY = 'qilin_store_admin_token';
 
 interface Category {
   id: string;
@@ -30,23 +29,6 @@ interface MenuItem {
   category?: Category;
 }
 
-/** 店长端专用 fetch：自动带 token */
-async function storeAdminFetch(path: string, options: RequestInit = {}) {
-  const token = localStorage.getItem(TOKEN_KEY);
-  const res = await fetch(path, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers as Record<string, string> || {}),
-    },
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw { status: res.status, message: text };
-  }
-  return res.json();
-}
 
 export default function StoreAdminMenuPage() {
   const { storeId } = useParams();
@@ -66,15 +48,15 @@ export default function StoreAdminMenuPage() {
     setLoading(true);
     try {
       const [catRes, itemRes] = await Promise.all([
-        storeAdminFetch(`${API}/stores/${storeId}/menu/categories`),
-        storeAdminFetch(`${API}/stores/${storeId}/menu/items`),
+        storeAdminFetch(`${STORE_ADMIN_CONFIG.API_BASE}/stores/${storeId}/menu/categories`),
+        storeAdminFetch(`${STORE_ADMIN_CONFIG.API_BASE}/stores/${storeId}/menu/items`),
       ]);
       if (catRes.success) setCategories(catRes.data || []);
       if (itemRes.success) setItems(itemRes.data || []);
     } catch (err: any) {
       console.error('[StoreAdminMenu] 加载失败:', err);
       if (err.status === 401) {
-        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(STORE_ADMIN_CONFIG.TOKEN_KEY);
         localStorage.removeItem('qilin_store_admin_user');
         navigate('/store-admin/login');
         return;
@@ -100,13 +82,13 @@ export default function StoreAdminMenuPage() {
   async function handleSave(values: any) {
     try {
       if (editingItem) {
-        const json = await storeAdminFetch(`${API}/stores/${storeId}/menu/items/${editingItem.id}`, {
+        const json = await storeAdminFetch(`${STORE_ADMIN_CONFIG.API_BASE}/stores/${storeId}/menu/items/${editingItem.id}`, {
           method: 'PUT', body: JSON.stringify(values),
         });
         if (json.success) { message.success('更新成功'); }
         else { message.error(json.error || '更新失败'); }
       } else {
-        const json = await storeAdminFetch(`${API}/stores/${storeId}/menu/items`, {
+        const json = await storeAdminFetch(`${STORE_ADMIN_CONFIG.API_BASE}/stores/${storeId}/menu/items`, {
           method: 'POST', body: JSON.stringify(values),
         });
         if (json.success) { message.success('添加成功'); }
@@ -121,7 +103,7 @@ export default function StoreAdminMenuPage() {
 
   async function handleDelete(itemId: string) {
     try {
-      const json = await storeAdminFetch(`${API}/stores/${storeId}/menu/items/${itemId}`, {
+      const json = await storeAdminFetch(`${STORE_ADMIN_CONFIG.API_BASE}/stores/${storeId}/menu/items/${itemId}`, {
         method: 'DELETE', body: JSON.stringify({}),
       });
       if (json.success) { message.success('已删除'); loadData(); }
@@ -131,7 +113,7 @@ export default function StoreAdminMenuPage() {
 
   async function toggleAvailability(item: MenuItem) {
     try {
-      const json = await storeAdminFetch(`${API}/stores/${storeId}/menu/items/${item.id}/availability`, {
+      const json = await storeAdminFetch(`${STORE_ADMIN_CONFIG.API_BASE}/stores/${storeId}/menu/items/${item.id}/availability`, {
         method: 'PATCH', body: JSON.stringify({ isAvailable: !item.isAvailable }),
       });
       if (json.success) { message.success(item.isAvailable ? '已下架' : '已上架'); loadData(); }

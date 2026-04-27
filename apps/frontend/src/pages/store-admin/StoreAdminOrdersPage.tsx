@@ -5,10 +5,9 @@ import {
   Table, Tag, Button, Space, Typography, message, Select, Popconfirm, Empty, Modal, Descriptions,
 } from 'antd';
 import { ArrowLeftOutlined, ReloadOutlined, EyeOutlined } from '@ant-design/icons';
+import { STORE_ADMIN_CONFIG, storeAdminFetch } from '../../config/store-admin';
 
 const { Title, Text } = Typography;
-const API = '/api/store-admin';
-const TOKEN_KEY = 'qilin_store_admin_token';
 
 interface OrderItem {
   id: string;
@@ -38,20 +37,6 @@ const STATUS_MAP: Record<string, { color: string; label: string }> = {
   CANCELLED: { color: 'red', label: '已取消' },
 };
 
-async function storeAdminFetch(path: string, options: RequestInit = {}) {
-  const token = localStorage.getItem(TOKEN_KEY);
-  const res = await fetch(path, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers as Record<string, string> || {}),
-    },
-  });
-  if (!res.ok) throw { status: res.status, message: await res.text() };
-  return res.json();
-}
-
 export default function StoreAdminOrdersPage() {
   const { storeId } = useParams();
   const navigate = useNavigate();
@@ -66,13 +51,13 @@ export default function StoreAdminOrdersPage() {
   async function loadOrders() {
     setLoading(true);
     try {
-      let path = `${API}/stores/${storeId}/orders?limit=50`;
+      let path = `${STORE_ADMIN_CONFIG.API_BASE}/stores/${storeId}/orders?limit=50`;
       if (statusFilter) path += `&status=${statusFilter}`;
       const json = await storeAdminFetch(path);
       setOrders(json.data || []);
     } catch (err: any) {
       if (err.status === 401) {
-        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(STORE_ADMIN_CONFIG.TOKEN_KEY);
         navigate('/store-admin/login');
         return;
       }
@@ -82,7 +67,7 @@ export default function StoreAdminOrdersPage() {
 
   async function updateStatus(orderId: string, status: string) {
     try {
-      const json = await storeAdminFetch(`${API}/stores/${storeId}/orders/${orderId}/status`, {
+      const json = await storeAdminFetch(`${STORE_ADMIN_CONFIG.API_BASE}/stores/${storeId}/orders/${orderId}/status`, {
         method: 'PATCH',
         body: JSON.stringify({ status }),
       });

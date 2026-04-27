@@ -27,10 +27,14 @@ export default function StoreAdminLoginPage() {
         message.error(json.error || json.data?.error || '登录失败，请检查账号密码');
       }
     } catch (err: any) {
-      // api-client 将非 2xx 响应转化为 ApiError，提取友好消息
-      const errorMsg = err.originalError?.response?.data?.error
-        || err.message
-        || '登录失败，请检查网络连接';
+      // ApiError 的 message 是后端返回的 JSON 字符串
+      let errorMsg = '登录失败，请检查网络连接';
+      try {
+        const parsed = JSON.parse(err.message);
+        errorMsg = parsed.error || parsed.message || errorMsg;
+      } catch {
+        errorMsg = err.message || errorMsg;
+      }
       message.error(errorMsg);
     } finally {
       setLoading(false);

@@ -306,10 +306,10 @@ const ScanOrderPage: React.FC<ScanOrderPageProps> = ({ mode = 'dine-in' }) => {
       {cartItemCount > 0 && !isCartOpen && (
         <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-100 shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
           <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-3">
+            <button onClick={openCart} className="flex items-center gap-3 flex-1">
               <div className="relative">
-                <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center shadow-md">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-11 h-11 bg-orange-500 rounded-full flex items-center justify-center shadow-md">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
@@ -321,7 +321,7 @@ const ScanOrderPage: React.FC<ScanOrderPageProps> = ({ mode = 'dine-in' }) => {
                 <div className="text-base font-bold text-gray-800">{formatPrice(cartTotal)}</div>
                 <div className="text-[10px] text-gray-400">另需配送费 ¥0</div>
               </div>
-            </div>
+            </button>
             <button
               onClick={openCart}
               className="px-6 py-2.5 bg-orange-500 text-white rounded-full font-semibold text-sm hover:bg-orange-600 active:scale-95 transition-all shadow-lg shadow-orange-200"

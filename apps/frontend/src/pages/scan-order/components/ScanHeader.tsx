@@ -88,7 +88,7 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
         }}>
           {onBack ? (
             <button onClick={onBack} style={{
-              width: 30, height: 30,
+              width: 36, height: 36,
               borderRadius: '50%',
               background: '#fff5f0',
               border: '1px solid #ffe8dc',
@@ -98,14 +98,14 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
             }} aria-label="返回">
-              <svg width={16} height={16} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg width={18} height={18} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
           ) : <div />}
           <button onClick={onCartClick} style={{
             position: 'relative',
-            width: 30, height: 30,
+            width: 36, height: 36,
             borderRadius: '50%',
             background: '#fff5f0',
             border: '1px solid #ffe8dc',
@@ -115,25 +115,25 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
           }} aria-label="购物车">
-            <svg width={16} height={16} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg width={20} height={20} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
             {cartItemCount > 0 && (
               <span style={{
                 position: 'absolute',
-                top: -3,
-                right: -3,
-                minWidth: 15,
-                height: 15,
+                top: -4,
+                right: -4,
+                minWidth: 18,
+                height: 18,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 background: '#ff8a4c',
                 color: 'white',
-                fontSize: 9,
+                fontSize: 10,
                 fontWeight: 700,
                 borderRadius: '50%',
-                padding: '0 3px',
+                padding: '0 4px',
               }}>
                 {cartItemCount > 99 ? '99+' : cartItemCount}
               </span>
@@ -221,7 +221,7 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
         }}>
           {onBack ? (
             <button onClick={onBack} style={{
-              width: 30, height: 30,
+              width: 36, height: 36,
               borderRadius: '50%',
               background: 'rgba(255,255,255,0.25)',
               border: 'none',
@@ -231,14 +231,14 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
             }} aria-label="返回">
-              <svg width={16} height={16} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg width={18} height={18} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
           ) : <div />}
           <button onClick={onCartClick} style={{
             position: 'relative',
-            width: 30, height: 30,
+            width: 36, height: 36,
             borderRadius: '50%',
             background: 'rgba(255,255,255,0.25)',
             border: 'none',
@@ -248,25 +248,25 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
           }} aria-label="购物车">
-            <svg width={16} height={16} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg width={20} height={20} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
             {cartItemCount > 0 && (
               <span style={{
                 position: 'absolute',
-                top: -3,
-                right: -3,
-                minWidth: 15,
-                height: 15,
+                top: -4,
+                right: -4,
+                minWidth: 18,
+                height: 18,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 background: '#ff4757',
                 color: 'white',
-                fontSize: 9,
+                fontSize: 10,
                 fontWeight: 700,
                 borderRadius: '50%',
-                padding: '0 3px',
+                padding: '0 4px',
               }}>
                 {cartItemCount > 99 ? '99+' : cartItemCount}
               </span>

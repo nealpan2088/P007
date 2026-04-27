@@ -561,3 +561,131 @@ export class TenantService {
 
 // 导出默认实例
 export default new TenantService();
+
+// ═══ 超管后台专用函数（named exports） ═══
+
+/**
+ * 获取租户列表（含分页、搜索、套餐过滤）- 超管 API
+ */
+export async function getTenants({ page = 1, pageSize = 20, search, plan, status, sortBy = 'createdAt', sortOrder = 'desc' }) {
+  const skip = (page - 1) * pageSize;
+
+  const where = {};
+  if (search) {
+    where.OR = [
+      { name: { contains: search } },
+      { subdomain: { contains: search } },
+      { contactEmail: { contains: search } },
+    ];
+  }
+  if (plan) where.plan = plan;
+  if (status) where.status = status;
+
+  const [tenants, total] = await Promise.all([
+    db.tenant.findMany({
+      where,
+      skip,
+      take: pageSize,
+      orderBy: { [sortBy]: sortOrder },
+      include: {
+        _count: { select: { stores: true, userTenants: true } },
+      },
+    }),
+    db.tenant.count({ where }),
+  ]);
+
+  return {
+    items: tenants.map(t => ({
+      id: t.id,
+      name: t.name,
+      subdomain: t.subdomain,
+      description: t.description,
+      plan: t.plan,
+      contactEmail: t.contactEmail,
+      status: t.status,
+      trialEndsAt: t.trialEndsAt,
+      createdAt: t.createdAt,
+      updatedAt: t.updatedAt,
+      storeCount: t._count.stores,
+      userCount: t._count.userTenants,
+    })),
+    pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
+  };
+}
+
+/**
+ * 获取租户详情（含门店和用户列表）
+ */
+export async function getTenantDetail(tenantId) {
+  const tenant = await db.tenant.findUnique({
+    where: { id: tenantId },
+    include: {
+      _count: { select: { stores: true, userTenants: true } },
+      stores: {
+        select: { id: true, name: true, slug: true, status: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+      },
+      userTenants: {
+        include: {
+          user: { select: { id: true, email: true, username: true, fullName: true, role: true, status: true, lastLoginAt: true } },
+        },
+      },
+    },
+  });
+  if (!tenant) return null;
+  return { ...tenant, storeCount: tenant._count.stores, userCount: tenant._count.userTenants, _count: undefined };
+}
+
+/**
+ * 变更租户套餐（超管操作）
+ */
+export async function changeTenantPlan(tenantId, newPlan, extendedByDays = 0) {
+  const { PLANS } = await import('../config/plan.config.js');
+  if (!PLANS[newPlan]) throw new Error(`无效套餐: ${newPlan}`);
+  const updateData = { plan: newPlan };
+  if (extendedByDays > 0) {
+    const t = await db.tenant.findUnique({ where: { id: tenantId }, select: { trialEndsAt: true } });
+    const base = t?.trialEndsAt || new Date();
+    updateData.trialEndsAt = new Date(base.getTime() + extendedByDays * 86400000);
+  }
+  return db.tenant.update({ where: { id: tenantId }, data: updateData });
+}
+
+/**
+ * 延长试用期
+ */
+export async function extendTrial(tenantId, days) {
+  const t = await db.tenant.findUnique({ where: { id: tenantId }, select: { trialEndsAt: true } });
+  const base = t?.trialEndsAt || new Date();
+  return db.tenant.update({
+    where: { id: tenantId },
+    data: { trialEndsAt: new Date(base.getTime() + days * 86400000) },
+  });
+}
+
+/**
+ * 获取租户使用量（当前值 vs 套餐限额）
+ */
+export async function getTenantUsage(tenantId) {
+  const { PLANS } = await import('../config/plan.config.js');
+  const tenant = await db.tenant.findUnique({
+    where: { id: tenantId },
+    include: { _count: { select: { stores: true } } },
+  });
+  if (!tenant) return null;
+  const limits = PLANS[tenant.plan] || PLANS.FREE;
+  const storeIds = (await db.store.findMany({ where: { tenantId }, select: { id: true } })).map(s => s.id);
+  const printerCount = storeIds.length > 0 ? await db.printer.count({ where: { storeId: { in: storeIds } } }) : 0;
+  const menuItemCount = storeIds.length > 0 ? await db.menuItem.count({ where: { category: { storeId: { in: storeIds } } } }) : 0;
+  const tableCount = storeIds.length > 0 ? await db.table.count({ where: { storeId: { in: storeIds } } }) : 0;
+  return {
+    tenantId, plan: tenant.plan, trialEndsAt: tenant.trialEndsAt,
+    usage: {
+      stores: { current: tenant._count.stores, limit: limits.maxStores === Infinity ? '无限制' : limits.maxStores },
+      printers: { current: printerCount, limit: limits.maxPrinters === Infinity ? '无限制' : limits.maxPrinters },
+      menuItems: { current: menuItemCount, limit: limits.maxMenusPerStore === Infinity ? '无限制' : limits.maxMenusPerStore },
+      tables: { current: tableCount, limit: limits.maxTablesPerStore === Infinity ? '无限制' : limits.maxTablesPerStore },
+    },
+    dataRetentionDays: limits.dataRetentionDays,
+  };
+}

@@ -6,6 +6,7 @@ import menuTemplateRoutes from './menu-template.routes.js';
 import PrinterService from '../services/printer/printer.service.js';
 import { authenticate, requireStoreAccess } from '../middleware/index.js';
 import { ADMIN_ROUTES } from '../config/routes.js';
+import * as tenantService from '../services/tenant.service.js';
 
 const STORES = ADMIN_ROUTES.STORES;
 const DASHBOARD = ADMIN_ROUTES.DASHBOARD;
@@ -429,6 +430,85 @@ export function registerAdminRoutes(fastify) {
         return reply.code(500).send({ success: false, error: '移除授权失败: ' + error.message });
       }
     });
+  });
+
+  // ═══ 租户管理（超管） ═══
+  const TENANTS = ADMIN_ROUTES.TENANTS;
+
+  // 获取租户列表
+  fastify.get(TENANTS.LIST, async (request, reply) => {
+    try {
+      const { page = 1, pageSize = 20, search, plan, status, sortBy, sortOrder } = request.query;
+      const result = await tenantService.getTenants({
+        page: parseInt(page), pageSize: parseInt(pageSize), search, plan, status, sortBy, sortOrder,
+      });
+      return { code: 200, message: 'success', data: result };
+    } catch (error) {
+      request.log.error({ msg: '获取租户列表失败', error: error.message });
+      return reply.code(500).send({ code: 500, error: '获取租户列表失败', traceId: `trace-${Date.now()}` });
+    }
+  });
+
+  // 获取租户详情
+  fastify.get(TENANTS.DETAIL, async (request, reply) => {
+    try {
+      const tenant = await tenantService.getTenantDetail(request.params.tenantId);
+      if (!tenant) return reply.code(404).send({ code: 404, error: '租户不存在', traceId: `trace-${Date.now()}` });
+      return { code: 200, message: 'success', data: tenant };
+    } catch (error) {
+      request.log.error({ msg: '获取租户详情失败', error: error.message });
+      return reply.code(500).send({ code: 500, error: '获取租户详情失败', traceId: `trace-${Date.now()}` });
+    }
+  });
+
+  // 更新租户信息
+  fastify.put(TENANTS.UPDATE, async (request, reply) => {
+    try {
+      const tenant = await tenantService.updateTenant(request.params.tenantId, request.body);
+      if (!tenant) return reply.code(400).send({ code: 400, error: '没有可更新的字段', traceId: `trace-${Date.now()}` });
+      return { code: 200, message: 'success', data: tenant };
+    } catch (error) {
+      request.log.error({ msg: '更新租户失败', error: error.message });
+      return reply.code(500).send({ code: 500, error: '更新租户失败', traceId: `trace-${Date.now()}` });
+    }
+  });
+
+  // 变更套餐
+  fastify.post(TENANTS.CHANGE_PLAN, async (request, reply) => {
+    try {
+      const { plan, extendDays = 0 } = request.body;
+      if (!plan) return reply.code(400).send({ code: 400, error: '缺少套餐参数', traceId: `trace-${Date.now()}` });
+      const tenant = await tenantService.changeTenantPlan(request.params.tenantId, plan, extendDays);
+      return { code: 200, message: '套餐变更成功', data: tenant };
+    } catch (error) {
+      request.log.error({ msg: '套餐变更失败', error: error.message });
+      return reply.code(400).send({ code: 400, error: error.message, traceId: `trace-${Date.now()}` });
+    }
+  });
+
+  // 延长试用期
+  fastify.post(TENANTS.EXTEND_TRIAL, async (request, reply) => {
+    try {
+      const { days } = request.body;
+      if (!days || days < 1) return reply.code(400).send({ code: 400, error: '天数必须大于0', traceId: `trace-${Date.now()}` });
+      const tenant = await tenantService.extendTrial(request.params.tenantId, days);
+      return { code: 200, message: '试用期已延长', data: tenant };
+    } catch (error) {
+      request.log.error({ msg: '延长试用期失败', error: error.message });
+      return reply.code(500).send({ code: 500, error: '延长试用期失败', traceId: `trace-${Date.now()}` });
+    }
+  });
+
+  // 获取租户使用量
+  fastify.get(TENANTS.USAGE, async (request, reply) => {
+    try {
+      const usage = await tenantService.getTenantUsage(request.params.tenantId);
+      if (!usage) return reply.code(404).send({ code: 404, error: '租户不存在', traceId: `trace-${Date.now()}` });
+      return { code: 200, message: 'success', data: usage };
+    } catch (error) {
+      request.log.error({ msg: '获取租户使用量失败', error: error.message });
+      return reply.code(500).send({ code: 500, error: '获取租户使用量失败', traceId: `trace-${Date.now()}` });
+    }
   });
 
   console.log('✅ 管理API路由已注册');

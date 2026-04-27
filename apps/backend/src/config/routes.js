@@ -381,6 +381,18 @@ export const ADMIN_ROUTES = {
     IMPORT: '/menu-templates/import',
   },
 
+  // 租户管理（超管后台）
+  TENANTS: {
+    LIST: '/tenants',
+    DETAIL: '/tenants/:tenantId',
+    UPDATE: '/tenants/:tenantId',
+    // 套餐管理
+    CHANGE_PLAN: '/tenants/:tenantId/change-plan',
+    EXTEND_TRIAL: '/tenants/:tenantId/extend-trial',
+    // 使用统计
+    USAGE: '/tenants/:tenantId/usage',
+  },
+
   // 用户管理（超管后台）
   USERS: {
     LIST: '/users',

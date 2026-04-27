@@ -181,14 +181,16 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
   } else {
     headerContent = (
       /* 渐变模板（默认） */
-      <div
-        style={{
-          position: 'relative',
-          height: 160,
-          background: hasHeaderImage ? `center/cover no-repeat url(${headerImageUrl})` : bannerGradient,
-          overflow: 'hidden',
-        }}
-      >
+      <div style={{ padding: '8px 10px', background: '#f5f7fa' }}>
+        <div
+          style={{
+            position: 'relative',
+            height: 152,
+            background: hasHeaderImage ? `center/cover no-repeat url(${headerImageUrl})` : bannerGradient,
+            overflow: 'hidden',
+            borderRadius: 14,
+          }}
+        >
         {/* 装饰圆 — 有背景图时不显示 */}
         {!hasHeaderImage && (<div style={{
           position: 'absolute',
@@ -322,20 +324,26 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
           </div>
         </div>
       </div>
+      </div>
     );
   }
 
   return (
-    <div style={{ position: 'relative', marginBottom: 0 }}>
+    <div style={{ background: '#f5f7fa', padding: '8px 10px', marginBottom: 0 }}>
       {/* 封面图区 — 根据模板渲染 */}
       {headerContent}
+      {/* 店招信息栏 */}
+      {mode !== ('minimal' as any) && (
       <div style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '10px 16px',
+        padding: '10px 14px',
         background: 'white',
-        borderBottom: '1px solid #f0f0f0',
+        borderRadius: '0 0 14px 14px',
+        borderLeft: '1px solid #eeeff2',
+        borderRight: '1px solid #eeeff2',
+        borderBottom: '1px solid #eeeff2',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {mode === 'takeaway' ? (
@@ -352,7 +360,7 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
             {storeDescription}
           </span>
         )}
-      </div>
+        </div>)}
     </div>
   );
 };

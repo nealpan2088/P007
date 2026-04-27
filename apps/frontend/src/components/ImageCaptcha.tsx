@@ -42,40 +42,49 @@ const ImageCaptcha: React.FC<ImageCaptchaProps> = ({ onChange }) => {
     const h = canvas.height;
 
     // 背景
-    ctx.fillStyle = '#f8f9fa';
+    ctx.fillStyle = '#f0f4ff';
     ctx.fillRect(0, 0, w, h);
 
-    // 干扰线
-    for (let i = 0; i < 4; i++) {
+    // 浅色边框
+    ctx.strokeStyle = '#d0d8e8';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0, 0, w, h);
+
+    // 干扰线（减少到2条，更细更淡）
+    ctx.globalAlpha = 0.3;
+    for (let i = 0; i < 2; i++) {
       ctx.beginPath();
       ctx.moveTo(Math.random() * w, Math.random() * h);
       ctx.lineTo(Math.random() * w, Math.random() * h);
       ctx.strokeStyle = randomColor();
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1;
       ctx.stroke();
     }
+    ctx.globalAlpha = 1;
 
-    // 噪点
-    for (let i = 0; i < 30; i++) {
+    // 噪点（减少到15个，更淡）
+    ctx.globalAlpha = 0.25;
+    for (let i = 0; i < 15; i++) {
       ctx.fillStyle = randomColor();
       ctx.beginPath();
-      ctx.arc(Math.random() * w, Math.random() * h, 1 + Math.random() * 2, 0, Math.PI * 2);
+      ctx.arc(Math.random() * w, Math.random() * h, 1, 0, Math.PI * 2);
       ctx.fill();
     }
+    ctx.globalAlpha = 1;
 
-    // 数字
+    // 数字（加大字号，轻微旋转，颜色更饱满）
     const chars = text.split('');
     const charWidth = w / chars.length;
     chars.forEach((char, i) => {
-      const x = charWidth * i + charWidth / 2;
-      const y = h / 2 + Math.random() * 8 - 4;
-      ctx.font = `${20 + Math.random() * 6}px "Courier New", monospace`;
+      const x = charWidth * i + charWidth / 2 + (Math.random() - 0.5) * 4;
+      const y = h / 2 + Math.random() * 3 - 1.5;
+      ctx.font = `bold ${26 + Math.random() * 2}px "Courier New", monospace`;
       ctx.fillStyle = randomColor();
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.save();
       ctx.translate(x, y);
-      ctx.rotate((Math.random() - 0.5) * 0.4);
+      ctx.rotate((Math.random() - 0.5) * 0.25);
       ctx.fillText(char, 0, 0);
       ctx.restore();
     });

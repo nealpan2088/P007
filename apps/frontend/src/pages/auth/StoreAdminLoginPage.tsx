@@ -24,10 +24,14 @@ export default function StoreAdminLoginPage() {
         message.success('登录成功');
         navigate('/store-admin');
       } else {
-        message.error(json.data?.error || json.error || '登录失败');
+        message.error(json.error || json.data?.error || '登录失败，请检查账号密码');
       }
     } catch (err: any) {
-      message.error(err.message || '登录失败');
+      // api-client 将非 2xx 响应转化为 ApiError，提取友好消息
+      const errorMsg = err.originalError?.response?.data?.error
+        || err.message
+        || '登录失败，请检查网络连接';
+      message.error(errorMsg);
     } finally {
       setLoading(false);
     }

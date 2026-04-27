@@ -4,6 +4,8 @@ import { useAuth } from './hooks/useAuth';
 import { CustomRouter } from './components/CustomRouter';
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
 import LoginPage from './pages/auth/LoginPage';
 import AdminLoginPage from './pages/auth/AdminLoginPage';
 import TenantLoginPage from './pages/auth/TenantLoginPage';
@@ -148,6 +150,8 @@ function AppContent() {
           {/* ===== 公共路由 ===== */}
           <Route path={PUBLIC_ROUTES.HOME} element={<HomePage />} />
           <Route path={PUBLIC_ROUTES.PUBLIC.ABOUT} element={<AboutPage />} />
+          <Route path={PUBLIC_ROUTES.PUBLIC.TERMS} element={<TermsPage />} />
+          <Route path={PUBLIC_ROUTES.PUBLIC.PRIVACY} element={<PrivacyPage />} />
 
           {/* ===== 认证路由 ===== */}
           <Route path={PUBLIC_ROUTES.AUTH.LOGIN} element={<LoginPage />} />

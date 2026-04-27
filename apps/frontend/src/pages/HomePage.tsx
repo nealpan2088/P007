@@ -641,6 +641,15 @@ export default function HomePage() {
               popular: false,
             },
             {
+              name: '单店版',
+              price: '¥38',
+              period: '/月',
+              desc: '单店起步，亲民价格',
+              badge: '亲民价',
+              features: ['1家门店', '2台云打印机', '90天数据留存', '完整数据看板', '快速客服支持'],
+              popular: false,
+            },
+            {
               name: '专业版',
               price: '¥199',
               period: '/月',

@@ -10,11 +10,11 @@ const PLANS = {
     price: 0,
     period: 'month',
     limits: {
-      maxStores: 1,           // 最多1家门店
-      maxPrinters: 1,         // 最多1台打印机
-      maxMenusPerStore: 50,    // 每家店最多50个菜品
-      maxTablesPerStore: 20,   // 每家店最多20张餐桌
-      dataRetentionDays: 30,   // 数据保留30天
+      maxStores: 1,
+      maxPrinters: 1,
+      maxMenusPerStore: 50,
+      maxTablesPerStore: 20,
+      dataRetentionDays: 30,
     },
     features: [
       '扫码点餐基础功能',
@@ -22,7 +22,28 @@ const PLANS = {
       '30天数据留存',
       '基础数据看板',
     ],
-    trialDays: 14,  // 试用天数
+    trialDays: 14,
+  },
+
+  SINGLE: {
+    name: '单店版',
+    key: 'SINGLE',
+    price: 38,
+    period: 'month',
+    limits: {
+      maxStores: 1,
+      maxPrinters: 2,
+      maxMenusPerStore: 100,
+      maxTablesPerStore: 50,
+      dataRetentionDays: 90,
+    },
+    features: [
+      '1家门店',
+      '2台云打印机',
+      '90天数据留存',
+      '完整数据看板',
+      '快速客服支持',
+    ],
   },
 
   PRO: {

@@ -50,6 +50,21 @@ const PLANS = [
     ],
   },
   {
+    key: 'SINGLE',
+    name: '单店版',
+    price: '¥38',
+    period: '/月',
+    badge: '亲民价',
+    badgeColor: '#00c853',
+    features: [
+      '✅ 1家门店',
+      '✅ 2台云打印机',
+      '✅ 90天数据留存',
+      '✅ 完整数据看板',
+      '✅ 快速客服支持',
+    ],
+  },
+  {
     key: 'PRO',
     name: '专业版',
     price: '¥199',
@@ -260,7 +275,25 @@ const RegisterPage: React.FC = () => {
               <div style={{ fontWeight: 600, color: '#667eea', marginBottom: 4 }}>🎯 免费版包含：</div>
               1家门店 · 扫码点餐 · 1台云打印机 · 30天数据留存 · 基础数据看板
               <div style={{ marginTop: 4, fontSize: 12, color: '#999' }}>
-                💡 14天内可体验专业版全部功能，到期后自动降级为免费版
+                💡 14天内可体验全部功能，到期后自动降级为免费版
+              </div>
+            </div>
+          )}
+          {/* 单店版说明 */}
+          {selectedPlan === 'SINGLE' && (
+            <div style={{
+              marginTop: 12,
+              padding: 12,
+              borderRadius: 8,
+              background: '#f0faf4',
+              fontSize: 13,
+              color: '#666',
+              lineHeight: 1.8,
+            }}>
+              <div style={{ fontWeight: 600, color: '#00c853', marginBottom: 4 }}>🏪 单店版包含：</div>
+              1家门店 · 2台云打印机 · 90天数据留存 · 完整数据看板 · 快速客服
+              <div style={{ marginTop: 4, fontSize: 12, color: '#999' }}>
+                💡 ¥38/月，适合刚起步的单店商家，无广告无隐藏费用
               </div>
             </div>
           )}

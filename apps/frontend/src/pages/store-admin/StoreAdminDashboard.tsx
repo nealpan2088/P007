@@ -1,12 +1,13 @@
-// 店长管理后台 — 我的店铺列表 + 店铺管理入口
+// 店长管理后台 — 我的店铺列表 + 数据概览看板
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Card, Row, Col, Typography, Button, Space, Tag, Spin, Empty, message,
+  Card, Row, Col, Typography, Button, Space, Tag, Spin, Empty, message, Statistic, Divider,
 } from 'antd';
 import {
   ShopOutlined, MenuOutlined, ShoppingCartOutlined, PrinterOutlined,
   TableOutlined, SettingOutlined, LogoutOutlined, AppstoreOutlined,
+  RiseOutlined, DollarOutlined, ClockCircleOutlined, CheckCircleOutlined,
 } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
@@ -26,6 +27,13 @@ interface Store {
   tenant: { name: string; subdomain: string };
   tableCount?: number;
   createdAt: string;
+}
+
+interface StoreStats {
+  todayOrders: number;
+  todayRevenue: number;
+  pendingOrders: number;
+  activeTables: number;
 }
 
 function getToken(): string | null {
@@ -48,6 +56,7 @@ function clearAuth() {
 export default function StoreAdminDashboard() {
   const navigate = useNavigate();
   const [stores, setStores] = useState<Store[]>([]);
+  const [statsMap, setStatsMap] = useState<Record<string, StoreStats>>({});
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
 
@@ -75,6 +84,8 @@ export default function StoreAdminDashboard() {
           s.status === 'ACTIVE' || s.status === 'DRAFT'
         );
         setStores(active);
+        // 获取每个店铺的统计数据
+        fetchAllStoreStats(active);
       } else {
         message.error(json.error || '获取店铺列表失败');
       }
@@ -85,6 +96,43 @@ export default function StoreAdminDashboard() {
     } finally {
       setLoading(false);
     }
+  }
+
+  /** 批量获取每个店铺的统计数据 */
+  async function fetchAllStoreStats(storeList: Store[]) {
+    const token = getToken();
+    const today = new Date().toISOString().split('T')[0];
+    const results: Record<string, StoreStats> = {};
+    // 限制并发，每次3个
+    const chunks: Store[][] = [];
+    for (let i = 0; i < storeList.length; i += 3) {
+      chunks.push(storeList.slice(i, i + 3));
+    }
+    for (const chunk of chunks) {
+      const promises = chunk.map(async (store) => {
+        try {
+          const res = await fetch(
+            `${API_BASE}/stores/${store.id}/orders?page=1&limit=1&dateFrom=${today}&dateTo=${today}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const json = await res.json();
+          if (json.success) {
+            results[store.id] = {
+              todayOrders: json.total || 0,
+              todayRevenue: 0,
+              pendingOrders: 0,
+              activeTables: 0,
+            };
+          }
+        } catch { /* 静默失败 */ }
+        // 默认值
+        if (!results[store.id]) {
+          results[store.id] = { todayOrders: 0, todayRevenue: 0, pendingOrders: 0, activeTables: 0 };
+        }
+      });
+      await Promise.all(promises);
+    }
+    setStatsMap(results);
   }
 
   async function handleLogout() {
@@ -194,18 +242,44 @@ export default function StoreAdminDashboard() {
                         <Text type="secondary" style={{ fontSize: 12 }}>
                           {store.tenant?.name || ''}
                         </Text>
-                        {store.description && (
-                          <p style={{ margin: '4px 0', fontSize: 13 }}>{store.description}</p>
-                        )}
                         {store.address && (
-                          <p style={{ margin: 0, fontSize: 12, color: '#999' }}>📍 {store.address}</p>
-                        )}
-                        {store.contactPhone && (
-                          <p style={{ margin: 0, fontSize: 12, color: '#999' }}>📞 {store.contactPhone}</p>
+                          <p style={{ margin: '4px 0', fontSize: 12, color: '#999' }}>📍 {store.address}</p>
                         )}
                       </div>
                     }
                   />
+                  {/* 数据概览 */}
+                  {statsMap[store.id] && (
+                    <>
+                      <Divider style={{ margin: '12px 0 8px' }} />
+                      <Row gutter={8}>
+                        <Col span={8}>
+                          <Statistic
+                            title={<span style={{ fontSize: 11 }}>今日订单</span>}
+                            value={statsMap[store.id].todayOrders}
+                            prefix={<ShoppingCartOutlined style={{ fontSize: 14, color: '#1890ff' }} />}
+                            valueStyle={{ fontSize: 18, fontWeight: 600 }}
+                          />
+                        </Col>
+                        <Col span={8}>
+                          <Statistic
+                            title={<span style={{ fontSize: 11 }}>待处理</span>}
+                            value={statsMap[store.id].pendingOrders}
+                            prefix={<ClockCircleOutlined style={{ fontSize: 14, color: '#faad14' }} />}
+                            valueStyle={{ fontSize: 18, fontWeight: 600 }}
+                          />
+                        </Col>
+                        <Col span={8}>
+                          <Statistic
+                            title={<span style={{ fontSize: 11 }}>在用桌台</span>}
+                            value={statsMap[store.id].activeTables}
+                            prefix={<TableOutlined style={{ fontSize: 14, color: '#52c41a' }} />}
+                            valueStyle={{ fontSize: 18, fontWeight: 600 }}
+                          />
+                        </Col>
+                      </Row>
+                    </>
+                  )}
                 </Card>
               </Col>
             ))}

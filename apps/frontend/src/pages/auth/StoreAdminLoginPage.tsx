@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Card, Form, Input, Button, Typography, message } from 'antd';
-import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import { UserOutlined, LockOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { apiPost } from '../../utils/api-client';
+import ImageCaptcha from '../../components/ImageCaptcha';
 
 const { Title, Text } = Typography;
 
@@ -13,8 +14,13 @@ const STORE_ADMIN_USER_KEY = 'qilin_store_admin_user';
 export default function StoreAdminLoginPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [captchaValid, setCaptchaValid] = useState(false);
 
   const onFinish = async (values: { email: string; password: string }) => {
+    if (!captchaValid) {
+      message.error('请先完成图形验证码验证');
+      return;
+    }
     setLoading(true);
     try {
       const json = await apiPost('/api/store-admin/login', values, { skipAuth: true });
@@ -72,6 +78,13 @@ export default function StoreAdminLoginPage() {
             rules={[{ required: true, message: '请输入密码' }]}
           >
             <Input.Password prefix={<LockOutlined />} placeholder="密码" />
+          </Form.Item>
+          <Form.Item label={null}>
+            <div className="flex items-center gap-2">
+              <SafetyCertificateOutlined className="text-gray-400" />
+              <span className="text-sm text-gray-500">图形验证码</span>
+            </div>
+            <ImageCaptcha onChange={(valid) => setCaptchaValid(valid)} />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" loading={loading} block>

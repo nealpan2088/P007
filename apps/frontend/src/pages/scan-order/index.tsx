@@ -71,6 +71,13 @@ const ScanOrderPage: React.FC<ScanOrderPageProps> = ({ mode = 'dine-in' }) => {
     formatPrice,
   } = useScanOrder(storeIdentifier, effectiveTableId, mode);
 
+  // 计算购物车中各菜品的数量
+  const cartQuantities = React.useMemo(() => {
+    const q: Record<string, number> = {};
+    cartItems.forEach(item => { q[item.menuItemId] = (q[item.menuItemId] || 0) + item.quantity; });
+    return q;
+  }, [cartItems]);
+
   // 菜品详情弹窗
   const [detailItem, setDetailItem] = useState<MenuItem | null>(null);
 
@@ -286,6 +293,7 @@ const ScanOrderPage: React.FC<ScanOrderPageProps> = ({ mode = 'dine-in' }) => {
         onAddToCart={addToCart}
         onViewDetails={handleViewDetails}
         isLoading={isLoading}
+        cartQuantities={cartQuantities}
       />
 
       {/* 购物车侧边栏 */}

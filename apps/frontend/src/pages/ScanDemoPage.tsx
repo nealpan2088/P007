@@ -190,7 +190,7 @@ function VersionB() {
    主页面：Tab 切换两个版本
    ════════════════════════════════════════ */
 const ScanDemoPage: React.FC = () => {
-  const [tab, setTab] = useState<'A' | 'B'>('A');
+  const [tab, setTab] = useState<'A' | 'B'>('B');
 
   const containerStyle: React.CSSProperties = {
     ...styles.page,

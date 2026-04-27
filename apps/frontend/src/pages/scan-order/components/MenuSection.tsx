@@ -10,6 +10,7 @@ interface MenuSectionProps {
   onAddToCart: (menuItemId: string) => void;
   onViewDetails?: (item: MenuItem) => void;
   isLoading?: boolean;
+  cartQuantities?: Record<string, number>;
 }
 
 const MenuSection: React.FC<MenuSectionProps> = ({
@@ -20,6 +21,7 @@ const MenuSection: React.FC<MenuSectionProps> = ({
   onAddToCart,
   onViewDetails,
   isLoading = false,
+  cartQuantities = {},
 }) => {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const currentCategory = categories.find(cat => cat.id === selectedCategory);
@@ -93,7 +95,8 @@ const MenuSection: React.FC<MenuSectionProps> = ({
         </button>
         {categories.map((category, idx) => {
           // 分类图标映射
-          const iconMap: Record<string, string> = {
+          // 分类图标 — 优先精确匹配，其次关键词匹配
+          const exactIcons: Record<string, string> = {
             '招牌菜': '⭐',
             '热菜': '🔥',
             '凉菜': '🥗',
@@ -106,8 +109,28 @@ const MenuSection: React.FC<MenuSectionProps> = ({
             '午餐': '☀️',
             '晚餐': '🌙',
           };
+          // 关键词 → 图标（新增分类自动匹配）
+          const keywordIcons: [RegExp, string][] = [
+            [/拉面|面条|面食|拌面|汤面/, '🍜'],
+            [/川菜|麻辣|辣|香锅/, '🌶️'],
+            [/汤/, '🍲'],
+            [/饭|炒饭|盖饭|米饭/, '🍚'],
+            [/饮|茶|可乐|果汁|啤酒|水/, '🥤'],
+            [/甜|蛋糕|冰淇淋/, '🍰'],
+            [/凉|拌|沙拉/, '🥗'],
+            [/烤|炸|煎/, '🍟'],
+            [/包|饺|饼/, '🥟'],
+            [/早|晨/, '🌅'],
+            [/晚/, '🌙'],
+          ];
           const name = category.name;
-          const icon = iconMap[name] || '🍽️';
+          let icon = exactIcons[name];
+          if (!icon) {
+            for (const [regex, emoji] of keywordIcons) {
+              if (regex.test(name)) { icon = emoji; break; }
+            }
+          }
+          icon = icon || '🍽️';
           return (
           <button
             key={category.id}
@@ -132,16 +155,16 @@ const MenuSection: React.FC<MenuSectionProps> = ({
 
       {/* 右侧菜品列表 */}
       <div className="flex-1 overflow-y-auto bg-gray-50" id="menu-items-scroll">
-        <div className="px-3 py-3">
+        <div className="px-1.5 py-3">
           {/* 分类标题 */}
           <div className="flex items-center justify-between mb-2.5 px-1">
-            <h2 className="text-sm font-bold text-gray-700">
+            <h2 className="text-sm font-bold text-gray-800">
               {filteredCategories.length === 1
                 ? filteredCategories[0].name
                 : '全部菜单'
               }
             </h2>
-            <span className="text-[11px] text-gray-400">
+            <span className="text-xs font-medium text-gray-500">
               {filteredCategories.reduce((sum, cat) => sum + cat.items.length, 0)}道菜
             </span>
           </div>
@@ -159,6 +182,7 @@ const MenuSection: React.FC<MenuSectionProps> = ({
                 <MenuItemCard
                   key={item.id}
                   item={item}
+                  cartQuantity={cartQuantities?.[item.id] ?? 0}
                   onAddToCart={onAddToCart}
                   onViewDetails={onViewDetails}
                 />

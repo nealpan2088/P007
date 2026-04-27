@@ -181,7 +181,7 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
   } else {
     headerContent = (
       /* 渐变模板（默认） */
-      <div style={{ padding: '8px 10px', background: '#f5f7fa' }}>
+      <div style={{ padding: '2px 3px', background: '#f5f7fa' }}>
         <div
           style={{
             position: 'relative',
@@ -329,7 +329,7 @@ const ScanHeader: React.FC<ScanHeaderProps> = ({
   }
 
   return (
-    <div style={{ background: '#f5f7fa', padding: '8px 10px', marginBottom: 0 }}>
+    <div style={{ background: '#f5f7fa', padding: '2px 3px', marginBottom: 0 }}>
       {/* 封面图区 — 根据模板渲染 */}
       {headerContent}
       {/* 店招信息栏 */}

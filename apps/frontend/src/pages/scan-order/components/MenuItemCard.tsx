@@ -4,6 +4,7 @@ import { getFoodImageUrl } from '../../../utils/image.utils';
 
 interface MenuItemCardProps {
   item: MenuItem;
+  cartQuantity?: number;
   onAddToCart: (itemId: string) => void;
   onViewDetails?: (item: MenuItem) => void;
 }
@@ -71,6 +72,7 @@ function getFoodGradient(name: string): string {
 
 const MenuItemCard: React.FC<MenuItemCardProps> = ({
   item,
+  cartQuantity = 0,
   onAddToCart,
   onViewDetails,
 }) => {
@@ -84,20 +86,28 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
       className="flex bg-white mb-2.5 rounded-xl overflow-hidden cursor-pointer active:bg-gray-50 shadow-sm border border-gray-50"
       onClick={() => onViewDetails?.(item)}
     >
-      {/* 左侧图片 */}
-      <div className="w-[88px] h-[88px] shrink-0 relative">
-        <img
-          src={getFoodImageUrl(item.imageUrl)}
-          alt={item.name}
-          className="w-full h-full object-cover"
-          loading="lazy"
-          onError={e => { (e.target as HTMLImageElement).src = getFoodImageUrl(''); }}
-        />
-        {item.isAvailable === false && (
-          <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-            <span className="text-white text-xs font-medium bg-gray-800 bg-opacity-70 px-2 py-0.5 rounded">已售罄</span>
-          </div>
-        )}
+      {/* 左侧图片 — 88x88正方形，纵向居中 */}
+      <div className="w-[88px] shrink-0" style={{ display: 'flex', alignItems: 'center' }}>
+        <div className="w-[88px] h-[88px] shrink-0 relative overflow-hidden rounded-xl">
+          <img
+            src={getFoodImageUrl(item.imageUrl)}
+            alt={item.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+            onError={e => { (e.target as HTMLImageElement).src = getFoodImageUrl(''); }}
+          />
+          {cartQuantity > 0 && (
+            <div className="absolute w-5 h-5 flex items-center justify-center rounded-full bg-orange-500 text-white text-[11px] font-bold shadow-md z-20"
+              style={{ top: 3, right: 3 }}>
+              {cartQuantity}
+            </div>
+          )}
+          {item.isAvailable === false && (
+            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+              <span className="text-white text-xs font-medium bg-gray-800 bg-opacity-70 px-2 py-0.5 rounded">已售罄</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 右侧信息 */}

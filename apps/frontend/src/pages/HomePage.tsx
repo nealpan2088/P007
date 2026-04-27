@@ -564,14 +564,15 @@ export default function HomePage() {
             <Link to="/scan-demo"
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '6px 16px', borderRadius: 20,
-                background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(4px)',
-                color: 'white', fontSize: 13, textDecoration: 'none',
-                border: '1px solid rgba(255,255,255,0.25)',
+                padding: '12px 24px', borderRadius: 30,
+                background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(8px)',
+                color: '#667eea', fontSize: 14, fontWeight: 600, textDecoration: 'none',
+                border: '2px solid rgba(102,126,234,0.3)',
                 transition: 'all 0.2s',
+                boxShadow: '0 2px 10px rgba(102,126,234,0.15)',
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.25)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; }}>
+              onMouseEnter={e => { e.currentTarget.style.background = '#667eea'; e.currentTarget.style.color = 'white'; e.currentTarget.style.borderColor = '#667eea'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.95)'; e.currentTarget.style.color = '#667eea'; e.currentTarget.style.borderColor = 'rgba(102,126,234,0.3)'; }}>
               📖 场景介绍
             </Link>
           </div>

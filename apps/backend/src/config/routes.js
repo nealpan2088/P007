@@ -77,6 +77,13 @@ export const PUBLIC_ROUTES = {
     TEST: {
       ORDER: '/test/order',
     },
+    
+    // 在线客服聊天（无需认证）
+    CHAT: {
+      SEND: '/chat/send',
+      MESSAGES: '/chat/messages',
+      STREAM: '/chat/stream',
+    },
   },
 };
 
@@ -412,6 +419,13 @@ export const ADMIN_ROUTES = {
     STORE_OVERRIDE: '/nightwolf/store/:storeId/override',
     HEALTH: '/nightwolf/health',
     TRIGGER: '/nightwolf/store/:storeId/trigger',
+  },
+
+  // 在线客服聊天管理
+  CHAT: {
+    REPLY: '/chat/reply',
+    SESSIONS: '/chat/sessions',
+    MESSAGES: '/chat/messages',
   },
 };
 

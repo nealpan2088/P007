@@ -3,6 +3,7 @@
 
 import adminRoutes from './admin.routes.js';
 import menuTemplateRoutes from './menu-template.routes.js';
+import chatAdminRoutes from './chat.admin.routes.js';
 import PrinterService from '../services/printer/printer.service.js';
 import { authenticate, requireStoreAccess } from '../middleware/index.js';
 import { ADMIN_ROUTES } from '../config/routes.js';
@@ -510,6 +511,9 @@ export function registerAdminRoutes(fastify) {
       return reply.code(500).send({ code: 500, error: '获取租户使用量失败', traceId: `trace-${Date.now()}` });
     }
   });
+
+  // ═══ 在线客服聊天管理（超管） ═══
+  fastify.register(chatAdminRoutes);
 
   console.log('✅ 管理API路由已注册');
 }

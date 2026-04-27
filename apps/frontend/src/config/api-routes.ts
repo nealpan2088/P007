@@ -256,6 +256,16 @@ export const API_ENDPOINTS = {
     REMOVE_STORE_ADMIN: (userId: string) => getApiUrl(`/admin/users/${userId}/remove-store-admin`),
   },
 
+  // 租户管理（超管）
+  TENANTS: {
+    LIST: getApiUrl('/admin/tenants'),
+    DETAIL: (id: string) => getApiUrl(`/admin/tenants/${id}`),
+    UPDATE: (id: string) => getApiUrl(`/admin/tenants/${id}`),
+    CHANGE_PLAN: (id: string) => getApiUrl(`/admin/tenants/${id}/change-plan`),
+    EXTEND_TRIAL: (id: string) => getApiUrl(`/admin/tenants/${id}/extend-trial`),
+    USAGE: (id: string) => getApiUrl(`/admin/tenants/${id}/usage`),
+  },
+
   utils: {
     buildUrl: buildApiUrl,
     buildTenantStoreInfoUrl: apiBuilders.tenantStoreInfo,

@@ -2,6 +2,7 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import SCAN_ROUTES from '../config/scan-routes';
+import ChatWidget from '../components/ChatWidget';
 
 /* ===================== 内联样式（避免破坏现有 CSS） ===================== */
 const styles = {
@@ -780,6 +781,9 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* 在线客服聊天浮动组件 */}
+      <ChatWidget />
 
     </div>
     </>

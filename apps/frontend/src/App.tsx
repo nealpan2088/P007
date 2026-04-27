@@ -11,7 +11,7 @@ import LoginPage from './pages/auth/LoginPage';
 import AdminLoginPage from './pages/auth/AdminLoginPage';
 import TenantLoginPage from './pages/auth/TenantLoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
-import TenantManagement from './pages/TenantManagement';
+import TenantManagementPage from './pages/admin/TenantManagementPage';
 import CreateTenant from './pages/CreateTenant';
 import EditTenant from './pages/EditTenant';
 import TenantDashboard from './pages/TenantDashboard';
@@ -174,7 +174,7 @@ function AppContent() {
           {/* ===== 超级管理员后台（/admin/*，仅 SUPER_ADMIN） ===== */}
           <Route path={ADMIN_ROUTES.ADMIN} element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><AdminDashboard /></ProtectedRoute>} />
           <Route path="/admin" element={<Navigate to={ADMIN_ROUTES.ADMIN} replace state={{ fromLegacyAdmin: true }} />} />
-          <Route path={ADMIN_ROUTES.TENANTS.LIST} element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><TenantManagement /></ProtectedRoute>} />
+          <Route path={ADMIN_ROUTES.TENANTS.LIST} element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><TenantManagementPage /></ProtectedRoute>} />
           <Route path={ADMIN_ROUTES.TENANTS.CREATE} element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><CreateTenant /></ProtectedRoute>} />
           <Route path={ADMIN_ROUTES.TENANTS.EDIT} element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><EditTenant /></ProtectedRoute>} />
           <Route path={ADMIN_ROUTES.TENANTS.DETAIL} element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><TenantDashboard /></ProtectedRoute>} />

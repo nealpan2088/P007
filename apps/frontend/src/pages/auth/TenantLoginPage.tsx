@@ -8,9 +8,12 @@ import './AuthStyles.css';
 const TenantLoginPage: React.FC = () => {
   const { tenantLogin, isLoading, error } = useAuth();
 
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const savedEmail = localStorage.getItem('qilin_remembered_email') || '';
+
+  const [formData, setFormData] = useState({ email: savedEmail, password: '' });
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [captchaValid, setCaptchaValid] = useState(false);
+  const [rememberMe, setRememberMe] = useState(!!savedEmail);
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
@@ -33,6 +36,12 @@ const TenantLoginPage: React.FC = () => {
     }
     const success = await tenantLogin(formData.email, formData.password);
     if (success) {
+      // 记住账号
+      if (rememberMe) {
+        localStorage.setItem('qilin_remembered_email', formData.email);
+      } else {
+        localStorage.removeItem('qilin_remembered_email');
+      }
       // 登录成功后立即跳转到租户 Dashboard
       const storedUser = localStorage.getItem('qilin_user');
       if (storedUser) {
@@ -101,6 +110,17 @@ const TenantLoginPage: React.FC = () => {
             <label className="form-label">图形验证码</label>
             <ImageCaptcha onChange={setCaptchaValid} />
             {validationErrors.captcha && <div className="form-error">{validationErrors.captcha}</div>}
+          </div>
+          <div className="form-group checkbox-group">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="checkbox-input"
+              />
+              <span className="checkbox-text">记住账号</span>
+            </label>
           </div>
 
           <button type="submit" className="auth-button primary" disabled={isLoading}>

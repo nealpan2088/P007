@@ -8,9 +8,12 @@ import './AuthStyles.css';
 const AdminLoginPage: React.FC = () => {
   const { adminLogin, isLoading, error } = useAuth();
 
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const savedEmail = localStorage.getItem('qilin_remembered_email') || '';
+
+  const [formData, setFormData] = useState({ email: savedEmail, password: '' });
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [captchaValid, setCaptchaValid] = useState(false);
+  const [rememberMe, setRememberMe] = useState(!!savedEmail);
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
@@ -33,6 +36,12 @@ const AdminLoginPage: React.FC = () => {
     }
     const success = await adminLogin(formData.email, formData.password);
     if (success) {
+      // 记住账号
+      if (rememberMe) {
+        localStorage.setItem('qilin_remembered_email', formData.email);
+      } else {
+        localStorage.removeItem('qilin_remembered_email');
+      }
       window.location.href = ADMIN_ROUTES.ADMIN;
     }
   };
@@ -86,6 +95,17 @@ const AdminLoginPage: React.FC = () => {
             <label className="form-label">图形验证码</label>
             <ImageCaptcha onChange={setCaptchaValid} />
             {validationErrors.captcha && <div className="form-error">{validationErrors.captcha}</div>}
+          </div>
+          <div className="form-group checkbox-group">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="checkbox-input"
+              />
+              <span className="checkbox-text">记住账号</span>
+            </label>
           </div>
 
           <button type="submit" className="auth-button primary" disabled={isLoading}>

@@ -21,10 +21,12 @@ const LoginPage: React.FC = () => {
     return PUBLIC_ROUTES.HOME;
   };
 
+  const savedEmail = localStorage.getItem('qilin_remembered_email') || '';
+
   const [formData, setFormData] = useState({
-    email: '',
+    email: savedEmail,
     password: '',
-    rememberMe: false,
+    rememberMe: !!savedEmail,
   });
   
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -64,6 +66,12 @@ const LoginPage: React.FC = () => {
     try {
       const success = await login(formData.email, formData.password);
       if (success) {
+        // 记住账号
+        if (formData.rememberMe) {
+          localStorage.setItem('qilin_remembered_email', formData.email);
+        } else {
+          localStorage.removeItem('qilin_remembered_email');
+        }
         // 从 localStorage 读取刚保存的用户信息来判断跳转路径
         const storedUser = localStorage.getItem('qilin_user');
         if (storedUser) {

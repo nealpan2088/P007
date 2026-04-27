@@ -10,11 +10,14 @@ const { Title, Text } = Typography;
 
 const STORE_ADMIN_TOKEN_KEY = 'qilin_store_admin_token';
 const STORE_ADMIN_USER_KEY = 'qilin_store_admin_user';
+const REMEMBER_EMAIL_KEY = 'qilin_remembered_email';
 
 export default function StoreAdminLoginPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [captchaValid, setCaptchaValid] = useState(false);
+  const [rememberMe, setRememberMe] = useState(!!localStorage.getItem(REMEMBER_EMAIL_KEY));
+  const savedEmail = localStorage.getItem(REMEMBER_EMAIL_KEY) || '';
 
   const onFinish = async (values: { email: string; password: string }) => {
     if (!captchaValid) {
@@ -25,6 +28,12 @@ export default function StoreAdminLoginPage() {
     try {
       const json = await apiPost('/api/store-admin/login', values, { skipAuth: true });
       if (json.success && json.data?.token) {
+        // 记住邮箱
+        if (rememberMe) {
+          localStorage.setItem(REMEMBER_EMAIL_KEY, values.email);
+        } else {
+          localStorage.removeItem(REMEMBER_EMAIL_KEY);
+        }
         localStorage.setItem(STORE_ADMIN_TOKEN_KEY, json.data.token);
         localStorage.setItem(STORE_ADMIN_USER_KEY, JSON.stringify(json.data.user));
         message.success('登录成功');
@@ -66,6 +75,7 @@ export default function StoreAdminLoginPage() {
           onFinish={onFinish}
           layout="vertical"
           size="large"
+          initialValues={{ email: savedEmail }}
         >
           <Form.Item
             name="email"
@@ -85,6 +95,17 @@ export default function StoreAdminLoginPage() {
               <span className="text-sm text-gray-500">图形验证码</span>
             </div>
             <ImageCaptcha onChange={(valid) => setCaptchaValid(valid)} />
+          </Form.Item>
+          <Form.Item>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+              />
+              <span className="text-sm text-gray-600">记住账号</span>
+            </label>
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" loading={loading} block>

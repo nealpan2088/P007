@@ -24,6 +24,7 @@ export const PUBLIC_ROUTES = {
   // 公共信息页
   PUBLIC: {
     ABOUT: '/about',
+    SCAN_DEMO: '/scan-demo',
     PRICING: '/pricing',
     FEATURES: '/features',
     CONTACT: '/contact',

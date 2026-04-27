@@ -452,10 +452,44 @@ export default function HomePage() {
   );
 
   return (
+    <>
+      {/* ─── 内联移动端响应式样式 ─── */}
+      <style>{`
+        @media (max-width: 640px) {
+          .hp-hero, .hp-features, .hp-mockup, .hp-roles, .hp-pricing, .hp-cta, .hp-footer {
+            padding-left: 12px !important;
+            padding-right: 12px !important;
+          }
+          .hp-hero {
+            padding-top: 80px !important;
+            padding-bottom: 40px !important;
+          }
+          .hp-nav {
+            padding-left: 12px !important;
+            padding-right: 12px !important;
+          }
+          .hp-section-title {
+            font-size: 22px !important;
+          }
+          .hp-card {
+            padding: 20px 16px !important;
+          }
+          .hp-role-btn {
+            width: 100% !important;
+          }
+        }
+        /* iPad 等中等屏幕 */
+        @media (min-width: 641px) and (max-width: 1024px) {
+          .hp-hero, .hp-features, .hp-mockup, .hp-roles, .hp-pricing, .hp-cta, .hp-footer {
+            padding-left: 24px !important;
+            padding-right: 24px !important;
+          }
+        }
+      `}</style>
     <div style={styles.page}>
 
       {/* ─────── Nav ─────── */}
-      <nav style={{ ...styles.nav, boxShadow: scrolled ? '0 1px 6px rgba(0,0,0,0.06)' : 'none' }}>
+      <nav className="hp-nav" style={{ ...styles.nav, boxShadow: scrolled ? '0 1px 6px rgba(0,0,0,0.06)' : 'none' }}>
         <a href="/" style={styles.navLogo}>
           {icons.qilin}
           <span>麒麟云点餐</span>
@@ -473,7 +507,7 @@ export default function HomePage() {
       </nav>
 
       {/* ─────── Hero ─────── */}
-      <section style={styles.hero}>
+      <section className="hp-hero" style={styles.hero}>
         <div style={styles.heroBg} />
         <div style={styles.heroBg2} />
         <div style={styles.heroContent}>
@@ -527,6 +561,19 @@ export default function HomePage() {
               onMouseLeave={e => { e.currentTarget.style.background = '#fff'; }}>
               体验扫码点餐 →
             </a>
+            <Link to="/scan-demo"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '6px 16px', borderRadius: 20,
+                background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(4px)',
+                color: 'white', fontSize: 13, textDecoration: 'none',
+                border: '1px solid rgba(255,255,255,0.25)',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.25)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; }}>
+              📖 场景介绍
+            </Link>
           </div>
         </div>
       </section>
@@ -542,7 +589,7 @@ export default function HomePage() {
       </section>
 
       {/* ─────── Features ─────── */}
-      <section id="features" style={styles.section}>
+      <section id="features" className="hp-features" style={styles.section}>
         <h2 style={styles.sectionTitle}>不止于点餐</h2>
         <p style={styles.sectionSubtitle}>从顾客扫码到经营管理，全链路数字化</p>
         <div style={styles.featuresGrid}>
@@ -561,7 +608,7 @@ export default function HomePage() {
       </section>
 
       {/* ─────── Mockup ─────── */}
-      <section style={styles.mockupSection}>
+      <section className="hp-mockup" style={styles.mockupSection}>
         <div style={styles.mockupContainer}>
           <h2 style={styles.sectionTitle}>看看它长什么样</h2>
           <p style={{ ...styles.sectionSubtitle, marginBottom: 0 }}>简洁、高效、适合餐饮行业的管理界面</p>
@@ -586,7 +633,7 @@ export default function HomePage() {
       </section>
 
       {/* ─────── Role Entry ─────── */}
-      <section style={{ ...styles.section, paddingTop: 60, paddingBottom: 60 }}>
+      <section className="hp-roles" style={{ ...styles.section, paddingTop: 60, paddingBottom: 60 }}>
         <h2 style={styles.sectionTitle}>选择你的角色</h2>
         <p style={styles.sectionSubtitle}>根据身份进入对应的管理后台</p>
         <div style={{
@@ -626,7 +673,7 @@ export default function HomePage() {
       </section>
 
       {/* ─────── Pricing ─────── */}
-      <section id="pricing" style={{ ...styles.section, paddingTop: 40 }}>
+      <section id="pricing" className="hp-pricing" style={{ ...styles.section, paddingTop: 40 }}>
         <h2 style={styles.sectionTitle}>简单透明的定价</h2>
         <p style={styles.sectionSubtitle}>从小店到连锁，总有适合你的方案</p>
         <div style={styles.pricingGrid}>
@@ -698,7 +745,7 @@ export default function HomePage() {
       </section>
 
       {/* ─────── CTA ─────── */}
-      <section style={styles.ctaSection}>
+      <section className="hp-cta" style={styles.ctaSection}>
         <h2 style={styles.ctaTitle}>准备好数字化升级了吗？</h2>
         <p style={styles.ctaSubtitle}>免费注册，3分钟完成店铺配置，立刻开始接单。</p>
         <div style={styles.heroActions}>
@@ -718,7 +765,7 @@ export default function HomePage() {
       </section>
 
       {/* ─────── Footer ─────── */}
-      <footer style={styles.footer}>
+      <footer className="hp-footer" style={styles.footer}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {icons.qilin}
@@ -734,5 +781,6 @@ export default function HomePage() {
       </footer>
 
     </div>
+    </>
   );
 }

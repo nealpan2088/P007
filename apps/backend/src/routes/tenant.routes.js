@@ -629,7 +629,7 @@ export async function registerTenantRoutes(fastify) {
   });
 
   // 批量更新餐桌状态
-  fastify.patch(TENANT_ROUTES.TABLES.BATCH_STATUS, { preHandler: [authenticate] }, async (request, reply) => {
+  fastify.post(TENANT_ROUTES.TABLES.BATCH_STATUS, { preHandler: [authenticate] }, async (request, reply) => {
     try {
       const { storeId } = request.params;
       const { tableIds, status } = request.body;

@@ -319,7 +319,7 @@ export default function UserManagementPage() {
         confirmLoading={createLoading}
         okText="创建"
         cancelText="取消"
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={createForm} layout="vertical" onFinish={handleCreateUser}>
           <Form.Item name="email" label="邮箱" rules={[

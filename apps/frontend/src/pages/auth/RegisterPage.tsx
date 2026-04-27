@@ -4,6 +4,31 @@ import { useAuth } from '../../hooks/useAuth';
 import { PUBLIC_ROUTES } from '../../config/routes';
 import './AuthStyles.css';
 
+const STORAGE_KEY = 'qilin_register_draft';
+
+/** 从 localStorage 恢复草稿 */
+function loadDraft() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return null;
+}
+
+/** 保存草稿到 localStorage */
+function saveDraft(data: Record<string, any>) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch {}
+}
+
+/** 清除草稿 */
+function clearDraft() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {}
+}
+
 const PLANS = [
   {
     key: 'FREE',
@@ -60,15 +85,11 @@ const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const { register, isLoading, error } = useAuth();
 
-  const [formData, setFormData] = useState({
-    email: '',
-    username: '',
-    fullName: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-    agreeToTerms: false,
-    marketingConsent: false,
+  const [formData, setFormData] = useState(() => {
+    const draft = loadDraft();
+    return draft
+      ? { ...{ email: '', username: '', fullName: '', phone: '', password: '', confirmPassword: '', agreeToTerms: false, marketingConsent: false }, ...draft }
+      : { email: '', username: '', fullName: '', phone: '', password: '', confirmPassword: '', agreeToTerms: false, marketingConsent: false };
   });
 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -105,6 +126,7 @@ const RegisterPage: React.FC = () => {
       };
       const success = await register(userData);
       if (success) {
+        clearDraft();
         setRegistrationSuccess(true);
         setTimeout(() => navigate(PUBLIC_ROUTES.AUTH.LOGIN), 3000);
       }
@@ -115,7 +137,12 @@ const RegisterPage: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    const newVal = type === 'checkbox' ? checked : value;
+    setFormData((prev: typeof formData) => {
+      const next = { ...prev, [name]: newVal };
+      saveDraft(next);
+      return next;
+    });
     if (validationErrors[name]) {
       setValidationErrors(prev => { const n = { ...prev }; delete n[name]; return n; });
     }

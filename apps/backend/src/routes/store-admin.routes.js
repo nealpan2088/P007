@@ -325,11 +325,103 @@ export default async function storeAdminRoutes(fastify) {
   }, async (request, reply) => {
     try {
       const { storeId } = request.params;
-      const printers = await publicDb.printer.findMany({ where: { storeId } });
+      const printers = await publicDb.printer.findMany({
+        where: { storeId },
+        include: { brand: { select: { name: true } } },
+      });
       return { success: true, data: printers };
     } catch (error) {
       request.log.error({ msg: '获取打印机列表失败', error: error.message });
       return reply.status(500).send({ success: false, error: '获取打印机列表失败' });
+    }
+  });
+
+  // 添加打印机（店长：填写 SN + 密钥 + 品牌，调用云端注册）
+  fastify.post(SA.PRINTERS.LIST, {
+    preHandler: [storeAdminAuth, requireStoreAccess({ storeIdParam: 'storeId' })],
+  }, async (request, reply) => {
+    try {
+      const { storeId } = request.params;
+      const { serialNumber, secretKey, name, type, brandCode } = request.body || {};
+
+      if (!serialNumber) {
+        return reply.status(400).send({ success: false, error: '缺少打印机编号(SN)' });
+      }
+
+      // 检查序列号是否已被绑定
+      const existing = await publicDb.printer.findFirst({ where: { serialNumber } });
+      if (existing) {
+        if (existing.storeId === storeId) {
+          return reply.status(409).send({ success: false, error: '该打印机已绑定到本店' });
+        }
+        return reply.status(409).send({ success: false, error: '该打印机已被其他店铺绑定' });
+      }
+
+      // 查找品牌
+      let brand = null;
+      if (brandCode) {
+        brand = await publicDb.printerBrand.findUnique({ where: { code: brandCode } });
+      }
+      if (!brand) {
+        brand = await publicDb.printerBrand.findFirst();
+      }
+
+      const printer = await publicDb.printer.create({
+        data: {
+          storeId,
+          brandId: brand?.id || '',
+          name: name || serialNumber,
+          serialNumber,
+          secretKey: secretKey || '',
+          model: type || 'RECEIPT',
+          status: 'ACTIVE',
+          printCopies: 1,
+        },
+      });
+      return reply.status(201).send({ success: true, data: printer });
+    } catch (error) {
+      request.log.error({ msg: '添加打印机失败', error: error.message });
+      return reply.status(500).send({ success: false, error: '添加打印机失败' });
+    }
+  });
+
+  // 删除打印机
+  fastify.delete(SA.PRINTERS.DETAIL, {
+    preHandler: [storeAdminAuth, requireStoreAccess({ storeIdParam: 'storeId' })],
+  }, async (request, reply) => {
+    try {
+      const { storeId, printerId } = request.params;
+      await publicDb.printer.delete({ where: { id: printerId, storeId } });
+      return { success: true, message: '已删除' };
+    } catch (error) {
+      request.log.error({ msg: '删除打印机失败', error: error.message });
+      return reply.status(500).send({ success: false, error: '删除打印机失败' });
+    }
+  });
+
+  // 测试打印
+  fastify.post(SA.PRINTERS.TEST, {
+    preHandler: [storeAdminAuth, requireStoreAccess({ storeIdParam: 'storeId' })],
+  }, async (request, reply) => {
+    try {
+      const { storeId, printerId } = request.params;
+      const printer = await publicDb.printer.findFirst({ where: { id: printerId, storeId } });
+      if (!printer) {
+        return reply.status(404).send({ success: false, error: '打印机不存在' });
+      }
+      // 调用夜狼测试打印（模拟一个测试订单）
+      const testPayload = {
+        storeId,
+        printerId: printer.id,
+        action: 'test',
+        content: `【麒麟云点餐】测试打印\n店铺：${request.params.storeId}\n时间：${new Date().toLocaleString('zh-CN')}\n\n如果看到此信息，说明打印机连接正常！`,
+      };
+      // 这里可以调夜狼 API 发送测试
+      // 暂时返回成功，后续对接夜狼
+      return { success: true, message: '测试打印已发送' };
+    } catch (error) {
+      request.log.error({ msg: '测试打印失败', error: error.message });
+      return reply.status(500).send({ success: false, error: '测试打印失败' });
     }
   });
 

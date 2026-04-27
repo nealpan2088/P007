@@ -187,6 +187,7 @@ model Table {
   capacity    Int      @default(4)
   status      String   @default("AVAILABLE")
   qrCodeUrl   String?
+  shortCode   String?  @unique
   notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -197,6 +198,7 @@ model Table {
   @@unique([storeId, tableNumber])
   @@index([storeId])
   @@index([tableNumber])
+  @@index([shortCode])
 }
 
 // ============================================

@@ -185,7 +185,9 @@ fastify.register(registerAuthRoutes, { prefix: '/api/v1/auth' })
 
 // 店长端API路由（独立于管理后台）
 import storeAdminRoutes from './routes/store-admin.routes.js'
+import registerShortLinkRoutes from './routes/short-link.routes.js'
 fastify.register(storeAdminRoutes, { prefix: '/api/store-admin' })
+fastify.register(registerShortLinkRoutes)
 
 // ==================== 图片上传 ====================
 import multipart from '@fastify/multipart';

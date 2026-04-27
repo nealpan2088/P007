@@ -198,3 +198,7 @@ apps/backend/node_modules/@prisma/
 /tmp/
 /logs/uploads/
 apps/uploads/
+# Runtime data
+apps/backend/data/
+*.bak.*
+

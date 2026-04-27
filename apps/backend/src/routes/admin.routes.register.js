@@ -8,6 +8,7 @@ import PrinterService from '../services/printer/printer.service.js';
 import { authenticate, requireStoreAccess } from '../middleware/index.js';
 import { ADMIN_ROUTES } from '../config/routes.js';
 import * as tenantService from '../services/tenant.service.js';
+import DemoShopService from '../services/demo-shop.service.js';
 
 const STORES = ADMIN_ROUTES.STORES;
 const DASHBOARD = ADMIN_ROUTES.DASHBOARD;
@@ -514,6 +515,33 @@ export function registerAdminRoutes(fastify) {
 
   // ═══ 在线客服聊天管理（超管） ═══
   fastify.register(chatAdminRoutes);
+
+  // ═══ 一键演示店铺（超管） ═══
+  fastify.post(ADMIN_ROUTES.DEMO.CREATE, async (request, reply) => {
+    try {
+      const { shopName, contactPhone } = request.body || {};
+      if (!shopName || !shopName.trim()) {
+        return reply.code(400).send({ code: 400, error: '缺少店铺名称' });
+      }
+      const result = await DemoShopService.createDemoShop({
+        shopName: shopName.trim(),
+        contactPhone: contactPhone || '',
+        adminUserId: request.user?.id,
+      });
+      return reply.code(200).send({
+        code: 200,
+        message: '演示店铺创建成功',
+        data: result.data,
+      });
+    } catch (error) {
+      request.log.error({ msg: '创建演示店铺失败', error: error.message });
+      // Unique 冲突
+      if (error.code === 'P2002') {
+        return reply.code(409).send({ code: 409, error: '数据冲突，请重试' });
+      }
+      return reply.code(500).send({ code: 500, error: error.message });
+    }
+  });
 
   console.log('✅ 管理API路由已注册');
 }

@@ -5,6 +5,7 @@ import { publicDb } from '../db/index.js';
 import { createError } from '../utils/error-handler.js';
 import { validateStoreData, validateBusinessHours } from '../validators/store.validator.js';
 import { checkPlanLimit, isPlanActive, getPlan } from '../config/plan.config.js';
+import { generateUniqueShortCode } from '../utils/short-code.js';
 
 /**
  * 店铺服务类
@@ -98,25 +99,29 @@ class StoreService {
       });
 
       // 创建默认营业时间（模型不存在时跳过）
-      // 创建默认餐桌 A01-A10
+      // 创建默认餐桌 A01-A10（带短码）
       try {
         const defaultTables = Array.from({ length: 10 }, (_, i) => ({
           tableNumber: `A${String(i + 1).padStart(2, '0')}`,
           name: `A${String(i + 1).padStart(2, '0')}`,
           capacity: 4,
         }));
-        await publicDb.$transaction(
-          defaultTables.map((t) =>
-            publicDb.table.create({
-              data: {
-                storeId: store.id,
-                tableNumber: t.tableNumber,
-                name: t.name,
-                capacity: t.capacity,
-              },
-            }),
-          ),
-        );
+        const createPromises = defaultTables.map(async (t) => {
+          const shortCode = await generateUniqueShortCode(async (code) => {
+            const existing = await publicDb.table.findUnique({ where: { shortCode: code } });
+            return !!existing;
+          });
+          return publicDb.table.create({
+            data: {
+              storeId: store.id,
+              tableNumber: t.tableNumber,
+              name: t.name,
+              capacity: t.capacity,
+              shortCode,
+            },
+          });
+        });
+        await Promise.all(createPromises);
       } catch (tableError) {
         console.warn('创建默认餐桌失败（不影响店铺创建）:', tableError.message);
       }

@@ -427,6 +427,11 @@ export const ADMIN_ROUTES = {
     SESSIONS: '/chat/sessions',
     MESSAGES: '/chat/messages',
   },
+
+  // 演示店铺
+  DEMO: {
+    CREATE: '/demo/create',
+  },
 };
 
 // ====== 店长端路由（STORE_ADMIN 专用，相对 /api/store-admin 前缀）======

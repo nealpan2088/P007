@@ -69,9 +69,9 @@ export default function StoreAdminLoginPage() {
         >
           <Form.Item
             name="email"
-            rules={[{ required: true, message: '请输入邮箱' }, { type: 'email', message: '邮箱格式不正确' }]}
+            rules={[{ required: true, message: '请输入邮箱/手机号/用户名' }]}
           >
-            <Input prefix={<UserOutlined />} placeholder="邮箱" />
+            <Input prefix={<UserOutlined />} placeholder="邮箱 / 手机号 / 用户名" />
           </Form.Item>
           <Form.Item
             name="password"

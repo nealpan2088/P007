@@ -16,7 +16,16 @@ import { storeAdminAuth } from '../middleware/auth.middleware.js';
  * 店长登录（独立于主登录，专门验证 STORE_ADMIN 身份）
  */
 async function storeAdminLogin(publicDb, email, password) {
-  const user = await publicDb.user.findUnique({ where: { email } });
+  const user = await publicDb.user.findFirst({
+    where: {
+      OR: [
+        { email },
+        { username: email },
+        { phone: email },
+      ],
+      status: 'ACTIVE',
+    },
+  });
   if (!user || user.status !== 'ACTIVE') {
     return { success: false, error: '账号不存在或已禁用' };
   }

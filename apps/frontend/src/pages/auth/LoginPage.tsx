@@ -34,9 +34,9 @@ const LoginPage: React.FC = () => {
     const errors: Record<string, string> = {};
     
     if (!formData.email.trim()) {
-      errors.email = '邮箱地址不能为空';
+      errors.email = '账号不能为空';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.email = '请输入有效的邮箱地址';
+      // 不强制邮箱格式 — 允许用户名/手机号登录
     }
     
     if (!formData.password) {
@@ -146,16 +146,16 @@ const LoginPage: React.FC = () => {
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
             <label htmlFor="email" className="form-label">
-              邮箱地址
+              账号
             </label>
             <input
-              type="email"
+              type="text"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
               className={`form-input ${validationErrors.email ? 'input-error' : ''}`}
-              placeholder="请输入您的邮箱"
+              placeholder="邮箱 / 手机号 / 用户名"
               disabled={isLoading}
               autoComplete="email"
             />

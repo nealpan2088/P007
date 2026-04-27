@@ -216,9 +216,15 @@ export const userService = {
       const { email, password } = credentials
       const { userAgent, ipAddress, deviceType, deviceId } = requestInfo
       
-      // 查找用户
-      const user = await publicDb.user.findUnique({
-        where: { email },
+      // 查找用户（支持邮箱、用户名、手机号登录）
+      const user = await publicDb.user.findFirst({
+        where: {
+          OR: [
+            { email: email },
+            { username: email },
+            { phone: email },
+          ],
+        },
         include: {
           userTenants: {
             where: {

@@ -14,8 +14,10 @@ const AdminLoginPage: React.FC = () => {
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
-    if (!formData.email.trim()) errors.email = '邮箱地址不能为空';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errors.email = '请输入有效的邮箱地址';
+    if (!formData.email.trim()) errors.email = '账号不能为空';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      // 不强制邮箱格式 — 允许用户名/手机号登录
+    }
     if (!formData.password) errors.password = '密码不能为空';
     else if (formData.password.length < 6) errors.password = '密码至少需要6个字符';
     setValidationErrors(errors);
@@ -52,13 +54,13 @@ const AdminLoginPage: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
-            <label htmlFor="email" className="form-label">邮箱地址</label>
+            <label htmlFor="email" className="form-label">账号</label>
             <input
-              type="email" id="email" name="email"
+              type="text" id="email" name="email"
               value={formData.email}
               onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
               className={`form-input ${validationErrors.email ? 'input-error' : ''}`}
-              placeholder="请输入管理员邮箱" disabled={isLoading}
+              placeholder="邮箱 / 手机号 / 用户名" disabled={isLoading}
               autoComplete="email"
             />
             {validationErrors.email && <div className="form-error">{validationErrors.email}</div>}

@@ -63,7 +63,7 @@ export const authHandlers = {
       if (!email || !password) {
         return reply.code(400).send({
           error: 'Bad Request',
-          message: '邮箱和密码是必填项',
+          message: '账号和密码是必填项',
           code: 'VALIDATION_ERROR',
         })
       }
@@ -111,7 +111,7 @@ export const authHandlers = {
     try {
       const { email, password } = request.body
       if (!email || !password) {
-        return reply.code(400).send({ error: 'Bad Request', message: '邮箱和密码是必填项', code: 'VALIDATION_ERROR' })
+        return reply.code(400).send({ error: 'Bad Request', message: '账号和密码是必填项', code: 'VALIDATION_ERROR' })
       }
       const requestInfo = {
         userAgent: request.headers['user-agent'],
@@ -138,7 +138,7 @@ export const authHandlers = {
     try {
       const { email, password } = request.body
       if (!email || !password) {
-        return reply.code(400).send({ error: 'Bad Request', message: '邮箱和密码是必填项', code: 'VALIDATION_ERROR' })
+        return reply.code(400).send({ error: 'Bad Request', message: '账号和密码是必填项', code: 'VALIDATION_ERROR' })
       }
       const requestInfo = {
         userAgent: request.headers['user-agent'],

@@ -36,6 +36,9 @@ export function getStoreTypeText(type: StoreType): string {
     CAFE: '咖啡厅',
     FAST_FOOD: '快餐店',
     BAKERY: '面包店',
+    BAR: '酒吧',
+    FOOD_TRUCK: '餐车',
+    CATERING: '食堂/团餐',
     OTHER: '其他',
   };
   return typeMap[type] || type;

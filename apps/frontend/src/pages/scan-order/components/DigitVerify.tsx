@@ -18,7 +18,7 @@ const DigitVerify: React.FC<DigitVerifyProps> = ({ isOpen, onVerify, onCancel, e
   const [clickedIndexes, setClickedIndexes] = useState<number[]>([]);
   const [phase, setPhase] = useState<'show' | 'input' | 'success' | 'error'>('show');
   const [errorMsg, setErrorMsg] = useState('');
-  const inputTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const inputTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // 生成一组新的验证码
   const generateCode = useCallback(() => {

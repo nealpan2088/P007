@@ -6,7 +6,7 @@ interface MenuSectionProps {
   categories: MenuCategory[];
   filteredCategories: MenuCategory[];
   selectedCategory: string | null;
-  onSelectCategory: (categoryId: string) => void;
+  onSelectCategory: (categoryId: string | null) => void;
   onAddToCart: (menuItemId: string) => void;
   onViewDetails?: (item: MenuItem) => void;
   isLoading?: boolean;

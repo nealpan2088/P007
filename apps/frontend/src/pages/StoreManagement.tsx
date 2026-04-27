@@ -115,7 +115,7 @@ const StoreManagement: React.FC = () => {
     
     try {
       // 后端 DELETE 接口路径：/api/store/stores/:storeId?tenantSlug=xxx
-      const url = API_ENDPOINTS.TENANT.STORES.DETAIL.replace(':storeId', storeToDelete.id) + `?tenantSlug=${encodeURIComponent(tenantSlugFromUrl)}`;
+      const url = API_ENDPOINTS.TENANT.STORES.DETAIL.replace(':storeId', String(storeToDelete.id)) + `?tenantSlug=${encodeURIComponent(tenantSlugFromUrl)}`;
       const result = await apiDelete(url);
       
       if (result.success) {
@@ -320,7 +320,7 @@ const StoreManagement: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" color="text.secondary">
-                        {new Date(store.createdAt || store.created_at).toLocaleDateString()}
+                        {new Date(store.createdAt || store.created_at || '').toLocaleDateString()}
                       </Typography>
                     </TableCell>
                     <TableCell align="right">

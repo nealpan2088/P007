@@ -88,7 +88,7 @@ const TenantManagement: React.FC = () => {
     };
   }, []);
 
-  const fetchTenants = async () => {
+  const fetchTenants = async (signal?: AbortSignal) => {
     try {
       setLoading(true);
       setError(null);

@@ -82,7 +82,7 @@ export function useScanOrder(storeSlug: string, tableId: string, mode: string = 
   };
 
   // 选择分类
-  const selectCategory = useCallback((categoryId: string) => {
+  const selectCategory = useCallback((categoryId: string | null) => {
     setState(prev => ({
       ...prev,
       selectedCategory: categoryId,

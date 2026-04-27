@@ -15,6 +15,7 @@ function getToken(): string | null {
 
 interface ApiClientOptions extends RequestInit {
   skipAuth?: boolean;
+  params?: Record<string, string>;
 }
 
 /**
@@ -25,7 +26,7 @@ async function apiRequest<T = any>(
   path: string,
   options: ApiClientOptions = {},
 ): Promise<T> {
-  const { skipAuth = false, headers: customHeaders, ...restOptions } = options;
+  const { skipAuth = false, headers: customHeaders, params, ...restOptions } = options;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -46,6 +47,12 @@ async function apiRequest<T = any>(
     url = path;
   } else {
     url = `${API_BASE}${path.startsWith('/') ? '' : '/'}${path}`;
+  }
+
+  // 拼接查询参数
+  if (params && Object.keys(params).length > 0) {
+    const searchParams = new URLSearchParams(params);
+    url += (url.includes('?') ? '&' : '?') + searchParams.toString();
   }
 
   const response = await fetch(url, {

@@ -19,6 +19,7 @@ interface Store {
   status: string;
   themeColor?: string;
   logoUrl?: string;
+  headerImageUrl?: string;
   themeTemplate?: string;
   createdAt: string;
   tenant: Tenant;

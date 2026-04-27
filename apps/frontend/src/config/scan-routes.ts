@@ -40,12 +40,12 @@ export const SCAN_ROUTES = {
   // 测试用的标准租户、店铺和餐桌
   TEST: {
     TENANT: {
-      SLUG: 'sdsd',
-      NAME: '大杀四方',
+      SLUG: 'qilin-test',
+      NAME: '麒麟测试租户',
     },
     STORE: {
-      SLUG: 'panhaiping',
-      NAME: 'panhaiping',
+      SLUG: 'qilin-test-restaurant',
+      NAME: '麒麟测试餐厅',
     },
     TABLE: {
       CODE: 'A01',

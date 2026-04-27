@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { PUBLIC_ROUTES, ADMIN_ROUTES } from '../../config/routes';
+import ImageCaptcha from '../../components/ImageCaptcha';
 import './AuthStyles.css';
 
 const AdminLoginPage: React.FC = () => {
@@ -9,6 +10,7 @@ const AdminLoginPage: React.FC = () => {
 
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [captchaValid, setCaptchaValid] = useState(false);
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
@@ -23,6 +25,10 @@ const AdminLoginPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
+    if (!captchaValid) {
+      setValidationErrors(prev => ({ ...prev, captcha: '请完成图形验证码' }));
+      return;
+    }
     const success = await adminLogin(formData.email, formData.password);
     if (success) {
       window.location.href = ADMIN_ROUTES.ADMIN;
@@ -72,6 +78,12 @@ const AdminLoginPage: React.FC = () => {
               autoComplete="current-password"
             />
             {validationErrors.password && <div className="form-error">{validationErrors.password}</div>}
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">图形验证码</label>
+            <ImageCaptcha onChange={setCaptchaValid} />
+            {validationErrors.captcha && <div className="form-error">{validationErrors.captcha}</div>}
           </div>
 
           <button type="submit" className="auth-button primary" disabled={isLoading}>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { PUBLIC_ROUTES, ADMIN_ROUTES } from '../../config/routes';
+import ImageCaptcha from '../../components/ImageCaptcha';
 import './AuthStyles.css';
 
 const LoginPage: React.FC = () => {
@@ -27,6 +28,7 @@ const LoginPage: React.FC = () => {
   });
   
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [captchaValid, setCaptchaValid] = useState(false);
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
@@ -51,6 +53,11 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     
     if (!validateForm()) {
+      return;
+    }
+    
+    if (!captchaValid) {
+      setValidationErrors(prev => ({ ...prev, captcha: '请完成图形验证码' }));
       return;
     }
     
@@ -180,6 +187,12 @@ const LoginPage: React.FC = () => {
             {validationErrors.password && (
               <div className="form-error">{validationErrors.password}</div>
             )}
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">图形验证码</label>
+            <ImageCaptcha onChange={setCaptchaValid} />
+            {validationErrors.captcha && <div className="form-error">{validationErrors.captcha}</div>}
           </div>
 
           <div className="form-group checkbox-group">

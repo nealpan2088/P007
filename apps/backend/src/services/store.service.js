@@ -85,24 +85,28 @@ class StoreService {
       });
 
       // 创建默认营业时间（模型不存在时跳过）
-      // this.db.storeBusinessHours 模型未定义，暂时注释
-      // await this.createDefaultBusinessHours(store.id);
-
-      // 创建店铺员工关联（模型不存在时跳过）
-      // 注释整个数据块
-      /*
-      await this.db.storeStaff.create({
-        data: {
-          storeId: store.id,
-          userId,
-          role: 'OWNER',
-          isActive: true,
-          joinedAt: new Date(),
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      });
-      */
+      // 创建默认餐桌 A01-A10
+      try {
+        const defaultTables = Array.from({ length: 10 }, (_, i) => ({
+          tableNumber: `A${String(i + 1).padStart(2, '0')}`,
+          name: `A${String(i + 1).padStart(2, '0')}`,
+          capacity: 4,
+        }));
+        await publicDb.$transaction(
+          defaultTables.map((t) =>
+            publicDb.table.create({
+              data: {
+                storeId: store.id,
+                tableNumber: t.tableNumber,
+                name: t.name,
+                capacity: t.capacity,
+              },
+            }),
+          ),
+        );
+      } catch (tableError) {
+        console.warn('创建默认餐桌失败（不影响店铺创建）:', tableError.message);
+      }
 
       return {
         success: true,

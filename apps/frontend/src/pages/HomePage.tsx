@@ -401,7 +401,7 @@ const features = [
   { title: '云打印自动分发', desc: '订单自动分发到对应厨房、吧台、前台打印机。后厨出单、前台小票全自动，不漏单不断单。', icon: icons.print },
   { title: '多店铺统一管理', desc: '一个后台管理多家门店。菜品、订单、打印机、数据报表一目了然，连锁餐饮高效管理。', icon: icons.multi },
   { title: '数据分析看板', desc: '实时销售数据、热门菜品排行、高峰时段分析、门店经营对比，数据驱动经营决策。', icon: icons.chart },
-  { title: '租户隔离 · 安全可靠', desc: 'SaaS 多租户架构，数据独立安全存储。支持品牌定制域名，每个商户拥有独立空间。', icon: icons.shield },
+  { title: '租户隔离 · 安全可靠', desc: '高效多租户架构，数据独立安全存储。支持品牌定制域名，每个商户拥有独立空间。', icon: icons.shield },
   { title: '极速流畅体验', desc: '前后端分离架构 + CDN 加速。页面秒开，操作流畅不卡顿，顾客扫码3秒直达菜单。', icon: icons.bolt },
 ];
 
@@ -447,7 +447,7 @@ export default function HomePage() {
         <div style={styles.heroBg} />
         <div style={styles.heroBg2} />
         <div style={styles.heroContent}>
-          <div style={styles.heroBadge}>🚀 专为中小餐饮品牌打造的 SaaS 方案</div>
+          <div style={styles.heroBadge}>🚀 专为中小餐饮品牌打造的高效方案</div>
           <h1 style={styles.heroTitle}>
             扫码点餐<br />云打印 · 一键管理
           </h1>
@@ -573,11 +573,12 @@ export default function HomePage() {
         <div style={styles.pricingGrid}>
           {[
             {
-              name: '基础版',
+              name: '免费版',
               price: '¥0',
-              period: '/月（免费）',
-              desc: '初创小店，先体验再付费',
-              features: ['1家门店', '扫码点餐基础功能', '1台打印机', '30天数据留存'],
+              period: '/月',
+              desc: '初创小店，14天全功能免费试用',
+              badge: '免费试用',
+              features: ['1家门店', '扫码点餐基础功能', '1台云打印机', '30天数据留存', '基础数据看板'],
               popular: false,
             },
             {
@@ -585,7 +586,8 @@ export default function HomePage() {
               price: '¥199',
               period: '/月',
               desc: '成长型餐饮品牌，功能全面',
-              features: ['最多5家门店', '扫码点餐 + 云打印', '不限打印机数量', '数据看板 + 报表', '90天数据留存'],
+              badge: '推荐',
+              features: ['最多5家门店', '不限打印机数量', '扫码点餐 + 云打印', '数据看板 + 报表', '90天数据留存', '多店统一管理'],
               popular: true,
             },
             {
@@ -593,6 +595,7 @@ export default function HomePage() {
               price: '¥499',
               period: '/月',
               desc: '连锁品牌，定制化需求',
+              badge: '连锁首选',
               features: ['不限门店数量', '全部功能', '品牌定制域名', 'API 接口对接', '专属客户成功经理', '永久数据留存'],
               popular: false,
             },
@@ -654,7 +657,7 @@ export default function HomePage() {
             <span style={{ fontWeight: 600 }}>麒麟云点餐</span>
           </div>
           <div style={{ fontSize: 12, color: '#bbb' }}>
-            © 2026 麒麟云点餐 · 多店扫码点餐云打印 SaaS 平台
+            © 2026 麒麟云点餐 · 多店扫码点餐云打印高效平台
           </div>
           <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#bbb' }}>
             <span>v0.2.6-alpha</span>

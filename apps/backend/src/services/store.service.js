@@ -4,6 +4,7 @@
 import { publicDb } from '../db/index.js';
 import { createError } from '../utils/error-handler.js';
 import { validateStoreData, validateBusinessHours } from '../validators/store.validator.js';
+import { checkPlanLimit, isPlanActive, getPlan } from '../config/plan.config.js';
 
 /**
  * 店铺服务类
@@ -36,6 +37,18 @@ class StoreService {
 
       if (!tenant) {
         throw createError('NOT_FOUND', '租户不存在或已停用');
+      }
+
+      // 检查租户套餐是否有效
+      if (!isPlanActive(tenant)) {
+        throw createError('PAYMENT_REQUIRED', '您的试用期已结束，请升级套餐以继续使用');
+      }
+
+      // 检查店铺数量是否超出套餐限制
+      const storeCount = await this.db.store.count({ where: { tenantId } });
+      const limitCheck = checkPlanLimit(tenant.plan, 'stores', storeCount);
+      if (!limitCheck.allowed) {
+        throw createError('FORBIDDEN', limitCheck.message);
       }
 
       // 检查用户是否有权限

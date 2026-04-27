@@ -78,7 +78,8 @@ export const passwordUtils = {
   },
 }
 
-// Token工具
+// 套餐计划配置
+import { getPlan, isPlanActive, getTrialRemainingDays } from '../config/plan.config.js'
 export const tokenUtils = {
   // 生成JWT Token
   generateToken(payload, options = {}) {
@@ -191,6 +192,26 @@ export const userService = {
         },
       })
       
+      // 自动创建租户并关联用户（免费版 + 14天试用）
+      const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+      const tenant = await publicDb.tenant.create({
+        data: {
+          name: `${username || email}的店铺`,
+          subdomain: `t_${user.id.slice(-8)}`,
+          description: `${email} 的餐饮管理系统`,
+          plan: 'FREE',
+          trialEndsAt,
+          status: 'ACTIVE',
+          userTenants: {
+            create: {
+              userId: user.id,
+              role: 'OWNER',
+              status: 'ACTIVE',
+            },
+          },
+        },
+      })
+      
       return {
         success: true,
         user: {
@@ -199,7 +220,14 @@ export const userService = {
           username: user.username,
           status: user.status,
         },
-        message: '用户注册成功',
+        tenant: {
+          id: tenant.id,
+          name: tenant.name,
+          subdomain: tenant.subdomain,
+          plan: tenant.plan,
+          trialEndsAt: tenant.trialEndsAt,
+        },
+        message: '注册成功，已为您创建测试店铺（14天免费试用）',
       }
     } catch (error) {
       console.error('用户注册失败:', error)

@@ -5,6 +5,7 @@
 import { PrismaClient } from '@prisma/client';
 import { authenticate } from '../middleware/index.js';
 import { ADMIN_ROUTES } from '../config/routes.js';
+import { CATEGORY_MAP, BASE_CATEGORIES, getMappedCategoryName } from '../constants/menu-template-map.constants.js';
 
 const MENU_TPL = ADMIN_ROUTES.MENU_TEMPLATES;
 const prisma = new PrismaClient();
@@ -192,33 +193,47 @@ export default async function menuTemplateRoutes(fastify) {
         return reply.code(404).send({ success: false, error: '未找到指定的模板' });
       }
 
-      // 按分类名自动创建店铺分类
-      const categoryMap = new Map();
-      for (const tpl of templates) {
-        if (!categoryMap.has(tpl.categoryName)) {
-          let category = await prisma.menuCategory.findFirst({
-            where: { storeId, name: tpl.categoryName },
+      // 确保基础分类存在（与一键演示店铺使用同一套映射规则）
+      for (const base of BASE_CATEGORIES) {
+        const existing = await prisma.menuCategory.findFirst({
+          where: { storeId, name: base.name },
+        });
+        if (!existing) {
+          await prisma.menuCategory.create({
+            data: {
+              storeId,
+              name: base.name,
+              description: '',
+              sortOrder: base.order,
+              isActive: true,
+            },
           });
-          if (!category) {
-            category = await prisma.menuCategory.create({
-              data: { storeId, name: tpl.categoryName },
-            });
-          }
-          categoryMap.set(tpl.categoryName, category);
         }
       }
 
-      // 批量导入（跳过重名）
+      // 预取当前店铺的所有分类，建立 name → id 映射
+      const allCats = await prisma.menuCategory.findMany({
+        where: { storeId, isActive: true },
+      });
+      const catIdByName = {};
+      for (const c of allCats) {
+        catIdByName[c.name] = c.id;
+      }
+
+      // 批量导入（跳过重名），按映射表归入基础分类
       let created = 0, skipped = 0;
       for (const tpl of templates) {
-        const category = categoryMap.get(tpl.categoryName);
+        const baseName = getMappedCategoryName(tpl.categoryName);
+        const categoryId = catIdByName[baseName];
+        if (!categoryId) continue; // 不应发生，但安全兜底
+
         const existing = await prisma.menuItem.findFirst({
-          where: { categoryId: category.id, name: tpl.name },
+          where: { categoryId, name: tpl.name },
         });
         if (existing) { skipped++; continue; }
         await prisma.menuItem.create({
           data: {
-            categoryId: category.id,
+            categoryId,
             name: tpl.name,
             description: tpl.description,
             price: tpl.price,

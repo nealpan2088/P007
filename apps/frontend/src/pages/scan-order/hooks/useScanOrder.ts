@@ -63,12 +63,15 @@ export function useScanOrder(storeSlug: string, tableId: string, mode: string = 
         tableInfo = await apiUtils.fetchTableInfo(storeSlug, tableId);
       }
 
+      // 过滤掉没有菜品的空分类
+      const nonEmptyCategories = categories.filter(cat => (cat.itemCount ?? cat.items.length) > 0);
+
       setState(prev => ({
         ...prev,
         storeInfo,
         tableInfo,
-        categories,
-        selectedCategory: categories.length > 0 ? categories[0].id : null,
+        categories: nonEmptyCategories,
+        selectedCategory: null, // 默认显示"全部"，不选中任何分类
         isLoading: false,
       }));
     } catch (error) {
@@ -193,6 +196,7 @@ export function useScanOrder(storeSlug: string, tableId: string, mode: string = 
       setState(prev => ({
         ...prev,
         orderStatus,
+        verificationCode: result.verification_code,
         isCartOpen: false,
         isLoading: false,
       }));

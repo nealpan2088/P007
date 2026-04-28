@@ -110,6 +110,7 @@ const RegisterPage: React.FC = () => {
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState('FREE');
+  const [showContactModal, setShowContactModal] = useState(false);
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
@@ -183,7 +184,7 @@ const RegisterPage: React.FC = () => {
           <div className="success-icon">🎉</div>
           <h1 className="auth-title">注册成功！</h1>
           <p className="auth-subtitle">
-            欢迎加入麒麟云点餐，<strong>{formData.email}</strong>
+            欢迎加入快点餐，<strong>{formData.email}</strong>
           </p>
           <div className="success-message" style={{ background: '#f0f5ff', padding: 16, borderRadius: 8, margin: '16px 0' }}>
             <p style={{ margin: 0, fontWeight: 600, color: '#667eea' }}>🎁 已为您开通 14 天全功能免费试用</p>
@@ -204,7 +205,7 @@ const RegisterPage: React.FC = () => {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-header">
-          <h1 className="auth-title">注册麒麟云点餐</h1>
+          <h1 className="auth-title">注册快点餐</h1>
           <p className="auth-subtitle">免费注册 · 14天全功能试用 · 无需绑定信用卡</p>
         </div>
 
@@ -407,9 +408,26 @@ const RegisterPage: React.FC = () => {
             </label>
           </div>
 
-          <button type="submit" className="auth-button primary" disabled={isLoading}>
-            {isLoading ? <><span className="spinner"></span>注册中...</> : '免费创建账户'}
+          <button type="button" className="auth-button primary" onClick={() => setShowContactModal(true)}>
+            免费创建账户
           </button>
+
+          {/* 联系客服弹窗 */}
+          {showContactModal && (
+            <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setShowContactModal(false)}>
+              <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center" onClick={e => e.stopPropagation()}>
+                <div className="text-5xl mb-4">💬</div>
+                <p className="text-lg font-semibold text-gray-800 mb-2">联系在线客服</p>
+                <p className="text-gray-500 mb-6">享快速体验通道</p>
+                <button
+                  onClick={() => setShowContactModal(false)}
+                  className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                >
+                  知道了
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="demo-section">
             <button type="button" className="auth-button secondary" onClick={handleDemoRegistration} disabled={isLoading}>

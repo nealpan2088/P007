@@ -230,6 +230,8 @@ export default AdminDashboard;
 function DemoShopModal({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
   const [shopName, setShopName] = useState('');
   const [contactPhone, setContactPhone] = useState('');
+  const [tableCount, setTableCount] = useState('10');
+  const [keyword, setKeyword] = useState('');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<any>(null);
@@ -241,7 +243,7 @@ function DemoShopModal({ onClose, onDone }: { onClose: () => void; onDone: () =>
       background: 'rgba(0,0,0,0.5)',
     }} onClick={() => !creating && !result && onClose()}>
       <div style={{
-        background: '#fff', borderRadius: 12, padding: 28, maxWidth: 460, width: '90%',
+        background: '#fff', borderRadius: 12, padding: 28, maxWidth: 480, width: '90%',
         boxShadow: '0 20px 60px rgba(0,0,0,0.15)', position: 'relative',
       }} onClick={e => e.stopPropagation()}>
         <button style={{
@@ -254,7 +256,7 @@ function DemoShopModal({ onClose, onDone }: { onClose: () => void; onDone: () =>
 <>
 <h3 style={{ margin: '0 0 4px', fontSize: 18, color: '#1a1a2e' }}>🚀 一键创建演示店铺</h3>
 <p style={{ margin: '0 0 20px', fontSize: 13, color: '#888' }}>
-  自动新建用户、租户、菜单、10张餐桌，直接发给朋友体验
+  自动新建用户、租户、菜单、餐桌，直接发给朋友体验
 </p>
 
 {error && (
@@ -269,11 +271,25 @@ function DemoShopModal({ onClose, onDone }: { onClose: () => void; onDone: () =>
     placeholder="例如：张三川菜馆" disabled={creating}
     style={{ width: '100%', padding: '9px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
 </div>
-<div style={{ marginBottom: 20 }}>
+<div style={{ marginBottom: 14 }}>
   <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#333', marginBottom: 4 }}>联系人手机</label>
   <input value={contactPhone} onChange={e => setContactPhone(e.target.value)}
     placeholder="选填" disabled={creating}
     style={{ width: '100%', padding: '9px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+</div>
+<div style={{ marginBottom: 14 }}>
+  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#333', marginBottom: 4 }}>餐桌数量</label>
+  <input type="number" min="1" max="100" value={tableCount} onChange={e => setTableCount(e.target.value)}
+    placeholder="默认10张" disabled={creating}
+    style={{ width: '100%', padding: '9px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+  <p style={{ margin: '2px 0 0', fontSize: 11, color: '#aaa' }}>填 1~100，不填默认10张</p>
+</div>
+<div style={{ marginBottom: 20 }}>
+  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#333', marginBottom: 4 }}>菜品类型</label>
+  <input value={keyword} onChange={e => setKeyword(e.target.value)}
+    placeholder="例如：川菜、汤品、烧烤（不填则随机取菜品）" disabled={creating}
+    style={{ width: '100%', padding: '9px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+  <p style={{ margin: '2px 0 0', fontSize: 11, color: '#aaa' }}>输入菜品类型名称，匹配该分类下所有菜品模板，按映射规则归入店铺分类</p>
 </div>
 
 <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
@@ -288,7 +304,12 @@ function DemoShopModal({ onClose, onDone }: { onClose: () => void; onDone: () =>
       const res = await fetch('/api/admin/demo/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ shopName: shopName.trim(), contactPhone }),
+        body: JSON.stringify({
+          shopName: shopName.trim(),
+          contactPhone,
+          tableCount: parseInt(tableCount, 10) || 10,
+          keyword: keyword.trim(),
+        }),
       });
       const json = await res.json();
       if (json.code === 200) setResult(json.data);
@@ -309,18 +330,61 @@ function DemoShopModal({ onClose, onDone }: { onClose: () => void; onDone: () =>
   <p style={{ margin: 0, fontSize: 13, color: '#888' }}>推荐用店长账号登录（界面更清爽）</p>
 </div>
 
-<div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 8, padding: 14, marginBottom: 8 }}>
-  <div style={{ fontSize: 11, color: '#666', marginBottom: 4, fontWeight: 600 }}>店长账号（推荐）→ 直接管理店铺</div>
+<div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 8, padding: 14, marginBottom: 8, position: 'relative' }}>
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+    <div style={{ fontSize: 11, color: '#666', fontWeight: 600 }}>店长账号（推荐）→ 直接管理店铺</div>
+    <button onClick={() => {
+      const text = `店铺：${result.shopName}\n登录：${result.storeAdminUrl}\n账号：${result.storeAdminEmail}\n密码：${result.storeAdminPassword}`;
+      navigator.clipboard.writeText(text).then(() => alert('已复制店长账号！'));
+    }}
+      style={{ padding: '3px 10px', border: '1px solid #a7f3d0', borderRadius: 4, background: '#fff', color: '#059669', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>
+    📋 复制</button>
+  </div>
   <div style={{ fontSize: 13, marginBottom: 4 }}><span style={{ color: '#666', fontWeight: 600 }}>账号：</span><span style={{ color: '#059669', fontFamily: 'monospace', userSelect: 'all' }}>{result.storeAdminEmail}</span></div>
   <div style={{ fontSize: 13, marginBottom: 4 }}><span style={{ color: '#666', fontWeight: 600 }}>密码：</span><span style={{ color: '#059669', fontFamily: 'monospace', userSelect: 'all' }}>{result.storeAdminPassword}</span></div>
   <div style={{ fontSize: 13 }}><span style={{ color: '#666', fontWeight: 600 }}>登录：</span><a href={result.storeAdminUrl} target="_blank" rel="noreferrer" style={{ color: '#667eea', fontFamily: 'monospace', fontSize: 12 }}>{result.storeAdminUrl}</a></div>
 </div>
 
-<div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: 14, marginBottom: 16, fontSize: 12, color: '#666' }}>
+<div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: 14, marginBottom: 8, fontSize: 12, color: '#666' }}>
   <div style={{ marginBottom: 4, fontWeight: 600, color: '#666' }}>老板账号（进阶）→ 管理多家店</div>
   <div style={{ marginBottom: 2 }}><span style={{ color: '#666' }}>账号：</span><span style={{ fontFamily: 'monospace' }}>{result.ownerEmail}</span> <span style={{ color: '#666' }}>密码：</span><span style={{ fontFamily: 'monospace' }}>{result.ownerPassword}</span></div>
-  <div style={{}}>店铺试用期至 {new Date(result.trialEndsAt).toLocaleDateString('zh-CN')}（30天）</div>
+  <div style={{}}>
+    店铺试用期至 {new Date(result.trialEndsAt).toLocaleDateString('zh-CN')}（30天）
+  </div>
 </div>
+
+{result.theme && (
+<div style={{ borderRadius: 10, overflow: 'hidden', marginBottom: 12, border: '1px solid #e5e7eb' }}>
+  {/* 店头背景预览 — 使用动态生成的 SVG */}
+  <div style={{
+    height: 70,
+    background: result.theme.headerImageUrl
+      ? `center/cover no-repeat url(${result.theme.headerImageUrl})`
+      : `linear-gradient(135deg, ${result.theme.headerConfig.primary} 0%, ${result.theme.headerConfig.secondary} 100%)`,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    position: 'relative', overflow: 'hidden',
+  }}>
+    {!result.theme.headerImageUrl && (<>
+    <div style={{ position: 'absolute', top: -30, right: -15, width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.12)' }} />
+    <div style={{ position: 'absolute', bottom: -25, left: -10, width: 60, height: 60, borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
+    </>)}
+    <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: 1 }}>
+      {result.theme.headerConfig.decorText}
+    </span>
+  </div>
+  {/* 主题信息 */}
+  <div style={{ padding: '8px 12px', background: '#f9fafb', fontSize: 11, color: '#666', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <span>🎨 主题色：<span style={{ color: result.theme.themeColor, fontWeight: 600 }}>{result.theme.headerConfig.paletteName}</span></span>
+    <span style={{
+      background: result.theme.themeColor, color: '#fff',
+      padding: '1px 8px', borderRadius: 10, fontSize: 10,
+    }}>{result.theme.headerConfig.badge}</span>
+  </div>
+  <div style={{ padding: '6px 12px 8px', fontSize: 11, color: '#888', fontStyle: 'italic' }}>
+    “{result.theme.headerConfig.slogan}”
+  </div>
+</div>
+)}
 
 <div style={{ background: '#fefce8', border: '1px solid #fde68a', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 12, color: '#92400e' }}>
   💡 把店长账号发给店家，直接用店长端登录管理店铺

@@ -140,7 +140,7 @@ const LoginPage: React.FC = () => {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-header">
-          <h1 className="auth-title">登录麒麟云点餐</h1>
+          <h1 className="auth-title">登录快点餐</h1>
           <p className="auth-subtitle">欢迎回来，请登录您的账户</p>
         </div>
 
@@ -263,7 +263,7 @@ const LoginPage: React.FC = () => {
         </div>
 
         <div className="auth-features">
-          <h3 className="features-title">麒麟云点餐特色功能</h3>
+          <h3 className="features-title">快点餐特色功能</h3>
           <ul className="features-list">
             <li>✅ 多店铺统一管理</li>
             <li>✅ 扫码点餐，顾客自助下单</li>

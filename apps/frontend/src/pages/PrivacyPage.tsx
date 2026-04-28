@@ -75,12 +75,12 @@ const PrivacyPage: React.FC = () => {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h1 style={styles.title}>麒麟云点餐隐私政策</h1>
+        <h1 style={styles.title}>快点餐隐私政策</h1>
         <p style={styles.updateDate}>最后更新：2026年4月27日</p>
       </div>
 
       <div style={styles.highlight}>
-        <strong>提示：</strong>本隐私政策介绍了麒麟云点餐平台（以下简称"本平台"或"我们"）
+        <strong>提示：</strong>本隐私政策介绍了快点餐平台（以下简称"本平台"或"我们"）
         如何收集、使用、存储和保护您的个人信息。请您在使用本平台服务前仔细阅读。
         使用本平台即表示您同意本隐私政策的条款。
       </div>

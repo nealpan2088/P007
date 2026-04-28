@@ -24,6 +24,7 @@ interface User {
   username: string | null;
   fullName: string | null;
   role: string;
+  derivedRole?: string; // 后端推导的真实角色
   status: string;
   lastLoginAt: string | null;
   createdAt: string;
@@ -43,7 +44,18 @@ export default function UserManagementPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [roleStats, setRoleStats] = useState<Record<string, number>>({});
+  // 0=全部, 1=SUPER_ADMIN, 2=TENANT_ADMIN, 3=USER… 用角色名直接存储
+  const [activeRole, setActiveRole] = useState('');
   const pageSize = 15;
+
+  const ROLES = [
+    { key: '', label: '全部', color: '#666' },
+    { key: 'SUPER_ADMIN', label: '超管', color: '#f5222d' },
+    { key: 'TENANT_ADMIN', label: '租管', color: '#1890ff' },
+    { key: 'STORE_ADMIN', label: '店长', color: '#52c41a' },
+    { key: 'USER', label: '用户', color: '#999' },
+  ];
 
   // 设为店长弹窗
   const [storeModalVisible, setStoreModalVisible] = useState(false);
@@ -67,16 +79,18 @@ export default function UserManagementPage() {
 
   useEffect(() => {
     loadUsers();
-  }, [page, debouncedSearch]);
+  }, [page, debouncedSearch, activeRole]);
 
   async function loadUsers() {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(pageSize) });
       if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim());
+      if (activeRole) params.set('role', activeRole);
       const json = await apiGet(`${API_ENDPOINTS.USERS.LIST}?${params}`);
       setUsers(json?.data || []);
       setTotal(json?.total || 0);
+      if (json?.roleStats) setRoleStats(json.roleStats);
     } catch (err: any) {
       message.error('加载用户列表失败');
     } finally {
@@ -154,13 +168,15 @@ export default function UserManagementPage() {
     }
   };
 
-  const roleBadge = (role: string) => {
+  const roleBadge = (role: string, derivedRole?: string) => {
+    const effectiveRole = derivedRole || role;
     const map: Record<string, { color: string; label: string }> = {
       SUPER_ADMIN: { color: 'red', label: '超管' },
       TENANT_ADMIN: { color: 'blue', label: '租管' },
+      STORE_ADMIN: { color: 'green', label: '店长' },
       USER: { color: 'default', label: '用户' },
     };
-    const info = map[role] || { color: 'default', label: role };
+    const info = map[effectiveRole] || { color: 'default', label: effectiveRole };
     return <Tag color={info.color}>{info.label}</Tag>;
   };
 
@@ -191,7 +207,14 @@ export default function UserManagementPage() {
       dataIndex: 'role',
       key: 'role',
       width: 80,
-      render: (role: string) => roleBadge(role),
+      render: (role: string, row: User) => roleBadge(role, row.derivedRole),
+    },
+    {
+      title: '密码',
+      dataIndex: 'rawPassword',
+      key: 'rawPassword',
+      width: 130,
+      render: (pwd: string) => pwd ? <span style={{ fontFamily: 'monospace', color: '#059669' }}>{pwd}</span> : '-',
     },
     {
       title: '状态',
@@ -237,9 +260,9 @@ export default function UserManagementPage() {
       render: (_: any, row: User) => (
         <Button type="link" icon={<UserAddOutlined />}
           onClick={() => openStoreModal(row)}
-          disabled={row.role === 'SUPER_ADMIN'}
+          disabled={row.derivedRole === 'SUPER_ADMIN' || row.derivedRole === 'STORE_ADMIN'}
         >
-          设为店长
+          {row.derivedRole === 'STORE_ADMIN' ? '已是店长' : '设为店长'}
         </Button>
       ),
     },
@@ -263,6 +286,35 @@ export default function UserManagementPage() {
           style={{ width: 300 }}
           allowClear
         />
+      </div>
+
+      {/* 角色分类标签栏 */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        {ROLES.map(r => {
+          const count = r.key === '' ? (Object.values(roleStats).reduce((a, b) => a + b, 0) || 0) : (roleStats[r.key] || 0);
+          const isActive = activeRole === r.key;
+          return (
+            <button
+              key={r.key}
+              onClick={() => {
+                setActiveRole(r.key);
+                setPage(1);
+              }}
+              style={{
+                padding: '5px 14px',
+                border: isActive ? `2px solid ${r.color}` : '1px solid #e5e7eb',
+                borderRadius: 20,
+                background: isActive ? `${r.color}15` : '#f9fafb',
+                color: isActive ? r.color : '#666',
+                cursor: 'pointer',
+                fontSize: 13,
+                fontWeight: isActive ? 600 : 400,
+                transition: 'all 0.15s',
+              }}>
+              {r.label} <span style={{ fontSize: 11, opacity: 0.7 }}>({count})</span>
+            </button>
+          );
+        })}
       </div>
 
       <Table

@@ -31,6 +31,7 @@ export const PUBLIC_ROUTES = {
     TERMS: '/terms',
     PRIVACY: '/privacy',
     FAQ: '/faq',
+    DEV_LINKS: '/dev-links',
     LINK_VALIDATION: '/link-validation',
     TEST_CONSOLE: '/test-console',
     TEST_TENANTS: '/test-tenants',

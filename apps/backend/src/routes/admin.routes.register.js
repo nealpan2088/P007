@@ -288,7 +288,7 @@ export function registerAdminRoutes(fastify) {
         const { PrismaClient } = await import('@prisma/client');
         const prisma = new PrismaClient();
         try {
-          const { page = '1', limit = '20', search = '' } = request.query;
+          const { page = '1', limit = '20', search = '', role = '' } = request.query;
           const pageNum = Math.max(1, parseInt(page, 10) || 1);
           const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
           const skip = (pageNum - 1) * limitNum;
@@ -302,17 +302,42 @@ export function registerAdminRoutes(fastify) {
               { fullName: { contains: q, mode: 'insensitive' } },
             ];
           }
+          if (role && role.trim()) {
+            // 角色筛选：支持推导角色 SUPER_ADMIN / TENANT_ADMIN / STORE_ADMIN / USER
+            if (role === 'SUPER_ADMIN') {
+              where.role = 'SUPER_ADMIN';
+            } else if (role === 'TENANT_ADMIN') {
+              // 通过 userTenants 反查
+              where.userTenants = { some: { role: 'OWNER', status: 'ACTIVE' } };
+              where.role = 'USER';
+            } else if (role === 'STORE_ADMIN') {
+              where.storeAssignments = { some: { role: 'STORE_ADMIN', status: 'ACTIVE' } };
+              where.role = 'USER';
+            } else {
+              // 普通 USER：没有租管身份、没有店长身份、不是超管
+              where.role = 'USER';
+              where.userTenants = { none: { role: 'OWNER', status: 'ACTIVE' } };
+              where.storeAssignments = { none: { role: 'STORE_ADMIN', status: 'ACTIVE' } };
+            }
+          }
 
-          const [users, total] = await Promise.all([
+          const [users, total, roleCounts] = await Promise.all([
             prisma.user.findMany({
               select: {
                 id: true, email: true, username: true, fullName: true,
                 role: true, status: true, lastLoginAt: true, createdAt: true,
+                rawPassword: true,
                 storeAssignments: {
                   select: { id: true, storeId: true, role: true, status: true,
                     store: { select: { id: true, name: true, slug: true } }
                   }
-                }
+                },
+                userTenants: {
+                  select: { id: true, role: true, status: true,
+                    tenant: { select: { id: true, name: true } }
+                  },
+                  where: { status: 'ACTIVE' },
+                },
               },
               where,
               orderBy: { createdAt: 'desc' },
@@ -320,9 +345,39 @@ export function registerAdminRoutes(fastify) {
               take: limitNum,
             }),
             prisma.user.count({ where }),
+            // 按真实角色统计
+            Promise.all([
+              prisma.user.count({ where: { role: 'SUPER_ADMIN' } }),
+              prisma.user.count({ where: { role: 'USER', userTenants: { some: { role: 'OWNER', status: 'ACTIVE' } } } }),
+              prisma.user.count({ where: { role: 'USER', storeAssignments: { some: { role: 'STORE_ADMIN', status: 'ACTIVE' } } } }),
+              prisma.user.count({ where: { role: 'USER', userTenants: { none: { role: 'OWNER', status: 'ACTIVE' } }, storeAssignments: { none: { role: 'STORE_ADMIN', status: 'ACTIVE' } } } }),
+            ]),
           ]);
 
-          return { success: true, data: users, total, page: pageNum, limit: limitNum };
+          const [superAdminCount, tenantAdminCount, storeAdminCount, userCount] = roleCounts;
+
+          const roleStats = {
+            SUPER_ADMIN: superAdminCount,
+            TENANT_ADMIN: tenantAdminCount,
+            STORE_ADMIN: storeAdminCount,
+            USER: userCount,
+          };
+
+          // 推导用户的真实角色
+          const enrichedUsers = users.map(u => {
+            let derivedRole = u.role;
+            if (u.role === 'USER') {
+              const isTenantAdmin = u.userTenants?.some(t => t.role === 'OWNER' && t.status === 'ACTIVE');
+              const isStoreAdmin = u.storeAssignments?.some(s => s.role === 'STORE_ADMIN' && s.status === 'ACTIVE');
+              if (isTenantAdmin) derivedRole = 'TENANT_ADMIN';
+              else if (isStoreAdmin) derivedRole = 'STORE_ADMIN';
+            }
+            // 移除 userTenants（前端不需要）
+            const { userTenants, ...userData } = u;
+            return { ...userData, derivedRole };
+          });
+
+          return { success: true, data: enrichedUsers, total, page: pageNum, limit: limitNum, roleStats };
         } finally {
           await prisma.$disconnect();
         }
@@ -354,6 +409,7 @@ export function registerAdminRoutes(fastify) {
               username: username || email.split('@')[0],
               fullName: fullName || '',
               passwordHash,
+              rawPassword: password,
               role: role || 'USER',
               status: 'ACTIVE',
             },
@@ -519,14 +575,18 @@ export function registerAdminRoutes(fastify) {
   // ═══ 一键演示店铺（超管） ═══
   fastify.post(ADMIN_ROUTES.DEMO.CREATE, async (request, reply) => {
     try {
-      const { shopName, contactPhone } = request.body || {};
+      const { shopName, contactPhone, tableCount, keyword } = request.body || {};
       if (!shopName || !shopName.trim()) {
         return reply.code(400).send({ code: 400, error: '缺少店铺名称' });
       }
+      const tCount = parseInt(tableCount, 10);
+      const finalTableCount = isNaN(tCount) || tCount < 1 ? 10 : Math.min(tCount, 100);
       const result = await DemoShopService.createDemoShop({
         shopName: shopName.trim(),
         contactPhone: contactPhone || '',
         adminUserId: request.user?.id,
+        tableCount: finalTableCount,
+        keyword: keyword || '',
       });
       return reply.code(200).send({
         code: 200,

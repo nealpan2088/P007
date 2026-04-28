@@ -4,6 +4,9 @@
 import scanService from '../services/public/scan.service.js';
 import { validate } from '../services/validation.service.js';
 import { PUBLIC_ROUTES } from '../config/routes.js';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 /**
  * 公开API路由注册
@@ -53,6 +56,30 @@ setInterval(() => {
     if (now - record.windowStart > RATE_WINDOW_MS) rateLimits.delete(key);
   }
 }, 5 * 60 * 1000);
+
+// 自动完成订单（每30秒检查一次）
+setInterval(async () => {
+  try {
+    // 查找所有 SIMPLE 模式店铺中超时的 PREPARING 订单
+    const stores = await prisma.store.findMany({
+      where: { orderFlow: 'SIMPLE', status: 'ACTIVE' },
+      select: { id: true, autoCompleteMin: true },
+    });
+    for (const store of stores) {
+      const cutoff = new Date(Date.now() - store.autoCompleteMin * 60 * 1000);
+      await prisma.order.updateMany({
+        where: {
+          storeId: store.id,
+          status: 'PREPARING',
+          updatedAt: { lte: cutoff },
+        },
+        data: { status: 'DELIVERED', updatedAt: new Date() },
+      });
+    }
+  } catch (e) {
+    // 静默失败，不打断请求
+  }
+}, 30 * 1000);
 
 async function publicRoutes(fastify) {
   // 健康检查（公开，不限频）

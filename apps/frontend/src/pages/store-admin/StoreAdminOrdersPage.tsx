@@ -2,9 +2,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Table, Tag, Button, Space, Typography, message, Select, Popconfirm, Empty, Modal, Descriptions,
+  Table, Tag, Button, Space, Typography, message, Select, Popconfirm, Empty,
 } from 'antd';
-import { ArrowLeftOutlined, ReloadOutlined, EyeOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons';
 import { STORE_ADMIN_CONFIG, storeAdminFetch } from '../../config/store-admin';
 
 const { Title, Text } = Typography;
@@ -43,10 +43,16 @@ export default function StoreAdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('');
-  const [detailVisible, setDetailVisible] = useState(false);
-  const [detailOrder, setDetailOrder] = useState<Order | null>(null);
+  const [orderFlow, setOrderFlow] = useState<string>('SIMPLE');
 
-  useEffect(() => { if (storeId) loadOrders(); }, [storeId, statusFilter]);
+  useEffect(() => { if (storeId) { loadStore(); loadOrders(); } }, [storeId, statusFilter]);
+
+  async function loadStore() {
+    try {
+      const json = await storeAdminFetch(`${STORE_ADMIN_CONFIG.API_BASE}/stores/${storeId}`);
+      setOrderFlow(json.data?.orderFlow || 'SIMPLE');
+    } catch (_) {}
+  }
 
   async function loadOrders() {
     setLoading(true);
@@ -76,11 +82,6 @@ export default function StoreAdminOrdersPage() {
     } catch (err: any) { message.error('更新失败'); }
   }
 
-  function showDetail(order: Order) {
-    setDetailOrder(order);
-    setDetailVisible(true);
-  }
-
   const columns = [
     { title: '订单号', dataIndex: 'orderNumber', key: 'orderNumber', width: 140 },
     {
@@ -106,7 +107,21 @@ export default function StoreAdminOrdersPage() {
       title: '操作', key: 'actions', width: 200,
       render: (_: any, r: Order) => (
         <Space>
-          <Button size="small" icon={<EyeOutlined />} onClick={() => showDetail(r)}>详情</Button>
+          {orderFlow === 'STANDARD' && r.status === 'PREPARING' && (
+            <Popconfirm title="标记完成？" onConfirm={() => updateStatus(r.id, 'READY')}>
+              <Button size="small" type="primary">完成</Button>
+            </Popconfirm>
+          )}
+          {orderFlow === 'STANDARD' && r.status === 'READY' && (
+            <Popconfirm title="已取餐？" onConfirm={() => updateStatus(r.id, 'DELIVERED')}>
+              <Button size="small">已取餐</Button>
+            </Popconfirm>
+          )}
+          {orderFlow === 'SIMPLE' && r.status === 'PREPARING' && (
+            <Popconfirm title="标记完成并已取餐？" onConfirm={() => updateStatus(r.id, 'DELIVERED')}>
+              <Button size="small" type="primary" style={{ background: '#52c41a', borderColor: '#52c41a' }}>完成取餐</Button>
+            </Popconfirm>
+          )}
           {r.status === 'PENDING' && (
             <Popconfirm title="确认此订单？" onConfirm={() => updateStatus(r.id, 'CONFIRMED')}>
               <Button size="small" type="primary">确认</Button>
@@ -115,11 +130,6 @@ export default function StoreAdminOrdersPage() {
           {r.status === 'CONFIRMED' && (
             <Popconfirm title="开始制作？" onConfirm={() => updateStatus(r.id, 'PREPARING')}>
               <Button size="small">制作</Button>
-            </Popconfirm>
-          )}
-          {r.status === 'PREPARING' && (
-            <Popconfirm title="标记完成？" onConfirm={() => updateStatus(r.id, 'READY')}>
-              <Button size="small" type="primary">完成</Button>
             </Popconfirm>
           )}
           {r.status === 'READY' && (
@@ -172,62 +182,6 @@ export default function StoreAdminOrdersPage() {
         size="middle"
         locale={{ emptyText: <Empty description="暂无订单" /> }}
       />
-
-      <Modal
-        title={`订单详情 - ${detailOrder?.orderNumber || ''}`}
-        open={detailVisible}
-        onCancel={() => setDetailVisible(false)}
-        footer={null}
-        width={500}
-      >
-        {detailOrder && (
-          <>
-            <Descriptions column={2} size="small" bordered>
-              <Descriptions.Item label="状态">
-                <Tag color={STATUS_MAP[detailOrder.status]?.color}>
-                  {STATUS_MAP[detailOrder.status]?.label}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="类型">
-                {detailOrder.orderType === 'TAKEAWAY' ? '📦 打包' : '🍽 堂食'}
-              </Descriptions.Item>
-              <Descriptions.Item label="餐桌">
-                {detailOrder.table?.tableNumber || '-'}
-              </Descriptions.Item>
-              <Descriptions.Item label="总金额">
-                ¥{detailOrder.totalAmount?.toFixed(2)}
-              </Descriptions.Item>
-              <Descriptions.Item label="备注" span={2}>
-                {detailOrder.customerNotes || '无'}
-              </Descriptions.Item>
-            </Descriptions>
-            <Title level={5} style={{ marginTop: 16 }}>菜品明细</Title>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ background: '#fafafa' }}>
-                  <th style={thStyle}>菜品</th>
-                  <th style={thStyle}>数量</th>
-                  <th style={thStyle}>单价</th>
-                  <th style={thStyle}>小计</th>
-                </tr>
-              </thead>
-              <tbody>
-                {detailOrder.items.map((item: OrderItem) => (
-                  <tr key={item.id}>
-                    <td style={tdStyle}>{item.name}</td>
-                    <td style={tdStyle}>×{item.quantity}</td>
-                    <td style={tdStyle}>¥{item.price?.toFixed(2)}</td>
-                    <td style={tdStyle}>¥{(item.price * item.quantity).toFixed(2)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </>
-        )}
-      </Modal>
     </div>
   );
 }
-
-const thStyle: React.CSSProperties = { padding: '8px 12px', borderBottom: '1px solid #f0f0f0', textAlign: 'left', fontWeight: 600 };
-const tdStyle: React.CSSProperties = { padding: '8px 12px', borderBottom: '1px solid #f0f0f0' };

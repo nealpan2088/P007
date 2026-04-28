@@ -188,6 +188,7 @@ export const userService = {
           email,
           username,
           passwordHash,
+          rawPassword: password,
           status: 'ACTIVE',
         },
       })

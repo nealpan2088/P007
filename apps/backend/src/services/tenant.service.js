@@ -79,6 +79,7 @@ export class TenantService {
             phone,
             passwordHash,
             passwordSalt,
+            rawPassword: password,
             status: 'ACTIVE',
             verificationToken: tokenUtils.generateVerificationToken(),
             verificationTokenExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24小时

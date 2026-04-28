@@ -21,6 +21,7 @@ export interface MenuCategory {
   name: string;
   description?: string;
   sortOrder: number;
+  itemCount?: number;
   items: MenuItem[];
 }
 
@@ -89,6 +90,7 @@ export interface ScanOrderState {
   cartItems: CartItem[];
   isCartOpen: boolean;
   orderStatus: OrderStatus | null;
+  verificationCode?: string;
   isLoading: boolean;
   error: string | null;
 }

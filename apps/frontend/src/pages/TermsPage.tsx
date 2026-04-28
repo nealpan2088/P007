@@ -65,14 +65,14 @@ const TermsPage: React.FC = () => {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h1 style={styles.title}>麒麟云点餐服务条款</h1>
+        <h1 style={styles.title}>快点餐服务条款</h1>
         <p style={styles.updateDate}>最后更新：2026年4月27日</p>
       </div>
 
       <section style={styles.section}>
         <h2 style={styles.sectionTitle}>一、总则</h2>
         <p style={styles.text}>
-          欢迎使用麒麟云点餐平台（以下简称"本平台"）。本平台由麒麟科技提供运营和技术支持。
+          欢迎使用快点餐平台（以下简称"本平台"）。本平台由快点餐科技提供运营和技术支持。
           请您仔细阅读以下条款。使用本平台即表示您同意接受本服务条款的约束。如果您不同意本条款的任何内容，
           请勿注册或使用本平台服务。
         </p>
@@ -114,7 +114,7 @@ const TermsPage: React.FC = () => {
 
       <section style={styles.section}>
         <h2 style={styles.sectionTitle}>五、知识产权</h2>
-        <p style={styles.text}>5.1 本平台的所有权、运营权及相关知识产权归麒麟科技所有。</p>
+        <p style={styles.text}>5.1 本平台的所有权、运营权及相关知识产权归快点餐科技所有。</p>
         <p style={styles.text}>5.2 用户在本平台发布的菜品图片、菜名等内容，其知识产权归用户所有。用户授予本平台在平台范围内免费使用、展示这些内容的权利。</p>
         <p style={styles.text}>5.3 未经本平台书面同意，任何人不得以任何方式复制、传播、修改、反编译本平台的软件和内容。</p>
       </section>

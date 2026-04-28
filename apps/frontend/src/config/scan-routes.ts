@@ -41,11 +41,11 @@ export const SCAN_ROUTES = {
   TEST: {
     TENANT: {
       SLUG: 'qilin-test',
-      NAME: '麒麟测试租户',
+      NAME: '快点餐测试租户',
     },
     STORE: {
       SLUG: 'qilin-test-restaurant',
-      NAME: '麒麟测试餐厅',
+      NAME: '快点餐测试餐厅',
     },
     TABLE: {
       CODE: 'A01',
@@ -438,7 +438,7 @@ export const SCAN_ROUTES_SPEC = {
   // 使用示例 (新规范)
   EXAMPLES_NEW: [
     {
-      description: '麒麟测试租户 - 测试店铺扫码点餐',
+      description: '快点餐测试租户 - 测试店铺扫码点餐',
       url: '/t/qilin-test/s/test-store/scan/A01',
       tenantSlug: 'qilin-test',
       storeSlug: 'test-store',
@@ -452,7 +452,7 @@ export const SCAN_ROUTES_SPEC = {
       tableId: 'B02',
     },
     {
-      description: '麒麟租户 - 北京分店VIP餐桌',
+      description: '快点餐 - 北京分店VIP餐桌',
       url: '/t/qilin/s/beijing-branch/scan/VIP-01',
       tenantSlug: 'qilin',
       storeSlug: 'beijing-branch',

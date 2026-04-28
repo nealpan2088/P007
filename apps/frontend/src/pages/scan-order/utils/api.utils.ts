@@ -77,7 +77,7 @@ export async function fetchStoreMenu(storeSlug: string): Promise<MenuCategory[]>
  */
 export async function submitOrder(
   orderData: SubmitOrderRequest,
-): Promise<{ order_number: string; total_amount: string }> {
+): Promise<{ order_number: string; total_amount: string; verification_code?: string }> {
   try {
     const response = await apiClient.post<ApiResponse<any>>(
       SCAN_ROUTES.api.CREATE_ORDER,
@@ -91,6 +91,7 @@ export async function submitOrder(
       return {
         order_number: order.orderNumber || order.order_number,
         total_amount: String(order.totalAmount ?? order.total_amount ?? '0'),
+        verification_code: order.verificationCode || order.verification_code,
       };
     } else {
       throw new Error(response.data.message || '提交订单失败');

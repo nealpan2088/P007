@@ -3,6 +3,10 @@ import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import { CustomRouter } from './components/CustomRouter';
 import HomePage from './pages/HomePage';
+import { getAppConfig } from './config/dynamic-config';
+
+const appConfig = getAppConfig();
+const BRAND = appConfig.name || '快点餐管理后台';
 import AboutPage from './pages/AboutPage';
 import ScanDemoPage from './pages/ScanDemoPage';
 import TermsPage from './pages/TermsPage';
@@ -23,6 +27,7 @@ import EditStorePage from './pages/store-management/EditStorePage';
 import StoreDetailPage from './pages/store-management/StoreDetailPage';
 import StoreOrdersPage from './pages/order-management/StoreOrdersPage';
 import TestTenants from './pages/TestTenants';
+import DevLinksPage from './pages/DevLinksPage';
 import LinkValidationTest from './pages/LinkValidationTest';
 import MenuTemplateManager from './pages/menu-management/MenuTemplateManager';
 import PrinterManagement from './pages/printer/PrinterManagement';
@@ -132,7 +137,7 @@ function AppContent() {
       {showNav && (
         <nav className="admin-nav">
           <ul>
-            <li className="nav-brand"><Link to={PUBLIC_ROUTES.HOME}>麒麟管理后台</Link></li>
+            <li className="nav-brand"><Link to={PUBLIC_ROUTES.HOME}>{BRAND}</Link></li>
             <AdminNavLinks key={`links-${key}`} />
             <li className="nav-right"><NavUserStatus key={`status-${key}`} /></li>
           </ul>
@@ -199,6 +204,7 @@ function AppContent() {
           <Route path={ADMIN_ROUTES.ORDERS.DETAIL} element={<StoreOrdersPage />} />
 
           {/* ===== 测试页面 ===== */}
+          <Route path={PUBLIC_ROUTES.PUBLIC.DEV_LINKS} element={<DevLinksPage />} />
           <Route path={PUBLIC_ROUTES.PUBLIC.TEST_CONSOLE} element={<TestConsolePage />} />
           <Route path={PUBLIC_ROUTES.PUBLIC.TEST_TENANTS} element={<TestTenants />} />
           <Route path={PUBLIC_ROUTES.PUBLIC.LINK_VALIDATION} element={<LinkValidationTest />} />

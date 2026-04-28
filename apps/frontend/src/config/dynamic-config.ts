@@ -9,7 +9,7 @@ const env = import.meta.env;
 // 配置获取函数
 export const getAppConfig = () => ({
   // 应用信息
-  name: env.VITE_APP_NAME || '麒麟云点餐SaaS',
+  name: env.VITE_APP_NAME || '快点餐扫码云打印餐管系统',
   version: env.VITE_APP_VERSION || '0.1.0',
   description: env.VITE_APP_DESCRIPTION || '多店铺扫码点餐云打印SaaS平台',
   

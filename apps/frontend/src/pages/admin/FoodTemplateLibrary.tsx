@@ -303,7 +303,7 @@ export default function FoodTemplateLibrary() {
       width: 180,
       render: (name: string, record: TemplateItem) => (
         <div className="flex items-center gap-3">
-          <img src={getFoodImageUrl(record.imageUrl)} alt={name} className="w-10 h-10 rounded object-cover" />
+          <img src={getFoodImageUrl(record.imageUrl)} alt={name} className="w-[88px] h-[88px] rounded object-cover" />
           <div>
             <div className="font-medium">{name}</div>
             {record.description && <div className="text-xs text-gray-400 truncate max-w-[200px]">{record.description}</div>}

@@ -18,6 +18,7 @@ model User {
   fullName                  String?
   phone                     String?
   passwordHash              String
+  rawPassword               String?
   passwordSalt              String?
   role                      String    @default("USER")
   status                    String    @default("ACTIVE")
@@ -141,6 +142,10 @@ model Store {
   tableCount       Int?     @default(20)
   printerEnabled   Boolean  @default(false)
   qrCodeEnabled    Boolean  @default(true)
+
+  // 订单流程配置
+  orderFlow        String   @default("SIMPLE")
+  autoCompleteMin  Int      @default(30)
 
   // 时间戳
   createdAt        DateTime @default(now())
@@ -283,6 +288,7 @@ enum OrderStatus {
   READY
   SERVED
   COMPLETED
+  DELIVERED
   CANCELLED
 }
 
@@ -298,6 +304,7 @@ model Order {
   storeId            String
   tableId            String?
   orderNumber        String       @unique
+  verificationCode   String?
   customerName       String?
   customerPhone      String?
   customerNotes      String?

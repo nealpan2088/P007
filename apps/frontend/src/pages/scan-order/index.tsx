@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import ScanHeader from './components/ScanHeader';
 import MenuSection from './components/MenuSection';
 import CartDrawer from './components/CartDrawer';
@@ -19,9 +19,7 @@ const ScanOrderPage: React.FC<ScanOrderPageProps> = ({ mode = 'dine-in' }) => {
     tableId?: string;
   }>();
 
-  const navigate = useNavigate();
 
-  // 统一获取店铺标识符（支持新旧规范参数名）
   const storeIdentifier = params.storeSlug || params.storeId || '';
   const tableId = params.tableId || '';
 
@@ -52,6 +50,7 @@ const ScanOrderPage: React.FC<ScanOrderPageProps> = ({ mode = 'dine-in' }) => {
     cartItems,
     isCartOpen,
     orderStatus,
+    verificationCode,
     isLoading,
     error,
     cartTotal,
@@ -81,9 +80,9 @@ const ScanOrderPage: React.FC<ScanOrderPageProps> = ({ mode = 'dine-in' }) => {
   // 菜品详情弹窗
   const [detailItem, setDetailItem] = useState<MenuItem | null>(null);
 
-  // 处理返回
+  // 处理返回（重新加载当前页，回到点餐模式）
   const handleBack = () => {
-    navigate(-1);
+    window.location.reload();
   };
 
   // 处理查看菜品详情
@@ -166,6 +165,11 @@ const ScanOrderPage: React.FC<ScanOrderPageProps> = ({ mode = 'dine-in' }) => {
               <p className="text-gray-600">
                 订单号: {orderStatus.orderId}
               </p>
+              {verificationCode && (
+                <p className="text-sm text-gray-500 mt-1">
+                  取餐 核销码: <span className="text-2xl font-bold text-orange-600 tracking-widest">{verificationCode}</span>
+                </p>
+              )}
             </div>
 
             {/* 订单状态进度 */}
@@ -255,7 +259,7 @@ const ScanOrderPage: React.FC<ScanOrderPageProps> = ({ mode = 'dine-in' }) => {
                 onClick={handleBack}
                 className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
               >
-                返回首页
+                请到前台扫码支付
               </button>
             </div>
           </div>

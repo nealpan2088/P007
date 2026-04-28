@@ -2,7 +2,11 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import SCAN_ROUTES from '../config/scan-routes';
+import { getAppConfig } from '../config/dynamic-config';
 import ChatWidget from '../components/ChatWidget';
+
+const appConfig = getAppConfig();
+const BRAND = appConfig.name || '快点餐';
 
 /* ===================== 内联样式（避免破坏现有 CSS） ===================== */
 const styles = {
@@ -493,7 +497,7 @@ export default function HomePage() {
       <nav className="hp-nav" style={{ ...styles.nav, boxShadow: scrolled ? '0 1px 6px rgba(0,0,0,0.06)' : 'none' }}>
         <a href="/" style={styles.navLogo}>
           {icons.qilin}
-          <span>麒麟云点餐</span>
+          <span>{BRAND}</span>
         </a>
         <div style={styles.navLinks}>
           <a href="#features" style={styles.navLink}>功能</a>
@@ -771,10 +775,10 @@ export default function HomePage() {
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {icons.qilin}
-            <span style={{ fontWeight: 600 }}>麒麟云点餐</span>
+            <span style={{ fontWeight: 600 }}>{BRAND}</span>
           </div>
           <div style={{ fontSize: 12, color: '#bbb' }}>
-            © 2026 麒麟云点餐 · 多店扫码点餐云打印高效平台
+            © 2026 {BRAND} · 多店扫码点餐云打印高效平台
           </div>
           <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#bbb' }}>
             <span>v0.2.6-alpha</span>

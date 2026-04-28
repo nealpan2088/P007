@@ -37,8 +37,8 @@ export default async function registerShortLinkRoutes(fastify) {
         return reply.code(404).type('text/html').send('<h1>404 链接无效</h1><p>该二维码已失效，请联系商家。</p>');
       }
 
-      // 构造完整扫码URL → 重定向
-      const targetUrl = `/t/${table.store.tenant.subdomain}/s/${table.store.slug}/scan/${table.tableNumber}`;
+      // 构造完整扫码URL → 重定向到主域名
+      const targetUrl = `https://saas.openyun.xin/t/${table.store.tenant.subdomain}/s/${table.store.slug}/scan/${table.tableNumber}`;
 
       return reply.code(302).header('Location', targetUrl).send();
     } catch (error) {

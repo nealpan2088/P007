@@ -52,13 +52,17 @@ export async function storeAdminFetch(
   options: RequestInit = {}
 ): Promise<any> {
   const token = getStoreAdminToken();
+  const headers: Record<string, string> = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.headers as Record<string, string> || {}),
+  };
+  // 只有有 body 时才设 Content-Type，避免无 body 请求报错
+  if (options.body) {
+    headers['Content-Type'] = 'application/json';
+  }
   const res = await fetch(path, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers as Record<string, string> || {}),
-    },
+    headers,
   });
   if (!res.ok) throw { status: res.status, message: await res.text() };
   return res.json();

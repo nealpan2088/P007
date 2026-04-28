@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Card, Form, Input, Button, Typography, message, Spin, Space, Descriptions,
+  Card, Form, Input, Button, Typography, message, Spin, Space, Descriptions, Select, InputNumber,
 } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { STORE_ADMIN_CONFIG, storeAdminFetch } from '../../config/store-admin';
@@ -83,6 +83,17 @@ export default function StoreAdminSettingsPage() {
           </Form.Item>
           <Form.Item name="contactPhone" label="联系电话">
             <Input />
+          </Form.Item>
+          <div style={{ borderTop: '1px solid #f0f0f0', margin: '16px 0' }} />
+          <Title level={5}>订单流程</Title>
+          <Form.Item name="orderFlow" label="订单模式" tooltip="精简模式：制作中→完成取餐一键操作，超时自动完成；标准模式：完成→已取餐两步操作">
+            <Select>
+              <Select.Option value="SIMPLE">精简模式（一键完成 + 自动超时）</Select.Option>
+              <Select.Option value="STANDARD">标准模式（完成→已取餐两步）</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item name="autoCompleteMin" label="自动完成时间（分钟）" tooltip="精简模式下，制作中超过此时间未操作，系统自动标记为已取餐">
+            <InputNumber min={5} max={240} style={{ width: '100%' }} />
           </Form.Item>
           <Form.Item>
             <Button type="primary" icon={<SaveOutlined />} htmlType="submit" loading={saving}>保存</Button>

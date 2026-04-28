@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Card, Table, Button, Tag, Typography, message, Empty, Space, Modal, Form, Input, InputNumber, Select,
 } from 'antd';
-import { ArrowLeftOutlined, ReloadOutlined, EditOutlined, QrcodeOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, ReloadOutlined, EditOutlined, QrcodeOutlined, DownloadOutlined } from '@ant-design/icons';
 import { STORE_ADMIN_CONFIG, storeAdminFetch } from '../../config/store-admin';
 
 const { Title } = Typography;
@@ -28,18 +28,42 @@ export default function StoreAdminTablesPage() {
   const [qrModal, setQrModal] = useState(false);
   const [qrTable, setQrTable] = useState<TableItem | null>(null);
   const [form] = Form.useForm();
+  const [storeName, setStoreName] = useState('');
 
   useEffect(() => { if (storeId) loadTables(); }, [storeId]);
 
   async function loadTables() {
     setLoading(true);
     try {
+      // 先取店铺名
+      const storeJson = await storeAdminFetch(`${STORE_ADMIN_CONFIG.API_BASE}/stores/${storeId}`);
+      setStoreName(storeJson.data?.name || storeJson.name || '');
+      // 再取餐桌列表
       const json = await storeAdminFetch(`${STORE_ADMIN_CONFIG.API_BASE}/stores/${storeId}/tables`);
       setTables(json.data || []);
     } catch (err: any) {
       if (err.status === 401) { navigate('/store-admin/login'); return; }
       message.error('加载餐桌失败');
     } finally { setLoading(false); }
+  }
+
+  function exportCsv() {
+    if (!tables.length) { message.warning('没有餐桌可导出'); return; }
+    const baseUrl = 'https://s.openyun.xin';
+    const rows = [['店铺名', '桌号', '短链接']];
+    for (const t of tables) {
+      rows.push([storeName, t.tableNumber, `${baseUrl}/s/${t.shortCode || ''}`]);
+    }
+    const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+    const bom = '\uFEFF';
+    const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${storeName || '店铺'}_餐桌二维码.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    message.success('已导出 CSV');
   }
 
   function openEdit(table: TableItem) {
@@ -92,8 +116,13 @@ export default function StoreAdminTablesPage() {
           rowKey="id"
           loading={loading}
           pagination={false}
-          locale={{ emptyText: <Empty description="暂无餐桌" /> }}
+          locale={{ emptyText: <Empty description="暂无餐桌" />}}
         />
+        {tables.length > 0 && (
+          <div style={{ textAlign: 'right', marginTop: 12 }}>
+            <Button icon={<DownloadOutlined />} onClick={exportCsv}>导出 CSV</Button>
+          </div>
+        )}
       </Card>
 
       <Modal title="编辑餐桌" open={editModal} onCancel={() => setEditModal(false)} onOk={() => form.submit()} destroyOnHidden>
@@ -131,17 +160,17 @@ export default function StoreAdminTablesPage() {
                 wordBreak: 'break-all',
               }}
               onClick={() => {
-                navigator.clipboard.writeText(`https://saas.openyun.xin/s/${qrTable.shortCode}`);
+                navigator.clipboard.writeText(`https://s.openyun.xin/s/${qrTable.shortCode}`);
                 message.success('链接已复制');
               }}
             >
-              https://saas.openyun.xin/s/{qrTable.shortCode}
+              https://s.openyun.xin/s/{qrTable.shortCode}
             </div>
             <div style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>
               二维码图片（右键保存或截图打印）
             </div>
             <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`https://saas.openyun.xin/s/${qrTable.shortCode}`)}`}
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`https://s.openyun.xin/s/${qrTable.shortCode}`)}`}
               alt={`${qrTable.tableNumber} 二维码`}
               style={{ width: 200, height: 200, border: '1px solid #eee', borderRadius: 8 }}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -150,7 +179,7 @@ export default function StoreAdminTablesPage() {
               <Button
                 type="primary"
                 onClick={() => {
-                  navigator.clipboard.writeText(`https://saas.openyun.xin/s/${qrTable.shortCode}`);
+                  navigator.clipboard.writeText(`https://s.openyun.xin/s/${qrTable.shortCode}`);
                   message.success('短链已复制，可发给印刷店制作二维码');
                 }}
               >

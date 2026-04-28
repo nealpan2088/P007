@@ -357,173 +357,174 @@ function ThemeEditorModal({ store, onClose, onSaved }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">🎨 装修设置 — {store.name}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
-        </div>
-
-        <div className="px-5 py-4 space-y-5">
-          {/* 主题色预览 */}
-          <div className="h-20 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-inner transition-all"
-            style={{ background: `linear-gradient(135deg, ${themeColor}, ${adjustHex(themeColor, -25)})` }}>
-            主题色预览
+    <div className="fixed inset-0 z-50 bg-black/40" onClick={onClose}>
+      <div className="h-full w-full flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-auto max-h-full overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">🎨 装修设置 — {store.name}</h3>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
           </div>
 
-          {/* 预设颜色 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">预设颜色</label>
-            <div className="flex flex-wrap gap-2">
-              {THEME_COLORS.map(c => (
-                <button
-                  key={c}
-                  onClick={() => setThemeColor(c)}
-                  className={`w-8 h-8 rounded-full border-2 transition-all ${
-                    themeColor === c ? 'border-gray-900 scale-110' : 'border-transparent hover:scale-105'
-                  }`}
-                  style={{ backgroundColor: c }}
-                  title={c}
+          <div className="px-5 py-4 space-y-5">
+            {/* 主题色预览 */}
+            <div className="h-20 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-inner transition-all"
+              style={{ background: `linear-gradient(135deg, ${themeColor}, ${adjustHex(themeColor, -25)})` }}>
+              主题色预览
+            </div>
+
+            {/* 预设颜色 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">预设颜色</label>
+              <div className="flex flex-wrap gap-2">
+                {THEME_COLORS.map(c => (
+                  <button
+                    key={c}
+                    onClick={() => setThemeColor(c)}
+                    className={`w-8 h-8 rounded-full border-2 transition-all ${
+                      themeColor === c ? 'border-gray-900 scale-110' : 'border-transparent hover:scale-105'
+                    }`}
+                    style={{ backgroundColor: c }}
+                    title={c}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* 自定义颜色 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">自定义颜色</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customColor}
+                  onChange={e => {
+                    setCustomColor(e.target.value);
+                    if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) {
+                      setThemeColor(e.target.value);
+                    }
+                  }}
+                  placeholder="#ff6b35"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-purple-500"
                 />
-              ))}
-            </div>
-          </div>
-
-          {/* 自定义颜色 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">自定义颜色</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={customColor}
-                onChange={e => {
-                  setCustomColor(e.target.value);
-                  if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) {
-                    setThemeColor(e.target.value);
-                  }
-                }}
-                placeholder="#ff6b35"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-purple-500"
-              />
-              <input
-                type="color"
-                value={themeColor}
-                onChange={e => { setThemeColor(e.target.value); setCustomColor(e.target.value); }}
-                className="w-10 h-10 rounded cursor-pointer border border-gray-300"
-              />
-            </div>
-            <p className="text-xs text-gray-400 mt-1">输入 Hex 色值或使用颜色选择器</p>
-          </div>
-
-          {/* Logo 上传 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">店铺 Logo</label>
-            <div className="flex items-center gap-4">
-              {/* Logo 预览 */}
-              <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 flex-shrink-0">
-                {logoPreview ? (
-                  <img src={logoPreview} alt="Logo 预览" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display='none'; (e.target as HTMLImageElement).parentElement!.innerHTML = '🏪'; }} />
-                ) : (
-                  <span className="text-2xl">🏪</span>
-                )}
+                <input
+                  type="color"
+                  value={themeColor}
+                  onChange={e => { setThemeColor(e.target.value); setCustomColor(e.target.value); }}
+                  className="w-10 h-10 rounded cursor-pointer border border-gray-300"
+                />
               </div>
-              <div className="flex-1">
-                <label className="inline-block px-4 py-2 text-sm text-purple-600 border border-purple-300 rounded-lg cursor-pointer hover:bg-purple-50 transition-colors">
-                  {uploading ? '上传中...' : '选择图片'}
-                  <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" disabled={uploading} />
-                </label>
-                <p className="text-xs text-gray-400 mt-1">支持 JPG/PNG/GIF/WebP，最大 1MB</p>
-                <p className="text-xs text-gray-400">建议使用 1:1 正方形图片，多余部分会被裁剪</p>
-                {logoUrl && (
-                  <button onClick={() => { setLogoUrl(''); setLogoPreview(''); }} className="text-xs text-red-500 mt-1 hover:underline">
-                    清除 Logo
-                  </button>
-                )}
-              </div>
+              <p className="text-xs text-gray-400 mt-1">输入 Hex 色值或使用颜色选择器</p>
             </div>
-          </div>
 
-          {/* 店头背景图 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">店头背景图</label>
-            <div className="flex items-center gap-4">
-              <div className="w-24 h-16 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 flex-shrink-0"
-                style={headerPreview ? { backgroundImage: `url(${headerPreview})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}>
-                {!headerPreview && <span className="text-2xl text-gray-300">🖼️</span>}
-              </div>
-              <div className="flex-1">
-                <label className="inline-block px-4 py-2 text-sm text-purple-600 border border-purple-300 rounded-lg cursor-pointer hover:bg-purple-50 transition-colors">
-                  {uploadingHeader ? '上传中...' : '选择图片'}
-                  <input type="file" accept="image/*" onChange={handleHeaderUpload} className="hidden" disabled={uploadingHeader} />
-                </label>
-                <p className="text-xs text-gray-400 mt-1">支持 JPG/PNG/GIF/WebP，最大 1MB</p>
-                <p className="text-xs text-gray-400">建议宽高比 3:1，用于店头背景展示</p>
-                {headerImageUrl && (
-                  <button onClick={() => { setHeaderImageUrl(''); setHeaderPreview(''); }} className="text-xs text-red-500 mt-1 hover:underline">
-                    清除背景图
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* 装修模板 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">装修模板</label>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setThemeTemplate('gradient')}
-                className={`flex-1 px-3 py-2 text-sm rounded-lg border-2 transition-all ${
-                  themeTemplate === 'gradient' ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded" style={{ background: 'linear-gradient(135deg, #ff6b35, #d84315)' }} />
-                  <span className="font-medium">渐变风</span>
+            {/* Logo 上传 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">店铺 Logo</label>
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 flex-shrink-0">
+                  {logoPreview ? (
+                    <img src={logoPreview} alt="Logo 预览" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display='none'; (e.target as HTMLImageElement).parentElement!.innerHTML = '🏪'; }} />
+                  ) : (
+                    <span className="text-2xl">🏪</span>
+                  )}
                 </div>
-                <div className="text-xs text-gray-400 mt-1">彩色渐变头部，带装饰元素</div>
-              </button>
-              <button
-                onClick={() => setThemeTemplate('minimal')}
-                className={`flex-1 px-3 py-2 text-sm rounded-lg border-2 transition-all ${
-                  themeTemplate === 'minimal' ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded bg-gray-100 border border-gray-200" />
-                  <span className="font-medium">极简白</span>
+                <div className="flex-1">
+                  <label className="inline-block px-4 py-2 text-sm text-purple-600 border border-purple-300 rounded-lg cursor-pointer hover:bg-purple-50 transition-colors">
+                    {uploading ? '上传中...' : '选择图片'}
+                    <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" disabled={uploading} />
+                  </label>
+                  <p className="text-xs text-gray-400 mt-1">支持 JPG/PNG/GIF/WebP，最大 1MB</p>
+                  <p className="text-xs text-gray-400">建议使用 1:1 正方形图片，多余部分会被裁剪</p>
+                  {logoUrl && (
+                    <button onClick={() => { setLogoUrl(''); setLogoPreview(''); }} className="text-xs text-red-500 mt-1 hover:underline">
+                      清除 Logo
+                    </button>
+                  )}
                 </div>
-                <div className="text-xs text-gray-400 mt-1">纯白干净设计，简洁清爽</div>
-              </button>
+              </div>
             </div>
+
+            {/* 店头背景图 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">店头背景图</label>
+              <div className="flex items-center gap-4">
+                <div className="w-24 h-16 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 flex-shrink-0"
+                  style={headerPreview ? { backgroundImage: `url(${headerPreview})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}>
+                  {!headerPreview && <span className="text-2xl text-gray-300">🖼️</span>}
+                </div>
+                <div className="flex-1">
+                  <label className="inline-block px-4 py-2 text-sm text-purple-600 border border-purple-300 rounded-lg cursor-pointer hover:bg-purple-50 transition-colors">
+                    {uploadingHeader ? '上传中...' : '选择图片'}
+                    <input type="file" accept="image/*" onChange={handleHeaderUpload} className="hidden" disabled={uploadingHeader} />
+                  </label>
+                  <p className="text-xs text-gray-400 mt-1">支持 JPG/PNG/GIF/WebP，最大 1MB</p>
+                  <p className="text-xs text-gray-400">建议宽高比 3:1，用于店头背景展示</p>
+                  {headerImageUrl && (
+                    <button onClick={() => { setHeaderImageUrl(''); setHeaderPreview(''); }} className="text-xs text-red-500 mt-1 hover:underline">
+                      清除背景图
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 装修模板 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">装修模板</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setThemeTemplate('gradient')}
+                  className={`flex-1 px-3 py-2 text-sm rounded-lg border-2 transition-all ${
+                    themeTemplate === 'gradient' ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded" style={{ background: 'linear-gradient(135deg, #ff6b35, #d84315)' }} />
+                    <span className="font-medium">渐变风</span>
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1">彩色渐变头部，带装饰元素</div>
+                </button>
+                <button
+                  onClick={() => setThemeTemplate('minimal')}
+                  className={`flex-1 px-3 py-2 text-sm rounded-lg border-2 transition-all ${
+                    themeTemplate === 'minimal' ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded bg-gray-100 border border-gray-200" />
+                    <span className="font-medium">极简白</span>
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1">纯白干净设计，简洁清爽</div>
+                </button>
+              </div>
+            </div>
+
+            {message && (
+              <div className={`text-sm px-3 py-2 rounded-lg ${
+                message.startsWith('✅') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+              }`}>{message}</div>
+            )}
           </div>
 
-          {message && (
-            <div className={`text-sm px-3 py-2 rounded-lg ${
-              message.startsWith('✅') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-            }`}>{message}</div>
-          )}
-        </div>
-
-        <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-          <button
-            onClick={() => window.open('/admin/printers', '_blank')}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-          >
-            🖨️ 打印机管理 →
-          </button>
-          <div className="flex gap-2">
-            <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50">
-              取消
-            </button>
+          <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
             <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-4 py-2 text-sm text-white rounded-lg"
-              style={{ background: saving ? '#999' : themeColor }}
+              onClick={() => window.open('/admin/printers', '_blank')}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
             >
-              {saving ? '保存中...' : '保存'}
+              🖨️ 打印机管理 →
             </button>
+            <div className="flex gap-2">
+              <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50">
+                取消
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="px-4 py-2 text-sm text-white rounded-lg"
+                style={{ background: saving ? '#999' : themeColor }}
+              >
+                {saving ? '保存中...' : '保存'}
+              </button>
+            </div>
           </div>
         </div>
       </div>

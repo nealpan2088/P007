@@ -29,8 +29,8 @@ const DevLinksPage: React.FC = () => {
     {
       title: '📱 扫码点餐（测试路径）',
       links: [
-        { name: '扫码点餐A01桌', to: '/t/qilin-test/s/qilin-test-restaurant/scan/A01', desc: '麒麟测试餐厅-23道菜' },
-        { name: '扫码点餐B01桌', to: '/t/qilin-test/s/qilin-test-restaurant/scan/B01', desc: '麒麟测试餐厅-B区' },
+        { name: '扫码点餐A01桌', to: '/t/sdsd/s/fo3-uj0-dian-ibo0ac/scan/A01', desc: '测试店铺-扫码点餐' },
+        { name: '扫码点餐B01桌', to: '/t/qilin-test/s/qilin-test-restaurant/scan/B01', desc: '快点餐测试餐厅-B区' },
         { name: '旧规范扫码', to: '/scan/cmob7gm2s0005l7pzkio01udf/A01', desc: '老路径兼容' },
       ],
     },
@@ -82,7 +82,7 @@ const DevLinksPage: React.FC = () => {
         { label: 'API地址', value: 'https://saas.openyun.xin/api' },
         { label: '后端端口', value: '33038（PM2 cluster*2）' },
         { label: '前端端口', value: '5177（Vite dev）' },
-        { label: '扫码测试', value: 'https://saas.openyun.xin/t/qilin-test/s/qilin-test-restaurant/scan/A01' },
+        { label: '扫码测试', value: 'https://saas.openyun.xin/t/sdsd/s/fo3-uj0-dian-ibo0ac/scan/A01' },
       ],
     },
   ];
@@ -176,7 +176,7 @@ const DevLinksPage: React.FC = () => {
   return (
     <div style={style.container}>
       <div style={style.header}>
-        <h1 style={style.title}>🔗 麒麟管理后台 · 规范链接导航</h1>
+        <h1 style={style.title}>🔗 快点餐管理后台 · 规范链接导航</h1>
         <p style={style.subtitle}>开发测试用 - 按角色和功能分类的所有入口</p>
       </div>
 
@@ -217,7 +217,7 @@ const DevLinksPage: React.FC = () => {
       ))}
 
       <div style={{ textAlign: 'center', margin: '30px 0', fontSize: 12, color: '#bbb' }}>
-        麒麟云点餐 v0.4.0 · 开发测试页（仅供内部使用）
+        快点餐 v0.4.0 · 开发测试页（仅供内部使用）
       </div>
     </div>
   );

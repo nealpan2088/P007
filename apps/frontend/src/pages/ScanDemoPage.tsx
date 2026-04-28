@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PUBLIC_ROUTES } from '../config/routes';
 
-const DEMO_SCAN_URL = 'https://saas.openyun.xin/t/qilin-test/s/qilin-test-restaurant/scan/A01';
+const DEMO_SCAN_URL = 'https://saas.openyun.xin/t/sdsd/s/fo3-uj0-dian-ibo0ac/scan/A01';
 const QR_API_URL = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(DEMO_SCAN_URL)}`;
 
 /* ───── 公用素材 ───── */
@@ -132,7 +132,7 @@ function VersionB() {
           🚀 数字化餐饮管理系统
         </div>
         <div style={{ fontSize: 26, fontWeight: 700, color: '#1a1a2e' }}>
-          麒麟云点餐
+          快点餐
         </div>
         <div style={{ fontSize: 14, color: '#999', marginTop: 4 }}>
           扫码点餐 · 云打印 · 后台管理 一站式解决
@@ -174,7 +174,7 @@ function VersionB() {
           </div>
           <QRCode url={DEMO_SCAN_URL} size={160} />
           <div style={{ marginTop: 8, fontSize: 11, color: '#aaa' }}>
-            麒麟测试餐厅 · 桌号 A01
+            快点餐测试餐厅 · 桌号 A01
           </div>
         </div>
 

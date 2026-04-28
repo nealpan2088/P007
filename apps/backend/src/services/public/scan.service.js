@@ -334,6 +334,14 @@ class ScanService {
       return sum + (itemPriceMap[item.menuItemId] || 0) * (item.quantity || 1);
     }, 0);
 
+    // 生成6位数字核销码（不重复）
+    let verificationCode;
+    let codeExists = true;
+    while (codeExists) {
+      verificationCode = String(Math.floor(100000 + Math.random() * 900000));
+      codeExists = await prisma.order.findFirst({ where: { verificationCode } });
+    }
+
     // 5. 生成订单号
     const orderNumber = 'ORD' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
 
@@ -343,6 +351,7 @@ class ScanService {
         storeId: storeId,
         tableId: tableId,
         orderNumber: orderNumber,
+        verificationCode: verificationCode,
         customerName: data.customerName || null,
         customerPhone: data.customerPhone || null,
         customerNotes: data.customerNotes || null,

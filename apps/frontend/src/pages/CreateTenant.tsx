@@ -279,7 +279,7 @@ const CreateTenant: React.FC = () => {
               创建新租户
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              为您的餐厅创建一个新的租户，开始使用麒麟点餐系统
+              为您的餐厅创建一个新的租户，开始使用快点餐系统
             </Typography>
           </Box>
 

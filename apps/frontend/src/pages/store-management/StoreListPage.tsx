@@ -591,7 +591,7 @@ function getMockStores(): Store[] {
     {
       id: '1',
       tenantId: 'tenant-1',
-      name: '麒麟测试餐厅',
+      name: '快点餐测试餐厅',
       description: '这是一家测试餐厅，提供各种美食',
       type: 'RESTAURANT',
       status: 'ACTIVE',

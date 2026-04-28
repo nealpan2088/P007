@@ -202,3 +202,9 @@ apps/uploads/
 apps/backend/data/
 *.bak.*
 
+
+# P007 本地备份和生成文件
+p007-backup/
+qr-codes/
+*.backup
+*.backup.*
